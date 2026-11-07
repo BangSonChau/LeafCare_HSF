@@ -39,3 +39,17 @@ Project skills in `.claude/skills/` (use them; subagents too):
 - Animations: CSS transitions / `@keyframes` / Tailwind/DaisyUI classes only; use `animate` to build, `animation-performance` for jank. Respect `prefers-reduced-motion`.
 - Before reporting a UI task done: run `review-animations` on changed animations and `break-ui` on new pages (long names, empty lists, many rows).
 - Ignore skill advice that only applies to React/Next.js; translate it to Thymeleaf + Tailwind or skip it.
+
+## Progress log (`docs/PROGRESS.md`)
+
+`docs/PROGRESS.md` is the project's memory between sessions. It is imported here, so every session starts with it:
+
+@docs/PROGRESS.md
+
+- Start of a session: trust PROGRESS.md for status, next step and past decisions. Open only the files it names or the current task needs; do not re-explore the whole repo.
+- After every finished plan task, and every commit outside the plan, update PROGRESS.md **in the same commit**:
+  - rewrite "Hiện trạng" (current task, next step, open problems);
+  - add one entry at the top of "Nhật ký": date, task, what was done, files changed (`git diff --stat` summary), decisions or deviations from the plan, known issues;
+  - add lasting choices (library, pattern, naming) to "Quyết định quan trọng".
+- Write it in Vietnamese, short: at most 5 bullets per entry. Keep the file under ~150 lines: when longer, squash old entries to one line each.
+- Subagent-driven runs: the implementer subagent writes the entry in its task commit; if a reviewer forces fixes, the fix commit updates that entry. The controller checks the entry exists before marking the task complete.
