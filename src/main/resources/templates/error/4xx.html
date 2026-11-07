@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Có lỗi xảy ra</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div th:replace="~{fragments/error-body :: errorBody('Có lỗi xảy ra', 'Yêu cầu không hợp lệ. Hãy quay lại trang chủ và thử lại.')}"></div>
+</section>
+</body>
+</html>

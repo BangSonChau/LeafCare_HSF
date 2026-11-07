@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Không tìm thấy</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div th:replace="~{fragments/error-body :: errorBody('Không tìm thấy', 'Trang hoặc mục bạn cần không còn tồn tại hoặc đường dẫn bị sai.')}"></div>
+</section>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title th:text="${plant.id == null} ? 'Thêm cây' : 'Sửa cây'">Thêm cây</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h1 class="text-2xl font-bold leading-tight" th:text="${plant.id == null} ? 'Thêm cây' : 'Sửa cây'">Thêm cây</h1>
+
+    <form th:action="${plant.id == null} ? @{/plants} : @{/plants/{id}(id=${plant.id})}" th:object="${plant}"
+          method="post" novalidate
+          class="mt-6 max-w-2xl space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+
+        <div>
+            <label for="name" class="text-sm font-semibold">Tên cây <span class="text-base-content/70">(bắt buộc)</span></label>
+            <input id="name" th:field="*{name}" type="text" maxlength="255" required autofocus
+                   class="input mt-1 h-12 w-full text-base" th:classappend="${#fields.hasErrors('name')} ? 'input-error'"
+                   th:attr="aria-invalid=${#fields.hasErrors('name')}, aria-describedby=${#fields.hasErrors('name')} ? 'name-error'">
+            <p id="name-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div>
+            <label for="scientificName" class="text-sm font-semibold">Tên khoa học</label>
+            <input id="scientificName" th:field="*{scientificName}" type="text" maxlength="255"
+                   class="input mt-1 h-12 w-full text-base" th:classappend="${#fields.hasErrors('scientificName')} ? 'input-error'"
+                   th:attr="aria-invalid=${#fields.hasErrors('scientificName')}, aria-describedby=${#fields.hasErrors('scientificName')} ? 'sci-error'">
+            <p id="sci-error" th:if="${#fields.hasErrors('scientificName')}" th:errors="*{scientificName}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div>
+            <label for="description" class="text-sm font-semibold">Mô tả</label>
+            <textarea id="description" th:field="*{description}" rows="5" maxlength="2000"
+                      class="textarea mt-1 w-full text-base" th:classappend="${#fields.hasErrors('description')} ? 'textarea-error'"
+                      th:attr="aria-invalid=${#fields.hasErrors('description')}, aria-describedby=${#fields.hasErrors('description')} ? 'desc-error'"></textarea>
+            <p id="desc-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <a th:href="@{/plants}" class="btn h-12 rounded-full px-6">Huỷ</a>
+            <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Lưu</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>
