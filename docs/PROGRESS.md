@@ -4,9 +4,9 @@
 
 ## Hiện trạng
 
-- Đang ở: Task 3 (Disease CRUD) xong trên nhánh `feat/task-3-disease-crud` (phân từ `main` sau khi Task 2 merge), chờ PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
-- Việc tiếp theo: Task 4 theo plan; nhánh `feat/task-4-...` phân từ `feat/task-3-disease-crud` nếu chưa merge.
-- Vấn đề đang mở: chưa chạy finish review của impeccable; chưa push/PR; form lỗi/empty state của Plant và Disease chưa chụp màn hình; xoá xong mất `q`/`page`; `page` không phải số trả 400.
+- Đang ở: Task 4 (Quét lá: upload ảnh + lịch sử) xong trên nhánh `feat/task-4-scan-upload` (phân từ `main` sau khi Task 3 merge), chưa push/PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
+- Việc tiếp theo: Task 5 theo plan (dùng `ScanHistoryRepository.findTop5ByOrderByCreatedAtDesc()` cho trang chủ).
+- Vấn đề đang mở: chưa chạy finish review của impeccable; FileStorageService chỉ kiểm tra đuôi + content-type, không kiểm tra magic bytes; chưa có trang lỗi riêng cho file ảnh thiếu (chỉ hiện alt).
 
 ## Quyết định quan trọng
 
@@ -20,6 +20,13 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-07 – Task 4: Scan upload và lịch sử
+- Đã làm: `ScanStatus`, `ScanHistory`, `ScanHistoryRepository`, `FileStorageService` (đuôi theo dấu chấm cuối, content-type, <=5 MB, tên UUID, chặn path traversal), `ScanHistoryService` (xoá dòng trước rồi tới file), `ScanController`, `WebConfig` (`/uploads/**`), 3 template `scans/*`.
+- Test: `FileStorageServiceTest`, `ScanHistoryServiceTest` (`@DataJpaTest` + `@TempDir`), `ScanControllerTest`; `./mvnw verify` xanh. Kiểm tay trên H2: upload, list/detail 1280 và 390, xoá thì file biến mất, file >5 MB và sai loại hiện lỗi tiếng Việt.
+- Lệch plan: thêm `spring.servlet.multipart.resolve-lazily=true`, vì không có nó `MaxUploadSizeExceededException` bị ném trước controller (trả 413) và `@ExceptionHandler` không chạy; handler tự đặt `currentPath` vì advice không chạy cho exception handler.
+- Quyết định: ghi chú rỗng lưu `null`, ghi chú >1000 ký tự bị chặn ở controller; list chỉ có 1 hàng/lượt quét, badge nằm dưới ngày giờ để không chật trên điện thoại. Nhánh: `feat/task-4-scan-upload`.
+- Còn lại: không kiểm tra magic bytes; hook impeccable báo `broken-image` cho `th:src` động (báo nhầm, bỏ qua).
 
 ### 2026-11-07 – Task 3: Disease CRUD
 - Đã làm: `Disease` (name, symptoms, treatment, `plant` LAZY), `DiseaseRepository` (`@EntityGraph("plant")`), `DiseaseService` (không kiểm tra trùng tên), `DiseaseController`, `diseases/list.html` + `form.html` (select cây, tuỳ chọn "— Không chọn —"); thêm `PlantService.findAll()` cho dropdown. Nav "Bệnh" đã có sẵn trong layout.

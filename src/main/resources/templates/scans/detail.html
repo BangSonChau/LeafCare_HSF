@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Chi tiết lượt quét</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <a th:href="@{/scans}" class="inline-flex min-h-12 items-center text-sm font-semibold text-primary">&larr; Lịch sử quét</a>
+
+    <div class="mt-2 grid gap-6 md:grid-cols-2">
+        <img th:src="@{/uploads/{f}(f=${scan.imageFileName})}" alt="Ảnh lá đã tải lên"
+             class="max-h-[32rem] w-full rounded-xl border border-base-300 bg-base-200 object-contain">
+
+        <div class="min-w-0 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+            <h1 class="text-2xl font-bold leading-tight">Lượt quét</h1>
+            <dl class="mt-4 space-y-4">
+                <div>
+                    <dt class="text-sm font-semibold text-base-content/70">Trạng thái</dt>
+                    <dd class="mt-1"><span class="badge badge-outline" th:text="${scan.status.label}">Chờ phân tích</span></dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-semibold text-base-content/70">Thời gian</dt>
+                    <dd class="tabular" th:text="${#temporals.format(scan.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-semibold text-base-content/70">Ghi chú</dt>
+                    <dd th:if="${scan.note != null}" class="whitespace-pre-line break-words" th:text="${scan.note}">Ghi chú</dd>
+                    <dd th:unless="${scan.note != null}" class="text-base-content/70">Không có ghi chú</dd>
+                </div>
+            </dl>
+
+            <form th:action="@{/scans/{id}/delete(id=${scan.id})}" method="post" class="mt-6"
+                  onsubmit="return confirm('Xoá lượt quét này? Ảnh cũng bị xoá và không thể hoàn tác.');">
+                <button type="submit"
+                        class="btn h-12 w-full rounded-full border-error text-error hover:bg-error hover:text-error-content sm:w-auto sm:px-6">Xoá lượt quét</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>
