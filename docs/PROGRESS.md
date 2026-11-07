@@ -4,9 +4,9 @@
 
 ## Hiện trạng
 
-- Đang ở: Task 1 (layout + DESIGN.md) xong trên nhánh `feat/task-1-layout`, chờ PR/merge. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
-- Việc tiếp theo: Task 2 (Plant CRUD), phân nhánh từ `feat/task-1-layout` nếu PR chưa merge. Mọi template mới dùng `layout:decorate="~{layout/base}"` và `fragments/pagination :: pager(page, baseUrl, q)`.
-- Vấn đề đang mở: chưa chạy finish review của impeccable (cần subagent, session này không dùng); logo chữ thập-lá cần xem lại bằng mắt; chưa push/PR.
+- Đang ở: Task 2 (Plant CRUD) xong trên nhánh `feat/task-2-plant-crud` (phân từ `main` sau khi Task 1 merge), chờ review/PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
+- Việc tiếp theo: Task 3 (Disease CRUD), dùng lại đúng mẫu `PlantController`/`PlantService`/`plants/*.html`; nhánh `feat/task-3-...` phân từ `feat/task-2-plant-crud` nếu chưa merge.
+- Vấn đề đang mở: chưa chạy finish review của impeccable; chưa push/PR; xoá cây đang được tham chiếu mới chỉ test bằng mock (khi có Disease/Scan sẽ cần test thật).
 
 ## Quyết định quan trọng
 
@@ -19,6 +19,13 @@
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-07 – Task 2: Plant CRUD
+- Đã làm: `Plant`, `PlantRepository`, `PlantService` (search trim/sort theo tên/clamp trang, chống trùng tên không phân biệt hoa thường, xoá -> `InUseException`), `PlantController`, `plants/list.html` (bảng trên desktop, hàng xếp dọc trên điện thoại, empty state 2 loại) và `plants/form.html`; ba exception trong `exception/`.
+- File: 3 file test mới (repository, service, controller; 35 test xanh), template, `output.css` build lại.
+- Quyết định: `%`/`_` được Spring Data `Containing` tự escape; thêm `findByNameIgnoreCase` (so sánh id khi sửa) và `@Size(max=255)` cho tên; xác nhận xoá bằng `confirm()` gốc của trình duyệt. Nhánh: `feat/task-2-plant-crud`.
+- Kiểm tra: `./mvnw test` xanh; xem tay 1280/390 trên H2 ổn, tên rất dài không tràn ngang.
+- Còn lại: màn form lỗi và empty state chỉ kiểm tra bằng test/markup, chưa chụp.
 
 ### 2026-11-07 – Task 1: layout, theme, pager
 - Đã làm: chọn hướng thiết kế qua `/impeccable` (new-work), viết `DESIGN.md`; làm `layout/base.html` (top bar desktop, bottom bar điện thoại, flash success/error), `fragments/brand.html` (logo), `fragments/pagination.html`; theme DaisyUI `leafcare`; thêm `thymeleaf-layout-dialect` 3.4.0 (tự đăng ký được trên Boot 4, không cần `@Bean`).
