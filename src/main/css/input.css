@@ -1,3 +1,62 @@
 @import "tailwindcss" source(none);
 @source "../resources/templates/**/*.html";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: leafcare --default;
+}
+
+/* DESIGN.md: clinic-green shell on enamel white, red only for errors. */
+@plugin "daisyui/theme" {
+  name: "leafcare";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f4f8f5;
+  --color-base-300: #d3e2d9;
+  --color-base-content: #14261c;
+  --color-primary: #0b7a4b;
+  --color-primary-content: #ffffff;
+  --color-secondary: #075c38;
+  --color-secondary-content: #ffffff;
+  --color-accent: #0b7a4b;
+  --color-accent-content: #ffffff;
+  --color-neutral: #14261c;
+  --color-neutral-content: #f4f8f5;
+  --color-info: #1f6f8b;
+  --color-info-content: #ffffff;
+  --color-success: #0b7a4b;
+  --color-success-content: #ffffff;
+  --color-warning: #b26a00;
+  --color-warning-content: #ffffff;
+  --color-error: #c8323a;
+  --color-error-content: #ffffff;
+  --radius-selector: 9999px;
+  --radius-field: 0.75rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+}
+
+@layer base {
+  ::selection {
+    background: #0b7a4b;
+    color: #ffffff;
+  }
+  :focus-visible {
+    outline: 2px solid #0b7a4b;
+    outline-offset: 2px;
+  }
+  .bg-primary :focus-visible,
+  .bg-primary:focus-visible {
+    outline-color: #ffffff;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
