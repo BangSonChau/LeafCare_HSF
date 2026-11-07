@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Quét lá</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h1 class="text-2xl font-bold leading-tight">Quét lá</h1>
+    <p class="mt-1 text-base-content/70">Chọn ảnh lá JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+
+    <form th:action="@{/scans}" method="post" enctype="multipart/form-data"
+          class="mt-6 max-w-2xl space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+
+        <div>
+            <label for="file" class="text-sm font-semibold">Ảnh lá <span class="text-base-content/70">(bắt buộc)</span></label>
+            <input id="file" name="file" type="file" required accept="image/jpeg,image/png,image/webp"
+                   class="file-input mt-1 h-12 w-full text-base"
+                   th:attr="aria-invalid=${error != null}, aria-describedby=${error != null} ? 'file-error'">
+            <p id="file-error" th:if="${error}" th:text="${error}" class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div>
+            <label for="note" class="text-sm font-semibold">Ghi chú</label>
+            <textarea id="note" name="note" rows="4" maxlength="1000" th:text="${note}"
+                      class="textarea mt-1 w-full text-base"></textarea>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <a th:href="@{/scans}" class="btn h-12 rounded-full px-6">Huỷ</a>
+            <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Lưu ảnh</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>
