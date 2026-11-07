@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- errorBody(title, message): shared body of the Vietnamese error pages. -->
+<div th:fragment="errorBody(title, message)"
+     class="mx-auto mt-8 max-w-md rounded-xl border border-base-300 bg-base-100 px-6 py-12 text-center">
+    <span class="mx-auto grid size-16 place-items-center rounded-xl bg-primary text-primary-content">
+        <svg th:replace="~{fragments/brand :: leafMark}"></svg>
+    </span>
+    <h1 class="mt-4 text-2xl font-bold leading-tight" th:text="${title}">Có lỗi xảy ra</h1>
+    <p class="mt-2 text-base-content/70" th:text="${message}">Thông báo</p>
+    <a th:href="@{/}" class="btn btn-primary mt-6 h-12 rounded-full px-6">Về trang chủ</a>
+</div>
+</body>
+</html>

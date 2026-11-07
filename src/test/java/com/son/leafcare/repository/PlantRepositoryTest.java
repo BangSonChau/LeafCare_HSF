@@ -66,7 +66,15 @@ class PlantRepositoryTest {
     }
 
     @Test
-    void findByNameIgnoreCase() {
-        assertThat(repo.findByNameIgnoreCase("lan 100%")).isPresent();
+    void existsByNameIgnoreCaseAndIdNotToleratesCaseTwins() {
+        Plant a = new Plant();
+        a.setName("Lan");
+        Plant b = new Plant();
+        b.setName("LAN");
+        repo.saveAll(List.of(a, b));
+        assertThat(repo.existsByNameIgnoreCaseAndIdNot("lan", a.getId())).isTrue();
+        assertThat(repo.existsByNameIgnoreCaseAndIdNot("Cây 01", 0L)).isTrue();
+        assertThat(repo.existsByNameIgnoreCaseAndIdNot("Cây 01", repo.findAll().stream()
+                .filter(p -> p.getName().equals("Cây 01")).findFirst().get().getId())).isFalse();
     }
 }

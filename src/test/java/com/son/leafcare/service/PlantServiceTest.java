@@ -71,20 +71,19 @@ class PlantServiceTest {
 
     @Test
     void saveNewDuplicateThrows() {
-        when(repo.findByNameIgnoreCase("Lan")).thenReturn(Optional.of(plant(2L, "Lan")));
+        when(repo.existsByNameIgnoreCase("Lan")).thenReturn(true);
         assertThatThrownBy(() -> service.save(plant(null, " Lan "))).isInstanceOf(DuplicateNameException.class);
     }
 
     @Test
     void saveEditKeepingOwnNameIsAllowed() {
-        when(repo.findByNameIgnoreCase("Lan")).thenReturn(Optional.of(plant(1L, "Lan")));
         when(repo.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
         assertThat(service.save(plant(1L, "Lan")).getName()).isEqualTo("Lan");
     }
 
     @Test
     void saveEditToOtherPlantsNameThrows() {
-        when(repo.findByNameIgnoreCase("lan")).thenReturn(Optional.of(plant(2L, "Lan")));
+        when(repo.existsByNameIgnoreCaseAndIdNot("lan", 1L)).thenReturn(true);
         assertThatThrownBy(() -> service.save(plant(1L, "lan"))).isInstanceOf(DuplicateNameException.class);
     }
 

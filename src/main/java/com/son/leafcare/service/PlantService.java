@@ -43,11 +43,13 @@ public class PlantService {
     @Transactional
     public Plant save(Plant p) {
         p.setName(p.getName().trim());
-        repo.findByNameIgnoreCase(p.getName()).ifPresent(other -> {
-            if (!other.getId().equals(p.getId())) {
-                throw new DuplicateNameException();
-            }
-        });
+        // Derived "id <> null" never matches, so new plants use the plain exists check.
+        boolean taken = p.getId() == null
+                ? repo.existsByNameIgnoreCase(p.getName())
+                : repo.existsByNameIgnoreCaseAndIdNot(p.getName(), p.getId());
+        if (taken) {
+            throw new DuplicateNameException();
+        }
         try {
             return repo.saveAndFlush(p);
         } catch (DataIntegrityViolationException e) { // lost a race against the unique index
