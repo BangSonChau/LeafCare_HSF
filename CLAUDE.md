@@ -20,4 +20,13 @@ Use the Maven wrapper (Windows: `mvnw.cmd`; bash: `./mvnw`):
 - Base package is `com.son.leafcare` (note: "leafcase", not "leafcare") — put new code under it so component scanning from `LeafCareHsfApplication` finds it.
 - `application.properties` has only the app name: no datasource is configured yet. PostgreSQL is the only DB driver, so the context-load test and the app will fail to start until `spring.datasource.*` is set (or an embedded/test DB is added).
 - Lombok is wired through `annotationProcessorPaths` in `pom.xml` for both compile and testCompile; keep both if editing the compiler plugin.
-- No git repository is initialized in this directory.
+
+## UI work (templates, CSS, animations)
+
+Stack: Thymeleaf + Tailwind v4 + DaisyUI v5, server-rendered. No React, no framer-motion, no new JS libraries.
+
+Project skills in `.claude/skills/` (use them; subagents too):
+- Before writing or changing any template/CSS: use the `impeccable` skill (follow `PRODUCT.md`/`DESIGN.md` if present) and `emil-design-eng`.
+- Animations: CSS transitions / `@keyframes` / Tailwind/DaisyUI classes only; use `animate` to build, `animation-performance` for jank. Respect `prefers-reduced-motion`.
+- Before reporting a UI task done: run `review-animations` on changed animations and `break-ui` on new pages (long names, empty lists, many rows).
+- Ignore skill advice that only applies to React/Next.js; translate it to Thymeleaf + Tailwind or skip it.
