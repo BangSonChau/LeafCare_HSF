@@ -57,10 +57,14 @@
             <tbody class="block md:table-row-group">
             <tr th:each="d : ${page.content}"
                 class="block border-b border-base-300 last:border-b-0 md:table-row">
-                <td class="block break-words px-4 pt-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle"
-                    th:text="${d.name}">Đốm lá</td>
-                <td class="block break-words px-4 pt-1 text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle"
-                    th:text="${d.plant != null} ? ${d.plant.name} : '—'">Lan hồ điệp</td>
+                <td class="block px-4 pt-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle">
+                    <div class="line-clamp-3 break-words" th:title="${d.name}" th:text="${d.name}">Đốm lá</div>
+                </td>
+                <td class="block px-4 pt-1 text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle">
+                    <div th:if="${d.plant != null}" class="line-clamp-2 break-words" th:title="${d.plant.name}"
+                         th:text="${d.plant.name}">Lan hồ điệp</div>
+                    <span th:unless="${d.plant != null}"><span aria-hidden="true">—</span><span class="sr-only">Chưa gắn cây</span></span>
+                </td>
                 <td class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
                     <div class="flex gap-2 md:justify-end">
                         <a th:href="@{/diseases/{id}/edit(id=${d.id})}"
