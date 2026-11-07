@@ -15,6 +15,15 @@ Use the Maven wrapper (Windows: `mvnw.cmd`; bash: `./mvnw`):
 - All tests: `./mvnw test`
 - Single test: `./mvnw test -Dtest=LeafCareHsfApplicationTests#methodName`
 
+## Testing (enforced by CI)
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm run build` and `./mvnw verify` on every push to `main` and every PR; a failing test fails the build.
+- Every new public method in `service/` and every controller endpoint gets a JUnit 5 test (write it first, TDD). Repository query methods you add get a `@DataJpaTest`.
+- Controllers: `@WebMvcTest` + `@MockitoBean` for the service. Services: plain JUnit + Mockito, or `@DataJpaTest` + `@Import` when they need the DB.
+- Cover the edge cases in the plan's "Review Focus", not just the happy path.
+- Tests run on H2 (`src/test/resources/application.properties`), never on the real PostgreSQL.
+- Run `./mvnw test` locally and see it pass before committing.
+
 ## Notes
 
 - Base package is `com.son.leafcare` (note: "leafcase", not "leafcare") — put new code under it so component scanning from `LeafCareHsfApplication` finds it.
