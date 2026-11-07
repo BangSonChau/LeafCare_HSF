@@ -36,6 +36,11 @@ public class PlantService {
     }
 
     @Transactional(readOnly = true)
+    public java.util.List<Plant> findAll() {
+        return repo.findAll(Sort.by("name"));
+    }
+
+    @Transactional(readOnly = true)
     public Plant get(Long id) {
         return repo.findById(id).orElseThrow(NotFoundException::new);
     }

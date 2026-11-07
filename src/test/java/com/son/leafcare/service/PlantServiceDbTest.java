@@ -42,6 +42,12 @@ class PlantServiceDbTest {
     }
 
     @Test
+    void findAllIsSortedByName() {
+        seed(3);
+        assertThat(service.findAll()).extracting(Plant::getName).containsExactly("Cây 01", "Cây 02", "Cây 03");
+    }
+
+    @Test
     void negativePageReturnsFirstPage() {
         seed(25);
         Page<Plant> page = service.search("  ", -4);

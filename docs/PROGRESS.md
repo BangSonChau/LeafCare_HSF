@@ -4,10 +4,9 @@
 
 ## Hiện trạng
 
-- Đang ở: Task 2 (Plant CRUD) xong trên nhánh `feat/task-2-plant-crud` (phân từ `main` sau khi Task 1 merge), chờ PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
-- Việc tiếp theo: Task 3 (Disease CRUD), dùng lại đúng mẫu `PlantController`/`PlantService`/`plants/*.html`; nhánh `feat/task-3-...` phân từ `feat/task-2-plant-crud` nếu chưa merge.
-- Vấn đề đang mở: chưa chạy finish review của impeccable; chưa push/PR; xoá cây đang được tham chiếu mới chỉ test bằng mock: Task 3 phải thêm test thật, xoá một cây đang được Disease tham chiếu thì dòng vẫn còn và ném `InUseException`.
-- Task 3: khi ô chọn cây để trống, `disease.plant` bind ra object `Plant` có id null; service phải set `disease.plant = null` (nếu không sẽ bị `TransientPropertyValueException`).
+- Đang ở: Task 3 (Disease CRUD) xong trên nhánh `feat/task-3-disease-crud` (phân từ `main` sau khi Task 2 merge), chờ PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
+- Việc tiếp theo: Task 4 theo plan; nhánh `feat/task-4-...` phân từ `feat/task-3-disease-crud` nếu chưa merge.
+- Vấn đề đang mở: chưa chạy finish review của impeccable; chưa push/PR; form lỗi/empty state của Plant và Disease chưa chụp màn hình; xoá xong mất `q`/`page`; `page` không phải số trả 400.
 
 ## Quyết định quan trọng
 
@@ -21,6 +20,14 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-07 – Task 3: Disease CRUD
+- Đã làm: `Disease` (name, symptoms, treatment, `plant` LAZY), `DiseaseRepository` (`@EntityGraph("plant")`), `DiseaseService` (không kiểm tra trùng tên), `DiseaseController`, `diseases/list.html` + `form.html` (select cây, tuỳ chọn "— Không chọn —"); thêm `PlantService.findAll()` cho dropdown. Nav "Bệnh" đã có sẵn trong layout.
+- Quyết định: ô cây trống bind ra `Plant` id null -> service đặt `plant = null`; id cây lạ -> `NotFoundException`; xoá bệnh không cần `InUseException` (chưa có bảng tham chiếu).
+- Test: `DiseaseRepositoryTest`, `DiseaseServiceDbTest` (DB thật: plant null, plant lạ, tên trùng, xoá, và xoá Plant đang được Disease tham chiếu -> `InUseException`, dòng vẫn còn, chạy ngoài transaction test), `DiseaseControllerTest`; `PlantService.delete` đã flush sẵn nên không cần sửa. 64 test xanh.
+- File: 3 entity/repo/service/controller mới, 2 template, 3 test mới, `output.css` build lại. Nhánh: `feat/task-3-disease-crud`.
+- UI (commit sau): chạy impeccable, emil-design-eng, break-ui; kiểm tra tay 1280/390 trên H2 với tên 250 ký tự, tên cây dài, không cây: không tràn ngang. Sửa: tên bệnh `line-clamp-3`, tên cây `line-clamp-2` kèm `title`; ô "không có cây" thêm chữ ẩn "Chưa gắn cây" cho trình đọc màn hình.
+- Còn lại: chưa chụp form lỗi/empty state.
 
 ### 2026-11-07 – Task 2: Plant CRUD
 - Đã làm: `Plant`, `PlantRepository`, `PlantService` (search trim/sort theo tên/clamp trang, chống trùng tên không phân biệt hoa thường bằng `existsByNameIgnoreCase[AndIdNot]`, xoá -> `InUseException`), `PlantController`, `plants/list.html` + `form.html`, 3 exception; trang lỗi tiếng Việt `error/404`, `error/4xx`, `error/5xx` (Boot chỉ nhận tên theo mã/dải mã, `error/error` không được dùng).
