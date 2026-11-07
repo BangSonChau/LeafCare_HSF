@@ -4,9 +4,9 @@
 
 ## Hiện trạng
 
-- Đang ở: Task 4 (Quét lá: upload ảnh + lịch sử) xong trên nhánh `feat/task-4-scan-upload` (phân từ `main` sau khi Task 3 merge), chưa push/PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
-- Việc tiếp theo: Task 5 theo plan (dùng `ScanHistoryRepository.findTop5ByOrderByCreatedAtDesc()` cho trang chủ).
-- Vấn đề đang mở: chưa chạy finish review của impeccable; FileStorageService chỉ kiểm tra đuôi + content-type, không kiểm tra magic bytes; chưa có trang lỗi riêng cho file ảnh thiếu (chỉ hiện alt).
+- Đang ở: Task 5 (Dashboard) xong trên nhánh `feat/task-5-dashboard`; kế hoạch Phase 1 (5 task) đã hoàn tất, chờ PR/merge. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
+- Còn lại: push + PR để CI chạy; chưa chạy finish review của impeccable; dashboard đã kiểm tay 1280/390 trên H2.
+- Vấn đề đang mở: xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -20,6 +20,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 5: Dashboard
+- Đã làm: `DashboardService.stats()` + record `DashboardStats`, `HomeController` gắn model `stats`, `index.html` có 3 thẻ số liệu link tới danh sách, 5 lượt quét gần đây (link `/scans/{id}`), empty state, nút "Quét lá".
+- Test: `HomeControllerTest` (2), `DashboardServiceTest` (1); `./mvnw verify` xanh.
+- Quyết định: ghi chú dài bị cắt 1 dòng (`line-clamp-1`), ảnh lỗi có nền xám; badge trạng thái ẩn trên điện thoại. Nhánh: `feat/task-5-dashboard`.
+- Kiểm tay 1280/390 (0 dòng, ghi chú dài, thiếu ảnh): bỏ nút "Quét lá" thừa ở đầu trang (đã có trên thanh trên/dưới), thẻ số liệu 3 cột trên điện thoại, số có dấu chấm ngăn nghìn, `alt=""` cho ảnh thumbnail.
 
 ### 2026-11-07 – Task 4: Scan upload và lịch sử
 - Đã làm: `ScanStatus`, `ScanHistory`, `ScanHistoryRepository`, `FileStorageService` (đuôi theo dấu chấm cuối, content-type, <=5 MB, tên UUID, chặn path traversal), `ScanHistoryService` (xoá dòng trước rồi tới file), `ScanController`, `WebConfig` (`/uploads/**`), 3 template `scans/*`.
