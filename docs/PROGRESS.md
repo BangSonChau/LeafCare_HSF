@@ -7,6 +7,7 @@
 - Đang ở: Task 2 (Plant CRUD) xong trên nhánh `feat/task-2-plant-crud` (phân từ `main` sau khi Task 1 merge), chờ review/PR. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
 - Việc tiếp theo: Task 3 (Disease CRUD), dùng lại đúng mẫu `PlantController`/`PlantService`/`plants/*.html`; nhánh `feat/task-3-...` phân từ `feat/task-2-plant-crud` nếu chưa merge.
 - Vấn đề đang mở: chưa chạy finish review của impeccable; chưa push/PR; xoá cây đang được tham chiếu mới chỉ test bằng mock (khi có Disease/Scan sẽ cần test thật).
+- Task 3 phải thêm test thật: xoá một cây đang được Disease tham chiếu thì dòng vẫn còn và ném `InUseException`.
 
 ## Quyết định quan trọng
 

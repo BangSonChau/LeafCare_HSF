@@ -28,9 +28,9 @@ public class PlantService {
         String query = q == null ? "" : q.trim();
         Sort sort = Sort.by("name");
         Page<Plant> result = repo.findByNameContainingIgnoreCase(query, PageRequest.of(Math.max(page, 0), PAGE_SIZE, sort));
-        if (result.getTotalPages() > 0 && result.getNumber() >= result.getTotalPages()) {
+        if (result.getNumber() > 0 && result.getNumber() >= result.getTotalPages()) {
             return repo.findByNameContainingIgnoreCase(query,
-                    PageRequest.of(result.getTotalPages() - 1, PAGE_SIZE, sort));
+                    PageRequest.of(Math.max(result.getTotalPages() - 1, 0), PAGE_SIZE, sort));
         }
         return result;
     }
