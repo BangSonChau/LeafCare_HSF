@@ -53,3 +53,10 @@ Project skills in `.claude/skills/` (use them; subagents too):
   - add lasting choices (library, pattern, naming) to "Quyết định quan trọng".
 - Write it in Vietnamese, short: at most 5 bullets per entry. Keep the file under ~150 lines: when longer, squash old entries to one line each.
 - Subagent-driven runs: the implementer subagent writes the entry in its task commit; if a reviewer forces fixes, the fix commit updates that entry. The controller checks the entry exists before marking the task complete.
+
+## Git workflow (branch per task)
+
+- Never commit straight to `main`. Before starting any plan task or other change, create a branch: `git checkout main && git pull && git checkout -b feat/task-<N>-<short-name>` (non-plan work: `fix/...`, `docs/...`).
+- If the previous task's branch is not merged into `main` yet, branch from that branch instead (the next task needs its code) and note it in PROGRESS.md.
+- Commit on the branch, then `git push -u origin <branch>` and open a PR to `main` so CI runs. Do not merge it yourself; Shin merges.
+- Record the branch name in the PROGRESS.md entry.
