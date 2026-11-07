@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title th:text="${disease.id == null} ? 'Thêm bệnh' : 'Sửa bệnh'">Thêm bệnh</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h1 class="text-2xl font-bold leading-tight" th:text="${disease.id == null} ? 'Thêm bệnh' : 'Sửa bệnh'">Thêm bệnh</h1>
+
+    <form th:action="${disease.id == null} ? @{/diseases} : @{/diseases/{id}(id=${disease.id})}" th:object="${disease}"
+          method="post" novalidate
+          class="mt-6 max-w-2xl space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+
+        <div>
+            <label for="name" class="text-sm font-semibold">Tên bệnh <span class="text-base-content/70">(bắt buộc)</span></label>
+            <input id="name" th:field="*{name}" type="text" maxlength="255" required autofocus
+                   class="input mt-1 h-12 w-full text-base" th:classappend="${#fields.hasErrors('name')} ? 'input-error'"
+                   th:attr="aria-invalid=${#fields.hasErrors('name')}, aria-describedby=${#fields.hasErrors('name')} ? 'name-error'">
+            <p id="name-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div>
+            <label for="plant" class="text-sm font-semibold">Cây thường gặp bệnh này</label>
+            <select id="plant" name="plant.id" class="select mt-1 h-12 w-full text-base">
+                <option value="">— Không chọn —</option>
+                <option th:each="p : ${plants}" th:value="${p.id}" th:text="${p.name}"
+                        th:selected="${disease.plant != null and disease.plant.id == p.id}">Lan hồ điệp</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="symptoms" class="text-sm font-semibold">Triệu chứng</label>
+            <textarea id="symptoms" th:field="*{symptoms}" rows="5" maxlength="2000"
+                      class="textarea mt-1 w-full text-base" th:classappend="${#fields.hasErrors('symptoms')} ? 'textarea-error'"
+                      th:attr="aria-invalid=${#fields.hasErrors('symptoms')}, aria-describedby=${#fields.hasErrors('symptoms')} ? 'symptoms-error'"></textarea>
+            <p id="symptoms-error" th:if="${#fields.hasErrors('symptoms')}" th:errors="*{symptoms}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div>
+            <label for="treatment" class="text-sm font-semibold">Cách điều trị</label>
+            <textarea id="treatment" th:field="*{treatment}" rows="5" maxlength="2000"
+                      class="textarea mt-1 w-full text-base" th:classappend="${#fields.hasErrors('treatment')} ? 'textarea-error'"
+                      th:attr="aria-invalid=${#fields.hasErrors('treatment')}, aria-describedby=${#fields.hasErrors('treatment')} ? 'treatment-error'"></textarea>
+            <p id="treatment-error" th:if="${#fields.hasErrors('treatment')}" th:errors="*{treatment}"
+               class="mt-1 text-sm font-semibold text-error">Lỗi</p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <a th:href="@{/diseases}" class="btn h-12 rounded-full px-6">Huỷ</a>
+            <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Lưu</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>

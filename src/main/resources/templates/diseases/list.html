@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Bệnh</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-2xl font-bold leading-tight">Bệnh</h1>
+        <a th:href="@{/diseases/new}" class="btn btn-primary h-12 rounded-full px-6">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Thêm bệnh
+        </a>
+    </div>
+
+    <form th:action="@{/diseases}" method="get" role="search" class="mt-6 flex gap-2">
+        <label for="q" class="sr-only">Tìm theo tên bệnh</label>
+        <input id="q" name="q" type="search" th:value="${q}" maxlength="100" placeholder="Tìm theo tên bệnh"
+               class="input h-12 min-w-0 flex-1 text-base">
+        <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Tìm</button>
+    </form>
+
+    <!-- Empty state: no diseases yet, or no search result. -->
+    <div th:if="${page.empty}" class="mt-8 rounded-xl border border-base-300 bg-base-100 px-6 py-12 text-center">
+        <span class="mx-auto grid size-16 place-items-center rounded-xl bg-primary text-primary-content">
+            <svg th:replace="~{fragments/brand :: leafMark}"></svg>
+        </span>
+        <th:block th:if="${#strings.isEmpty(q)}">
+            <p class="mt-4 text-lg font-bold">Chưa có bệnh nào</p>
+            <p class="mt-1 text-base-content/70">Thêm bệnh đầu tiên để làm căn cứ chẩn đoán.</p>
+            <a th:href="@{/diseases/new}" class="btn btn-primary mt-6 h-12 rounded-full px-6">Thêm bệnh</a>
+        </th:block>
+        <th:block th:unless="${#strings.isEmpty(q)}">
+            <p class="mt-4 text-lg font-bold">Không tìm thấy bệnh nào</p>
+            <p class="mt-1 break-words text-base-content/70">
+                Không có bệnh nào khớp với “<span th:text="${q}">từ khoá</span>”.
+            </p>
+            <a th:href="@{/diseases}" class="btn mt-6 h-12 rounded-full px-6">Xoá tìm kiếm</a>
+        </th:block>
+    </div>
+
+    <!-- Table on md+, stacked rows on phones. -->
+    <div th:unless="${page.empty}" class="mt-6 overflow-hidden rounded-xl border border-base-300 bg-base-100">
+        <table class="block w-full md:table">
+            <thead class="hidden md:table-header-group">
+            <tr class="border-b border-base-300 text-left text-sm font-semibold text-base-content/70">
+                <th scope="col" class="px-4 py-3">Tên bệnh</th>
+                <th scope="col" class="px-4 py-3">Cây</th>
+                <th scope="col" class="px-4 py-3 text-right">Thao tác</th>
+            </tr>
+            </thead>
+            <tbody class="block md:table-row-group">
+            <tr th:each="d : ${page.content}"
+                class="block border-b border-base-300 last:border-b-0 md:table-row">
+                <td class="block break-words px-4 pt-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle"
+                    th:text="${d.name}">Đốm lá</td>
+                <td class="block break-words px-4 pt-1 text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle"
+                    th:text="${d.plant != null} ? ${d.plant.name} : '—'">Lan hồ điệp</td>
+                <td class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
+                    <div class="flex gap-2 md:justify-end">
+                        <a th:href="@{/diseases/{id}/edit(id=${d.id})}"
+                           class="btn h-12 min-w-12 flex-1 rounded-full md:flex-none"
+                           th:attr="aria-label='Sửa ' + ${d.name}">Sửa</a>
+                        <form th:action="@{/diseases/{id}/delete(id=${d.id})}" method="post"
+                              class="flex flex-1 md:flex-none"
+                              onsubmit="return confirm('Xoá bệnh này? Hành động không thể hoàn tác.');">
+                            <button type="submit"
+                                    class="btn h-12 min-w-12 flex-1 rounded-full border-error text-error hover:bg-error hover:text-error-content"
+                                    th:attr="aria-label='Xoá ' + ${d.name}">Xoá</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/pagination :: pager(${page}, '/diseases', ${q})}"></div>
+</section>
+</body>
+</html>
