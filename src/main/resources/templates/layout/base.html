@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title layout:title-pattern="$CONTENT_TITLE · LeafCare">LeafCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+</head>
+<body class="min-h-screen flex flex-col bg-base-200 text-base-content font-sans antialiased">
+
+<!-- Top bar: committed clinic-green shell. Nav links and scan button show from md up. -->
+<header class="bg-primary text-primary-content">
+    <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 md:px-6">
+        <a th:href="@{/}" class="flex items-center gap-3 rounded-lg font-bold text-xl" aria-label="LeafCare, về trang chủ">
+            <span class="grid size-10 place-items-center rounded-xl bg-white text-primary">
+                <svg th:replace="~{fragments/brand :: leafMark}"></svg>
+            </span>
+            LeafCare
+        </a>
+
+        <nav class="hidden md:flex items-center gap-1 ml-4" aria-label="Điều hướng chính">
+            <a th:href="@{/}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${currentPath == '/'} ? 'bg-secondary'"
+               th:attr="aria-current=${currentPath == '/'} ? 'page'">Trang chủ</a>
+            <a th:href="@{/plants}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/plants')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/plants')} ? 'page'">Cây</a>
+            <a th:href="@{/diseases}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/diseases')} ? 'page'">Bệnh</a>
+            <a th:href="@{/scans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
+        </nav>
+
+        <a th:href="@{/scans/new}"
+           class="btn ml-auto hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                <circle cx="12" cy="13" r="3"/>
+            </svg>
+            Quét lá
+        </a>
+    </div>
+</header>
+
+<main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-32 md:px-6 md:py-8 md:pb-8">
+    <div th:if="${success}" role="status"
+         class="mb-4 flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 px-4 py-3">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0 text-primary" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span th:text="${success}">Đã lưu</span>
+    </div>
+    <div th:if="${error}" role="alert"
+         class="mb-4 flex items-center gap-3 rounded-xl border border-error bg-base-100 px-4 py-3 text-error">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+        </svg>
+        <span th:text="${error}">Có lỗi xảy ra</span>
+    </div>
+
+    <section layout:fragment="content">Nội dung trang</section>
+</main>
+
+<footer class="hidden border-t border-base-300 bg-base-100 md:block">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-sm text-base-content/70">
+        <span>LeafCare · Chăm sóc cây qua ảnh lá</span>
+        <span>Đồ án FPT</span>
+    </div>
+</footer>
+
+<!-- Phone bottom bar: four tabs and a raised "Quét lá" button inside the thumb zone. -->
+<nav class="fixed inset-x-0 bottom-0 z-30 border-t border-base-300 bg-base-100 shadow-[0_-2px_12px_rgba(20,38,28,0.12)] md:hidden"
+     aria-label="Điều hướng chính (điện thoại)">
+    <div class="mx-auto grid max-w-md grid-cols-5 items-end px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+        <a th:href="@{/}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${currentPath == '/'} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${currentPath == '/'} ? 'page'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>
+            </svg>
+            Trang chủ
+        </a>
+        <a th:href="@{/plants}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${#strings.startsWith(currentPath, '/plants')} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${#strings.startsWith(currentPath, '/plants')} ? 'page'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/>
+                <path d="M2 21c0-3 1.9-5.5 6-7"/>
+            </svg>
+            Cây
+        </a>
+        <a th:href="@{/scans/new}"
+           class="-mt-7 flex flex-col items-center justify-center gap-0.5 text-xs font-bold text-primary"
+           aria-label="Quét lá">
+            <span class="grid size-16 place-items-center rounded-full border-4 border-base-100 bg-primary text-primary-content shadow-[0_4px_12px_rgba(20,38,28,0.25)]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-7" aria-hidden="true">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                </svg>
+            </span>
+            Quét lá
+        </a>
+        <a th:href="@{/diseases}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${#strings.startsWith(currentPath, '/diseases')} ? 'page'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                <path d="M19.4 4.6a4 4 0 0 0-5.7 0L12 6.3l-1.7-1.7a4 4 0 0 0-5.7 5.7L12 17.7l7.4-7.4a4 4 0 0 0 0-5.7Z"/>
+                <path d="M12 22v-4"/>
+            </svg>
+            Bệnh
+        </a>
+        <a th:href="@{/scans}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            Lịch sử
+        </a>
+    </div>
+</nav>
+
+</body>
+</html>
