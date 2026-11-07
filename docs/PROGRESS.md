@@ -6,6 +6,7 @@
 
 - Đang ở: Task 5 (Dashboard) xong trên nhánh `feat/task-5-dashboard`; kế hoạch Phase 1 (5 task) đã hoàn tất, chờ PR/merge. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
 - Còn lại: push + PR để CI chạy; chưa chạy finish review của impeccable; dashboard đã kiểm tay 1280/390 trên H2.
+- Mới thêm Flyway (nhánh `chore/flyway`): đổi schema thì thêm file `V<N>__...sql`, không sửa file cũ.
 - Vấn đề đang mở: xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -17,9 +18,16 @@
 - Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
+- DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-07 – Flyway migration (ngoài plan)
+- Đã làm: thêm `spring-boot-starter-flyway` + `flyway-database-postgresql`; `V1__init.sql` (plant, disease, scan_history từ entity); `db/seed/V1_1__seed_data.sql` (3 cây, 3 bệnh); `ddl-auto=validate` ở cả app và test.
+- Test: 96 test xanh, test H2 chạy migration thật rồi validate. Thử PostgreSQL 16: DB trống -> V1 + seed; DB cũ tạo bằng `update` -> baseline V1, seed bỏ qua cây trùng tên.
+- Quyết định: seed đặt version 1.1 ở thư mục riêng để không chiếm số V2 của schema và để test không có dữ liệu mẫu. Nhánh: `chore/flyway`.
+- File: `pom.xml`, 2 `application.properties`, 2 file SQL, `CLAUDE.md`, `PROGRESS.md`.
 
 ### 2026-11-08 – Task 5: Dashboard
 - Đã làm: `DashboardService.stats()` + record `DashboardStats`, `HomeController` gắn model `stats`, `index.html` có 3 thẻ số liệu link tới danh sách, 5 lượt quét gần đây (link `/scans/{id}`), empty state, nút "Quét lá".
