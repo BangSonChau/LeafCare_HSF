@@ -60,7 +60,7 @@ class SecurityConfigTest {
     @BeforeEach
     void stubs() {
         when(plants.search(any(), anyInt())).thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
-        when(dashboard.stats()).thenReturn(new DashboardStats(0, 0, 0, List.of()));
+        when(dashboard.stats(any())).thenReturn(new DashboardStats(0, 0, 0, List.of()));
     }
 
     @Test

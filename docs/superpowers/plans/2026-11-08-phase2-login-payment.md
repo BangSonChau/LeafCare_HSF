@@ -137,3 +137,7 @@ Các hướng đã xét:
 - ngrok tài khoản miễn phí: 1 domain cố định `*.ngrok-free.app`, chạy `ngrok http --url=<domain> 8080`. Không cần code, chỉ cập nhật README.
 - Cloudflare named tunnel: cần tên miền riêng trỏ về Cloudflare.
 - Deploy thật (Render/Railway/VPS, có thể dùng Docker + PostgreSQL): `Dockerfile`, biến môi trường production, redirect URI Google cho domain mới, webhook SePay trỏ về domain đó.
+
+### Task 12 (Shin đề xuất, chưa lên chi tiết): Dashboard quản trị cho ADMIN
+
+Shin muốn trang ADMIN đổi sang giao diện dashboard để dễ quản lý số liệu. Hỏi Shin trước khi làm: cần những số liệu nào (người dùng, Premium, doanh thu SePay, lượt quét theo ngày...), có biểu đồ không, đặt ở `/` cho ADMIN hay trang riêng `/admin`. Task 10 chỉ làm phần tối thiểu: Trang chủ của ADMIN tính lượt quét của tất cả.

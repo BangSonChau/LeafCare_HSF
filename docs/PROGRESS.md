@@ -5,8 +5,8 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 10 (giới hạn Free 5 lượt/ngày), chờ Shin đồng ý. Task 11 = deploy lên Render, làm sau Task 9 và 10 (Shin chọn), chi tiết trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Việc tiếp theo: Task 11 = deploy lên Render (Shin chọn làm sau Task 9, 10), chờ Shin đồng ý. Task 12 = dashboard quản trị cho ADMIN (Shin đề xuất, cần hỏi chi tiết), ghi trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -23,6 +23,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free
+- Đã làm: `V5__scan_owner.sql` (`scan_history.user_id` null được, FK, index), `ScanHistory.owner`; `ScanHistoryService` nhận `AppUser`: `remainingToday` (null = không giới hạn cho Premium/ADMIN), `create` chặn lượt thứ 6 **trước** khi lưu file (`ScanLimitException`), `list/get/delete` chỉ của mình (người khác hoặc dòng không chủ -> 404), ADMIN thấy hết; `DashboardService.stats(user)` (số cây/bệnh chung, lượt quét của mình; ADMIN tính tất cả).
+- Giao diện: trang Quét lá hiện "Còn X/5 lượt hôm nay (gói Free)"; hết lượt thì hộp cảnh báo + nút "Nâng cấp Premium", nút Lưu ảnh bị khoá. Kiểm tay 390: không tràn ngang.
+- Test: `ScanHistoryServiceTest` (+8: chủ sở hữu, 5 lượt rồi chặn không ghi file, đếm lùi, hôm qua không tính, người khác không tính, Premium/ADMIN không giới hạn, chỉ thấy/xoá của mình), `ScanControllerTest` (+2), `DashboardServiceTest` (+1); 167 test xanh.
+- Quyết định: ngày tính theo `Asia/Ho_Chi_Minh` đổi sang giờ máy chủ (vì `createdAt` lưu giờ máy chủ, Render chạy UTC); hai lần upload cùng lúc có thể lọt lượt thứ 6 (ghi `shortcut:` trong code). Lượt quét cũ không có chủ: chỉ ADMIN thấy. Nhánh: `feat/task-10-free-limit`.
 
 ### 2026-11-08 – Task 9: Lịch sử giao dịch
 - Đã làm: `PaymentRepository.findByUser(user, Pageable)`, `PaymentService.history(user, page)` (10 dòng/trang, mới nhất trên, trang quá cuối -> trang cuối như Plant), `GET /payments` -> `payments/history.html` (mã đơn, gói, thời gian, số tiền, badge trạng thái, bấm vào mở trang đơn; trống thì nút "Xem các gói"; pager chung), link "Lịch sử giao dịch" ở trang Gói.

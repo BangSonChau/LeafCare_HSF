@@ -1,6 +1,7 @@
 package com.son.leafcare.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -39,7 +40,7 @@ class HomeControllerTest {
 
     @Test
     void homeShowsStatCardsAndEmptyRecentState() throws Exception {
-        when(dashboard.stats()).thenReturn(new DashboardStats(3, 2, 7, List.of()));
+        when(dashboard.stats(any())).thenReturn(new DashboardStats(3, 2, 7, List.of()));
         mvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("index"))
@@ -61,7 +62,7 @@ class HomeControllerTest {
         s.setImageFileName("a.jpg");
         s.setNote("Lá vàng");
         ReflectionTestUtils.setField(s, "createdAt", java.time.LocalDateTime.of(2026, 11, 7, 9, 30));
-        when(dashboard.stats()).thenReturn(new DashboardStats(1, 1, 1, List.of(s)));
+        when(dashboard.stats(any())).thenReturn(new DashboardStats(1, 1, 1, List.of(s)));
         mvc.perform(get("/"))
                 .andExpect(content().string(containsString("href=\"/scans/42\"")))
                 .andExpect(content().string(containsString("Lá vàng")));
