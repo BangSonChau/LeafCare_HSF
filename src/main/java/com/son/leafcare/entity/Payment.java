@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** One MoMo order. Only IPN or the server-side MoMo query changes status. */
+/** One order. Only the SePay webhook (bank transfer received) changes status. */
 @Entity
 @Getter
 @Setter
@@ -49,7 +49,8 @@ public class Payment {
     @Column(nullable = false, length = 20)
     private PaymentStatus status = PaymentStatus.PENDING;
 
-    private Long momoTransId;
+    /** SePay transaction id of the bank transfer that paid this order. */
+    private Long transId;
 
     private Integer resultCode;
 

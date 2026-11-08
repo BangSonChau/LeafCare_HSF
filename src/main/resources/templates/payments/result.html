@@ -3,7 +3,9 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Kết quả thanh toán</title>
+    <title>Thanh toán</title>
+    <!-- While waiting for the transfer, reload so the page flips to success once SePay's webhook lands. -->
+    <meta th:if="${payment.status.name() == 'PENDING'}" http-equiv="refresh" content="5">
 </head>
 <body>
 <section layout:fragment="content" th:with="st=${payment.status.name()}">
@@ -19,7 +21,7 @@
         </span>
 
         <h1 class="mt-4 text-2xl font-bold leading-tight" role="status"
-            th:text="${st == 'SUCCESS'} ? 'Thanh toán thành công' : (${st == 'FAILED'} ? 'Thanh toán không thành công' : 'Đang chờ MoMo xác nhận')">
+            th:text="${st == 'SUCCESS'} ? 'Thanh toán thành công' : (${st == 'FAILED'} ? 'Thanh toán không thành công' : 'Quét mã để thanh toán')">
             Thanh toán thành công</h1>
         <p class="mt-2 text-pretty text-base-content/80" th:if="${st == 'SUCCESS' and premiumUntil != null}">
             Gói Premium dùng đến
@@ -29,8 +31,31 @@
             Bạn chưa bị trừ tiền cho đơn này. Có thể thử thanh toán lại.
         </p>
         <p class="mt-2 text-pretty text-base-content/80" th:if="${st == 'PENDING'}">
-            MoMo chưa báo kết quả. Nếu bạn đã thanh toán, chờ vài giây rồi bấm “Kiểm tra lại”.
+            Mở app ngân hàng, quét mã và giữ nguyên nội dung chuyển khoản. Trang tự cập nhật khi tiền về.
         </p>
+        <th:block th:if="${st == 'PENDING'}">
+            <img th:src="@{https://vietqr.app/img(acc=${bank.account},bank=${bank.bank},amount=${payment.amount},des=${payment.orderId})}"
+                 class="mx-auto mt-5 aspect-square w-full max-w-64 rounded-lg border border-base-300 bg-white"
+                 width="256" height="256" alt="Mã QR chuyển khoản cho đơn này">
+            <dl class="mt-5 space-y-2 rounded-lg bg-base-200 p-4 text-left text-sm">
+                <div class="flex justify-between gap-4">
+                    <dt class="shrink-0 text-base-content/70">Ngân hàng</dt>
+                    <dd class="min-w-0 break-words text-right font-semibold" th:text="${bank.bank}">MBBank</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="shrink-0 text-base-content/70">Số tài khoản</dt>
+                    <dd class="min-w-0 break-all text-right font-semibold tabular" th:text="${bank.account}">0123456789</dd>
+                </div>
+                <div th:if="${!#strings.isEmpty(bank.name)}" class="flex justify-between gap-4">
+                    <dt class="shrink-0 text-base-content/70">Chủ tài khoản</dt>
+                    <dd class="min-w-0 break-words text-right font-semibold" th:text="${bank.name}">NGUYEN VAN A</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="shrink-0 text-base-content/70">Nội dung</dt>
+                    <dd class="min-w-0 break-all text-right font-semibold tabular select-all" th:text="${payment.orderId}">LC1731000000001234</dd>
+                </div>
+            </dl>
+        </th:block>
 
         <dl class="mt-6 space-y-2 border-t border-base-300 pt-4 text-left text-sm">
             <div class="flex justify-between gap-4">
@@ -50,14 +75,14 @@
                 <dd class="tabular" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">08/11/2026 12:00</dd>
             </div>
             <div th:if="${st == 'FAILED' and payment.message != null}" class="flex justify-between gap-4">
-                <dt class="shrink-0 text-base-content/70">MoMo báo</dt>
+                <dt class="shrink-0 text-base-content/70">Ghi chú</dt>
                 <dd class="min-w-0 break-words text-right" th:text="${payment.message}">Giao dịch bị từ chối</dd>
             </div>
         </dl>
 
         <div class="mt-6 flex flex-col gap-3">
             <a th:if="${st == 'PENDING'}" th:href="@{/payments/{id}(id=${payment.orderId})}"
-               class="btn btn-primary h-12 rounded-full px-6">Kiểm tra lại</a>
+               class="btn h-12 rounded-full px-6">Tôi đã chuyển, kiểm tra lại</a>
             <a th:if="${st == 'FAILED'}" th:href="@{/payments/checkout}" class="btn btn-primary h-12 rounded-full px-6">Thanh toán lại</a>
             <a th:if="${st == 'SUCCESS'}" th:href="@{/scans/new}" class="btn btn-primary h-12 rounded-full px-6">Quét lá ngay</a>
             <a th:href="@{/plans}" class="btn h-12 rounded-full px-6">Về trang gói</a>

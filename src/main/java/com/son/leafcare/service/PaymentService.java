@@ -6,93 +6,105 @@ import com.son.leafcare.entity.PaymentStatus;
 import com.son.leafcare.entity.Plan;
 import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.repository.PaymentRepository;
-import com.son.leafcare.service.momo.MomoClient;
-import com.son.leafcare.service.momo.MomoClient.MomoResult;
-import com.son.leafcare.service.momo.MomoException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Payment state changes only here, from a signed IPN or MoMo's query API; never from redirect URL params. */
+/** Payment state changes only here, from SePay's webhook (API key checked); never from the browser. */
 @Service
 public class PaymentService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+    private static final Pattern ORDER_ID = Pattern.compile("LC\\d{17}");
 
     private final PaymentRepository repo;
     private final SubscriptionService subscriptions;
-    private final MomoClient momo;
+    private final String apiKey;
 
-    public PaymentService(PaymentRepository repo, SubscriptionService subscriptions, MomoClient momo) {
+    public PaymentService(PaymentRepository repo, SubscriptionService subscriptions,
+                          @Value("${sepay.api-key}") String apiKey) {
         this.repo = repo;
         this.subscriptions = subscriptions;
-        this.momo = momo;
+        this.apiKey = apiKey;
     }
 
-    /** Saves a PENDING order and returns MoMo's payUrl. If MoMo refuses, nothing is saved. */
+    /** Saves a PENDING order; the buyer then transfers money with the orderId as transfer content. */
     @Transactional
-    public String startPremium(AppUser user) {
+    public Payment startPremium(AppUser user) {
         Payment p = new Payment();
         p.setUser(user);
         p.setOrderId("LC" + System.currentTimeMillis() + ThreadLocalRandom.current().nextInt(1000, 10000));
         p.setRequestId(p.getOrderId());
         p.setPlan(Plan.PREMIUM);
         p.setAmount(subscriptions.premiumPrice());
-        repo.saveAndFlush(p);
-        return momo.createPayUrl(p.getOrderId(), p.getAmount(), "LeafCare Premium " + subscriptions.premiumDays() + " ngay");
+        return repo.saveAndFlush(p);
     }
 
-    /** IPN from MoMo. False when the signature is wrong. */
+    /** Is this the "Authorization: Apikey ..." header SePay was configured with? */
+    public boolean validKey(String authorization) {
+        String expected = "Apikey " + apiKey;
+        return authorization != null
+                && MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), authorization.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * A bank transaction from SePay (key already checked). Pays the order named in the transfer content when
+     * the money is incoming and at least the order amount. Safe to receive twice: only PENDING orders change.
+     */
     @Transactional
-    public boolean handleIpn(Map<String, Object> params) {
-        MomoResult r = momo.verifyIpn(params);
-        if (r == null) {
-            log.warn("IPN bị từ chối: sai chữ ký, orderId={}", params.get("orderId"));
-            return false;
-        }
-        repo.findByOrderId(r.orderId()).ifPresentOrElse(p -> apply(p, r),
-                () -> log.warn("IPN cho đơn không tồn tại: {}", r.orderId()));
-        return true;
-    }
-
-    /** The user's own order; while PENDING, asks MoMo for its status first. Other users' orders are 404. */
-    @Transactional
-    public Payment refresh(String orderId, AppUser user) {
-        Payment p = repo.findByOrderId(orderId)
-                .filter(x -> x.getUser().getId().equals(user.getId()))
-                .orElseThrow(NotFoundException::new);
-        if (p.getStatus() == PaymentStatus.PENDING) {
-            try {
-                apply(p, momo.query(orderId));
-            } catch (MomoException e) {
-                log.warn("Không hỏi được MoMo cho đơn {}: {}", orderId, e.getMessage());
-            }
-        }
-        return p;
-    }
-
-    private void apply(Payment p, MomoResult r) {
-        if (p.getStatus() != PaymentStatus.PENDING || r.pending()) {
-            return; // already final (duplicate IPN) or MoMo still processing
-        }
-        if (r.amount() != p.getAmount()) {
-            log.warn("Số tiền MoMo ({}) khác đơn {} ({}), bỏ qua", r.amount(), p.getOrderId(), p.getAmount());
+    public void handleWebhook(Map<String, Object> tx) {
+        if (!"in".equals(tx.get("transferType"))) {
             return;
         }
-        p.setResultCode(r.resultCode());
-        p.setMomoTransId(r.transId());
-        String msg = r.message();
-        p.setMessage(msg != null && msg.length() > 255 ? msg.substring(0, 255) : msg);
-        if (r.success()) {
-            p.setStatus(PaymentStatus.SUCCESS);
-            p.setPaidAt(LocalDateTime.now());
-            subscriptions.activatePremium(p.getUser());
-        } else {
-            p.setStatus(PaymentStatus.FAILED);
+        String orderId = findOrderId(tx.get("code"), tx.get("content"));
+        if (orderId == null) {
+            log.warn("SePay: không thấy mã đơn trong nội dung '{}'", tx.get("content"));
+            return;
         }
+        Payment p = repo.findByOrderId(orderId).orElse(null);
+        if (p == null || p.getStatus() != PaymentStatus.PENDING) {
+            log.warn("SePay: đơn {} không tồn tại hoặc đã xử lý, bỏ qua giao dịch {}", orderId, tx.get("id"));
+            return;
+        }
+        long amount = ((Number) tx.getOrDefault("transferAmount", 0)).longValue();
+        if (amount < p.getAmount()) {
+            log.warn("SePay: đơn {} cần {} nhưng chỉ nhận {}, giữ PENDING", orderId, p.getAmount(), amount);
+            return;
+        }
+        p.setTransId(tx.get("id") instanceof Number n ? n.longValue() : null);
+        p.setMessage("Đã nhận chuyển khoản qua " + tx.getOrDefault("gateway", "ngân hàng"));
+        p.setStatus(PaymentStatus.SUCCESS);
+        p.setPaidAt(LocalDateTime.now());
+        subscriptions.activatePremium(p.getUser());
+    }
+
+    /** The user's own order; other users' orders are 404. */
+    @Transactional // findByOrderId locks the row (FOR UPDATE), which a read-only transaction refuses on PostgreSQL
+    public Payment getForUser(String orderId, AppUser user) {
+        return repo.findByOrderId(orderId)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(NotFoundException::new);
+    }
+
+    /** SePay's parsed code when its pattern is configured, else our own pattern in the raw content. */
+    static String findOrderId(Object code, Object content) {
+        for (Object o : new Object[] {code, content}) {
+            if (o != null) {
+                Matcher m = ORDER_ID.matcher(o.toString().toUpperCase());
+                if (m.find()) {
+                    return m.group();
+                }
+            }
+        }
+        return null;
     }
 }

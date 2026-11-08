@@ -4,13 +4,14 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,7 +24,6 @@ import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.service.AppUserService;
 import com.son.leafcare.service.PaymentService;
 import com.son.leafcare.service.SubscriptionService;
-import com.son.leafcare.service.momo.MomoException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,11 +74,11 @@ class PaymentControllerTest {
     }
 
     @Test
-    void checkoutShowsSummaryAndMomoButton() throws Exception {
+    void checkoutShowsSummaryAndQrButton() throws Exception {
         mvc.perform(get("/payments/checkout")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("49.000 ₫")))
-                .andExpect(content().string(containsString("Thanh toán bằng MoMo")))
-                .andExpect(content().string(containsString("action=\"/payments/momo\"")));
+                .andExpect(content().string(containsString("Tạo mã QR chuyển khoản")))
+                .andExpect(content().string(containsString("action=\"/payments/premium\"")));
     }
 
     @Test
@@ -87,41 +87,31 @@ class PaymentControllerTest {
     }
 
     @Test
-    void payRedirectsToMomo() throws Exception {
-        when(payments.startPremium(me)).thenReturn("https://test-payment.momo.vn/pay/x");
-        mvc.perform(post("/payments/momo").with(csrf())).andExpect(redirectedUrl("https://test-payment.momo.vn/pay/x"));
+    void startCreatesOrderAndOpensItsQrPage() throws Exception {
+        when(payments.startPremium(me)).thenReturn(payment(PaymentStatus.PENDING));
+        mvc.perform(post("/payments/premium").with(csrf())).andExpect(redirectedUrl("/payments/LC1"));
     }
 
     @Test
-    void momoDownShowsError() throws Exception {
-        when(payments.startPremium(me)).thenThrow(new MomoException("x"));
-        mvc.perform(post("/payments/momo").with(csrf())).andExpect(redirectedUrl("/payments/checkout"))
-                .andExpect(flash().attributeExists("error"));
+    void webhookIsPublicWithoutCsrfAndAnswersSuccessJson() throws Exception {
+        when(payments.validKey("Apikey k")).thenReturn(true);
+        mvc.perform(post("/payments/sepay/webhook").with(anonymous()).header("Authorization", "Apikey k")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"LC1\"}"))
+                .andExpect(status().isOk()).andExpect(content().json("{\"success\":true}"));
+        verify(payments).handleWebhook(anyMap());
     }
 
     @Test
-    void returnGoesToResultPageIgnoringOtherParams() throws Exception {
-        mvc.perform(get("/payments/momo/return").param("orderId", "LC1").param("resultCode", "0"))
-                .andExpect(redirectedUrl("/payments/LC1"));
-    }
-
-    @Test
-    void ipnIsPublicWithoutCsrfAndReturns204() throws Exception {
-        when(payments.handleIpn(anyMap())).thenReturn(true);
-        mvc.perform(post("/payments/momo/ipn").with(anonymous()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"orderId\":\"LC1\"}")).andExpect(status().isNoContent());
-    }
-
-    @Test
-    void ipnWithBadSignatureIs400() throws Exception {
-        when(payments.handleIpn(anyMap())).thenReturn(false);
-        mvc.perform(post("/payments/momo/ipn").with(anonymous()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"orderId\":\"LC1\"}")).andExpect(status().isBadRequest());
+    void webhookWithWrongKeyIs401AndChangesNothing() throws Exception {
+        mvc.perform(post("/payments/sepay/webhook").with(anonymous()).header("Authorization", "Apikey bad")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"LC1\"}"))
+                .andExpect(status().isUnauthorized());
+        verify(payments, never()).handleWebhook(anyMap());
     }
 
     @Test
     void resultSuccess() throws Exception {
-        when(payments.refresh("LC1", me)).thenReturn(payment(PaymentStatus.SUCCESS));
+        when(payments.getForUser("LC1", me)).thenReturn(payment(PaymentStatus.SUCCESS));
         when(subscriptions.premiumUntil(me)).thenReturn(LocalDateTime.of(2026, 12, 8, 12, 0));
         mvc.perform(get("/payments/LC1")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Thanh toán thành công")))
@@ -129,8 +119,8 @@ class PaymentControllerTest {
     }
 
     @Test
-    void resultFailedShowsMomoMessageAndRetry() throws Exception {
-        when(payments.refresh("LC1", me)).thenReturn(payment(PaymentStatus.FAILED));
+    void resultFailedShowsMessageAndRetry() throws Exception {
+        when(payments.getForUser("LC1", me)).thenReturn(payment(PaymentStatus.FAILED));
         mvc.perform(get("/payments/LC1"))
                 .andExpect(content().string(containsString("Thanh toán không thành công")))
                 .andExpect(content().string(containsString("Giao dịch bị từ chối")))
@@ -139,15 +129,19 @@ class PaymentControllerTest {
 
     @Test
     void resultPendingOffersRecheck() throws Exception {
-        when(payments.refresh("LC1", me)).thenReturn(payment(PaymentStatus.PENDING));
+        when(payments.getForUser("LC1", me)).thenReturn(payment(PaymentStatus.PENDING));
         mvc.perform(get("/payments/LC1"))
-                .andExpect(content().string(containsString("Đang chờ MoMo xác nhận")))
-                .andExpect(content().string(containsString("Kiểm tra lại")));
+                .andExpect(content().string(containsString("Quét mã để thanh toán")))
+                .andExpect(content().string(containsString(
+                        "https://vietqr.app/img?acc=0123456789&amp;bank=MBBank&amp;amount=49000&amp;des=LC1")))
+                .andExpect(content().string(containsString("NGUYEN VAN A")))
+                .andExpect(content().string(containsString("http-equiv=\"refresh\"")))
+                .andExpect(content().string(containsString("kiểm tra lại")));
     }
 
     @Test
     void otherUsersOrderIs404() throws Exception {
-        when(payments.refresh(eq("LC9"), any())).thenThrow(new NotFoundException());
+        when(payments.getForUser(eq("LC9"), any())).thenThrow(new NotFoundException());
         mvc.perform(get("/payments/LC9")).andExpect(status().isNotFound());
     }
 }

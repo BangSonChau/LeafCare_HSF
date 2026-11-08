@@ -42,7 +42,7 @@
             <ul class="mt-4 space-y-2">
                 <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Quét lá không giới hạn</li>
                 <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Mọi quyền lợi của gói Free</li>
-                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Thanh toán qua ví MoMo</li>
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Thanh toán bằng QR ngân hàng</li>
             </ul>
             <p th:if="${premium}" class="mt-4 text-sm text-base-content/80">
                 Hết hạn: <span class="font-semibold tabular" th:text="${#temporals.format(premiumUntil, 'dd/MM/yyyy HH:mm')}">08/12/2026 10:00</span>.

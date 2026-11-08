@@ -6,11 +6,12 @@ import com.son.leafcare.entity.PaymentStatus;
 import com.son.leafcare.service.AppUserService;
 import com.son.leafcare.service.PaymentService;
 import com.son.leafcare.service.SubscriptionService;
-import com.son.leafcare.service.momo.MomoException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -19,8 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.util.UriUtils;
 
 @Controller
@@ -31,11 +31,19 @@ public class PaymentController {
     private final AppUserService users;
     private final SubscriptionService subscriptions;
     private final PaymentService payments;
+    private final BankAccount bank;
 
-    public PaymentController(AppUserService users, SubscriptionService subscriptions, PaymentService payments) {
+    /** Where buyers transfer money; shown under the QR. */
+    public record BankAccount(String bank, String account, String name) {
+    }
+
+    public PaymentController(AppUserService users, SubscriptionService subscriptions, PaymentService payments,
+                             @Value("${sepay.bank}") String bank, @Value("${sepay.account}") String account,
+                             @Value("${sepay.account-name}") String name) {
         this.users = users;
         this.subscriptions = subscriptions;
         this.payments = payments;
+        this.bank = new BankAccount(bank, account, name);
     }
 
     @GetMapping("/payments/checkout")
@@ -46,34 +54,30 @@ public class PaymentController {
         return "payments/checkout";
     }
 
-    @PostMapping("/payments/momo")
-    public String pay(Authentication auth, RedirectAttributes ra) {
-        try {
-            return "redirect:" + payments.startPremium(users.current(auth));
-        } catch (MomoException e) {
-            log.warn("MoMo create failed: {}", e.getMessage());
-            ra.addFlashAttribute("error", "Chưa kết nối được MoMo, thử lại sau ít phút.");
-            return "redirect:/payments/checkout";
+    @PostMapping("/payments/premium")
+    public String start(Authentication auth) {
+        Payment p = payments.startPremium(users.current(auth));
+        return "redirect:/payments/" + UriUtils.encodePathSegment(p.getOrderId(), StandardCharsets.UTF_8);
+    }
+
+    /** Server-to-server from SePay: public and CSRF-exempt (SecurityConfig); the API key protects it. */
+    @PostMapping("/payments/sepay/webhook")
+    public ResponseEntity<Map<String, Boolean>> webhook(@RequestHeader(value = "Authorization", required = false) String auth,
+                                                        @RequestBody Map<String, Object> body) {
+        if (!payments.validKey(auth)) {
+            log.warn("SePay webhook bị từ chối: sai API key");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-    }
-
-    /** MoMo sends the browser back here; its query params are not trusted, only orderId is used. */
-    @GetMapping("/payments/momo/return")
-    public String back(@RequestParam String orderId) {
-        return "redirect:/payments/" + UriUtils.encodePathSegment(orderId, StandardCharsets.UTF_8);
-    }
-
-    /** Server-to-server from MoMo: public and CSRF-exempt (SecurityConfig). MoMo expects 204. */
-    @PostMapping("/payments/momo/ipn")
-    public ResponseEntity<Void> ipn(@RequestBody Map<String, Object> body) {
-        return payments.handleIpn(body) ? ResponseEntity.noContent().build() : ResponseEntity.badRequest().build();
+        payments.handleWebhook(body);
+        return ResponseEntity.ok(Map.of("success", true)); // SePay retries unless it gets exactly this
     }
 
     @GetMapping("/payments/{orderId}")
     public String result(@PathVariable String orderId, Authentication auth, Model model) {
         AppUser me = users.current(auth);
-        Payment p = payments.refresh(orderId, me);
+        Payment p = payments.getForUser(orderId, me);
         model.addAttribute("payment", p);
+        model.addAttribute("bank", bank);
         if (p.getStatus() == PaymentStatus.SUCCESS) {
             model.addAttribute("premiumUntil", subscriptions.premiumUntil(me));
         }

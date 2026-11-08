@@ -59,18 +59,24 @@ Mỗi người tự tạo OAuth client của mình (không chia sẻ secret, kh�
 
 Không đặt hai biến Google thì app vẫn chạy nhưng bấm đăng nhập sẽ lỗi `invalid_client`.
 
-### Cấu hình MoMo sandbox
+### Cấu hình thanh toán SePay (QR ngân hàng)
 
-Thanh toán Premium dùng MoMo môi trường test (`https://test-payment.momo.vn`, tiền giả). Đặt biến môi trường:
+Thanh toán Premium bằng chuyển khoản: trang `/payments/{orderId}` hiện mã VietQR của tài khoản ngân hàng bạn (số tiền + nội dung = mã đơn `LC...`). Khi tiền về, SePay gọi webhook `POST /payments/sepay/webhook`, app tìm mã đơn trong nội dung, kiểm số tiền rồi bật Premium. Đây là **tiền thật** vào tài khoản của bạn.
+
+1. Đăng ký https://my.sepay.vn, liên kết tài khoản ngân hàng.
+2. (Nên làm) Công ty → Cấu hình chung → Cấu trúc mã thanh toán: tiền tố `LC`, phần sau là 17 chữ số. Không đặt cũng được, app tự tìm `LC` + 17 số trong nội dung.
+3. Tích hợp Webhook → Thêm webhook: URL `https://<địa chỉ công khai>/payments/sepay/webhook`, kiểu xác thực **API Key**, giao dịch tiền vào. Chạy local thì cần tunnel, ví dụ `cloudflared tunnel --url http://localhost:8080` hoặc `ngrok http 8080`.
+4. Biến môi trường:
 
 | Biến | Ý nghĩa |
 |---|---|
-| `MOMO_PARTNER_CODE` | Partner code sandbox |
-| `MOMO_ACCESS_KEY` | Access key sandbox |
-| `MOMO_SECRET_KEY` | Secret key sandbox (dùng ký HMAC-SHA256) |
-| `MOMO_IPN_URL` | (tuỳ chọn) URL công khai MoMo gọi IPN, ví dụ qua ngrok: `https://xxx.ngrok-free.app/payments/momo/ipn` |
+| `SEPAY_BANK` | Tên ngắn ngân hàng theo https://vietqr.app/banks.json, ví dụ `MBBank`, `Vietcombank` |
+| `SEPAY_ACCOUNT` | Số tài khoản nhận tiền |
+| `SEPAY_ACCOUNT_NAME` | (tuỳ chọn) Tên chủ tài khoản, hiện dưới mã QR |
+| `SEPAY_API_KEY` | API key đặt ở bước 3 (SePay gửi header `Authorization: Apikey <key>`) |
+| `LEAFCARE_PREMIUM_PRICE` | (tuỳ chọn) Giá Premium, mặc định 49000; đặt `2000` khi thử bằng tiền thật |
 
-Chạy local thì MoMo không gọi được IPN vào `localhost`; trang kết quả `/payments/{orderId}` tự hỏi MoMo (API `query`) khi đơn còn "Đang xử lý", nên vẫn chạy đủ luồng. Mặc định `MOMO_REQUEST_TYPE=payWithATM`: trang MoMo cho nhập thẻ ATM test (theo developers.momo.vn, mục Test Instructions): số thẻ `9704 0000 0000 0018`, tên `NGUYEN VAN A`, ngày `03/07`, OTP theo trang MoMo hiện. Đặt `MOMO_REQUEST_TYPE=captureWallet` để hiện mã QR (chỉ quét được bằng app MoMo bản test).
+Code MoMo sandbox cũ vẫn còn ở `service/momo/` (không còn nút trên giao diện).
 
 ## Quy trình làm việc nhóm
 
