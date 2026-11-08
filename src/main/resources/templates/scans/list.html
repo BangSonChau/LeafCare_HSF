@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
@@ -35,6 +36,10 @@
                               th:text="${#temporals.format(s.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</span>
                         <span class="badge badge-outline whitespace-nowrap" th:text="${s.status.label}">Chờ phân tích</span>
                     </div>
+                    <p sec:authorize="hasRole('ADMIN')" class="mt-1 flex gap-1 text-sm text-base-content/70">
+                        <span class="shrink-0">Người quét:</span>
+                        <span th:replace="~{scans/list :: owner(${s.owner})}"></span>
+                    </p>
                 </div>
             </a>
         </li>
@@ -42,5 +47,9 @@
 
     <div th:replace="~{fragments/pagination :: pager(${page}, '/scans', '')}"></div>
 </section>
+
+<!-- Owner label for ADMIN views (list and detail). -->
+<span th:fragment="owner(o)" class="min-w-0 break-all"
+      th:text="${o == null} ? 'Chưa rõ (quét trước khi có đăng nhập)' : (${o.name} != null ? ${o.name} + ' · ' + ${o.email} : ${o.email})">Shin · s@x.com</span>
 </body>
 </html>
