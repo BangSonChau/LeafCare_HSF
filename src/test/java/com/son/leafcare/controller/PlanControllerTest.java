@@ -50,6 +50,7 @@ class PlanControllerTest {
                 .andExpect(content().string(containsString("49.000 ₫")))
                 .andExpect(content().string(containsString("5 lượt quét lá mỗi ngày")))
                 .andExpect(content().string(containsString("Nâng cấp Premium")))
+                .andExpect(content().string(containsString("href=\"/payments\"")))
                 .andExpect(content().string(containsString("href=\"/payments/checkout\"")))
                 .andExpect(content().string(not(containsString("Hết hạn"))));
     }

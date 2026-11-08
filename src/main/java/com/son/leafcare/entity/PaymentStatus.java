@@ -1,7 +1,7 @@
 package com.son.leafcare.entity;
 
 public enum PaymentStatus {
-    PENDING("Đang xử lý"), SUCCESS("Thành công"), FAILED("Thất bại");
+    PENDING("Chờ thanh toán"), SUCCESS("Thành công"), FAILED("Thất bại");
 
     private final String label;
 

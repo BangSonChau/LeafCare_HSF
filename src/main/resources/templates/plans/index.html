@@ -52,6 +52,8 @@
                th:text="${premium} ? 'Gia hạn thêm ' + ${days} + ' ngày' : 'Nâng cấp Premium'">Nâng cấp Premium</a>
         </article>
     </div>
+
+    <a th:href="@{/payments}" class="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-primary">Lịch sử giao dịch &rarr;</a>
 </section>
 
 <!-- Check icon used by both plan cards. -->

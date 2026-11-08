@@ -16,6 +16,9 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+    static final int PAGE_SIZE = 10;
     private static final Pattern ORDER_ID = Pattern.compile("LC\\d{17}");
 
     private final PaymentRepository repo;
@@ -93,6 +97,17 @@ public class PaymentService {
         return repo.findByOrderId(orderId)
                 .filter(x -> x.getUser().getId().equals(user.getId()))
                 .orElseThrow(NotFoundException::new);
+    }
+
+    /** The user's own orders, newest first, 10 per page; a page past the end shows the last page. */
+    @Transactional(readOnly = true)
+    public Page<Payment> history(AppUser user, int page) {
+        Sort sort = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
+        Page<Payment> result = repo.findByUser(user, PageRequest.of(Math.max(page, 0), PAGE_SIZE, sort));
+        if (result.getNumber() > 0 && result.getNumber() >= result.getTotalPages()) {
+            return repo.findByUser(user, PageRequest.of(Math.max(result.getTotalPages() - 1, 0), PAGE_SIZE, sort));
+        }
+        return result;
     }
 
     /** SePay's parsed code when its pattern is configured, else our own pattern in the raw content. */
