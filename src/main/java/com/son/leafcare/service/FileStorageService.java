@@ -1,18 +1,19 @@
 package com.son.leafcare.service;
 
+import com.son.leafcare.entity.ImageFile;
 import com.son.leafcare.exception.InvalidImageException;
+import com.son.leafcare.repository.ImageFileRepository;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/** Validates uploaded photos and keeps them in the image_file table (the server disk is not kept on Render Free). */
 @Service
 public class FileStorageService {
 
@@ -20,12 +21,14 @@ public class FileStorageService {
     private static final Set<String> EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
     private static final Set<String> CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
-    private final Path dir;
+    private final ImageFileRepository images;
 
-    public FileStorageService(@Value("${leafcare.upload-dir}") String dir) {
-        this.dir = Path.of(dir).toAbsolutePath().normalize();
+    public FileStorageService(ImageFileRepository images) {
+        this.images = images;
     }
 
+    /** Returns the new UUID name; the original file name is only used for its extension. */
+    @Transactional
     public String store(MultipartFile f) {
         if (f == null || f.isEmpty()) {
             throw new InvalidImageException("Vui lòng chọn ảnh lá");
@@ -42,29 +45,20 @@ public class FileStorageService {
         }
         String name = UUID.randomUUID() + "." + ext;
         try {
-            Files.createDirectories(dir);
-            Path target = dir.resolve(name).normalize();
-            if (!target.startsWith(dir)) {
-                throw new InvalidImageException("Tên ảnh không hợp lệ");
-            }
-            try (InputStream in = f.getInputStream()) {
-                Files.copy(in, target);
-            }
+            images.save(new ImageFile(name, type, f.getBytes()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
         return name;
     }
 
-    public void delete(String fileName) {
-        Path target = dir.resolve(fileName).normalize();
-        if (!target.startsWith(dir)) {
-            return;
-        }
-        try {
-            Files.deleteIfExists(target);
-        } catch (IOException e) {
-            // shortcut: an undeletable file leaves an orphan (row already gone); add a cleanup job if it matters.
-        }
+    @Transactional(readOnly = true)
+    public Optional<ImageFile> find(String name) {
+        return images.findById(name);
+    }
+
+    @Transactional
+    public void delete(String name) {
+        images.deleteById(name); // missing name is a no-op in Spring Data 3+
     }
 }

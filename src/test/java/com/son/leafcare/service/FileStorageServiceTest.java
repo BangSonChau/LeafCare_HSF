@@ -4,110 +4,95 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.son.leafcare.entity.ImageFile;
 import com.son.leafcare.exception.InvalidImageException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
+import com.son.leafcare.repository.ImageFileRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 
+@DataJpaTest
+@Import(FileStorageService.class)
 class FileStorageServiceTest {
 
-    @TempDir
-    Path dir;
+    @Autowired
+    FileStorageService service;
+
+    @Autowired
+    ImageFileRepository images;
 
     byte[] bytes = {1, 2, 3};
 
-    FileStorageService service() {
-        return new FileStorageService(dir.toString());
-    }
-
-    long count() throws IOException {
-        try (Stream<Path> s = Files.list(dir)) {
-            return s.count();
-        }
-    }
-
-    void assertRejected(MockMultipartFile f) throws IOException {
-        assertThatThrownBy(() -> service().store(f)).isInstanceOf(InvalidImageException.class);
-        assertThat(count()).isZero();
+    void assertRejected(MockMultipartFile f) {
+        assertThatThrownBy(() -> service.store(f)).isInstanceOf(InvalidImageException.class);
+        assertThat(images.count()).isZero();
     }
 
     @Test
-    void storesValidImageWithUuidName() {
-        String name = service().store(new MockMultipartFile("file", "leaf.png", "image/png", bytes));
+    void storesValidImageWithUuidNameInDb() {
+        String name = service.store(new MockMultipartFile("file", "leaf.png", "image/png", bytes));
         assertThat(name).matches("[0-9a-f-]{36}\\.png");
-        assertThat(dir.resolve(name)).exists();
+        ImageFile saved = service.find(name).orElseThrow();
+        assertThat(saved.getContentType()).isEqualTo("image/png");
+        assertThat(saved.getData()).containsExactly(bytes);
     }
 
     @Test
-    void createsMissingDirectory() {
-        Path nested = dir.resolve("a/b");
-        String name = new FileStorageService(nested.toString())
-                .store(new MockMultipartFile("file", "x.JPG", "image/jpeg", bytes));
+    void upperCaseExtensionAndTypeAreLowered() {
+        String name = service.store(new MockMultipartFile("file", "x.JPG", "IMAGE/JPEG", bytes));
         assertThat(name).endsWith(".jpg");
-        assertThat(nested.resolve(name)).exists();
+        assertThat(service.find(name).orElseThrow().getContentType()).isEqualTo("image/jpeg");
     }
 
     @Test
-    void rejectsGif() throws IOException {
+    void storesFiveMegabytes() {
+        String name = service.store(new MockMultipartFile("file", "big.webp", "image/webp", new byte[5 * 1024 * 1024]));
+        assertThat(service.find(name).orElseThrow().getData()).hasSize(5 * 1024 * 1024);
+    }
+
+    @Test
+    void rejectsGif() {
         assertRejected(new MockMultipartFile("file", "leaf.gif", "image/gif", bytes));
     }
 
     @Test
-    void rejectsWrongContentType() throws IOException {
+    void rejectsWrongContentType() {
         assertRejected(new MockMultipartFile("file", "leaf.png", "text/html", bytes));
     }
 
     @Test
-    void rejectsPhpExtension() throws IOException {
+    void rejectsPhpExtension() {
         assertRejected(new MockMultipartFile("file", "shell.php", "image/png", bytes));
     }
 
     @Test
-    void rejectsNoExtension() throws IOException {
+    void rejectsNoExtension() {
         assertRejected(new MockMultipartFile("file", "leaf", "image/png", bytes));
     }
 
     @Test
-    void rejectsEmpty() throws IOException {
+    void rejectsEmpty() {
         assertRejected(new MockMultipartFile("file", "leaf.png", "image/png", new byte[0]));
     }
 
     @Test
-    void rejectsOver5Mb() throws IOException {
+    void rejectsOver5Mb() {
         assertRejected(new MockMultipartFile("file", "leaf.png", "image/png", new byte[5 * 1024 * 1024 + 1]));
     }
 
     @Test
-    void traversalNameStoresInsideDir() throws IOException {
-        String name = service().store(new MockMultipartFile("file", "../../x.png", "image/png", bytes));
+    void originalNameIsNeverUsed() {
+        String name = service.store(new MockMultipartFile("file", "../../shell.php.png", "image/png", bytes));
         assertThat(name).matches("[0-9a-f-]{36}\\.png");
-        assertThat(count()).isEqualTo(1);
     }
 
     @Test
-    void doubleExtensionUsesLastDot() {
-        String name = service().store(new MockMultipartFile("file", "shell.php.png", "image/png", bytes));
-        assertThat(name).endsWith(".png").doesNotContain("shell");
-    }
-
-    @Test
-    void deleteMissingIsSilent() {
-        assertThatCode(() -> service().delete("missing.png")).doesNotThrowAnyException();
-    }
-
-    @Test
-    void deleteIgnoresTraversal() throws IOException {
-        Path outside = dir.getParent().resolve("outside-" + System.nanoTime() + ".png");
-        Files.write(outside, bytes);
-        try {
-            service().delete("../" + outside.getFileName());
-            assertThat(outside).exists();
-        } finally {
-            Files.deleteIfExists(outside);
-        }
+    void deleteRemovesAndMissingIsSilent() {
+        String name = service.store(new MockMultipartFile("file", "leaf.png", "image/png", bytes));
+        service.delete(name);
+        assertThat(service.find(name)).isEmpty();
+        assertThatCode(() -> service.delete("missing.png")).doesNotThrowAnyException();
     }
 }

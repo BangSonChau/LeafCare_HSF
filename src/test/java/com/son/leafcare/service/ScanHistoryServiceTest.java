@@ -10,32 +10,19 @@ import com.son.leafcare.entity.ScanStatus;
 import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.exception.ScanLimitException;
 import com.son.leafcare.repository.AppUserRepository;
+import com.son.leafcare.repository.ImageFileRepository;
 import com.son.leafcare.repository.ScanHistoryRepository;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 @DataJpaTest
 @Import({ScanHistoryService.class, FileStorageService.class, SubscriptionService.class})
 class ScanHistoryServiceTest {
-
-    @TempDir
-    static Path dir;
-
-    @DynamicPropertySource
-    static void props(DynamicPropertyRegistry r) {
-        r.add("leafcare.upload-dir", () -> dir.toString());
-    }
 
     @Autowired
     ScanHistoryService service;
@@ -67,10 +54,11 @@ class ScanHistoryServiceTest {
         return users.save(u);
     }
 
-    long files() throws IOException {
-        try (var s = Files.list(dir)) {
-            return s.count();
-        }
+    @Autowired
+    ImageFileRepository images;
+
+    long files() {
+        return images.count();
     }
 
     MockMultipartFile img() {
@@ -83,7 +71,7 @@ class ScanHistoryServiceTest {
         assertThat(s.getStatus()).isEqualTo(ScanStatus.PENDING);
         assertThat(s.getCreatedAt()).isNotNull();
         assertThat(s.getNote()).isEqualTo("note");
-        assertThat(dir.resolve(s.getImageFileName())).exists();
+        assertThat(images.existsById(s.getImageFileName())).isTrue();
     }
 
     @Test
@@ -96,13 +84,13 @@ class ScanHistoryServiceTest {
         ScanHistory s = service.create(img(), null, user);
         service.delete(s.getId(), user);
         assertThat(repo.findById(s.getId())).isEmpty();
-        assertThat(dir.resolve(s.getImageFileName())).doesNotExist();
+        assertThat(images.existsById(s.getImageFileName())).isFalse();
     }
 
     @Test
-    void deleteWithMissingFileStillRemovesRow() throws IOException {
+    void deleteWithMissingFileStillRemovesRow() {
         ScanHistory s = service.create(img(), null, user);
-        Files.delete(dir.resolve(s.getImageFileName()));
+        images.deleteById(s.getImageFileName());
         service.delete(s.getId(), user);
         assertThat(repo.findById(s.getId())).isEmpty();
     }
@@ -135,7 +123,7 @@ class ScanHistoryServiceTest {
     }
 
     @Test
-    void freeUserGetsFiveScansThenSixthIsBlockedWithoutWritingAFile() throws IOException {
+    void freeUserGetsFiveScansThenSixthIsBlockedWithoutWritingAFile() {
         for (int i = 0; i < 5; i++) {
             service.create(img(), null, user);
         }
@@ -208,7 +196,7 @@ class ScanHistoryServiceTest {
         ScanHistory theirs = service.create(img(), null, other);
         assertThatThrownBy(() -> service.delete(theirs.getId(), user)).isInstanceOf(NotFoundException.class);
         assertThat(repo.findById(theirs.getId())).isPresent();
-        assertThat(dir.resolve(theirs.getImageFileName())).exists();
+        assertThat(images.existsById(theirs.getImageFileName())).isTrue();
         service.delete(theirs.getId(), admin);
         assertThat(repo.findById(theirs.getId())).isEmpty();
     }
