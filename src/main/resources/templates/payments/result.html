@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Kết quả thanh toán</title>
+</head>
+<body>
+<section layout:fragment="content" th:with="st=${payment.status.name()}">
+    <div class="mx-auto mt-4 max-w-md rounded-xl border border-base-300 bg-base-100 px-5 py-8 text-center md:px-6">
+        <span class="mx-auto grid size-16 place-items-center rounded-full"
+              th:classappend="${st == 'SUCCESS'} ? 'bg-primary text-primary-content' : (${st == 'FAILED'} ? 'bg-error text-error-content' : 'bg-base-200 text-base-content')">
+            <svg th:if="${st == 'SUCCESS'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="size-8" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+            <svg th:if="${st == 'FAILED'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="size-8" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <svg th:if="${st == 'PENDING'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </span>
+
+        <h1 class="mt-4 text-2xl font-bold leading-tight" role="status"
+            th:text="${st == 'SUCCESS'} ? 'Thanh toán thành công' : (${st == 'FAILED'} ? 'Thanh toán không thành công' : 'Đang chờ MoMo xác nhận')">
+            Thanh toán thành công</h1>
+        <p class="mt-2 text-pretty text-base-content/80" th:if="${st == 'SUCCESS' and premiumUntil != null}">
+            Gói Premium dùng đến
+            <span class="font-semibold tabular" th:text="${#temporals.format(premiumUntil, 'dd/MM/yyyy HH:mm')}">08/12/2026</span>.
+        </p>
+        <p class="mt-2 text-pretty text-base-content/80" th:if="${st == 'FAILED'}">
+            Bạn chưa bị trừ tiền cho đơn này. Có thể thử thanh toán lại.
+        </p>
+        <p class="mt-2 text-pretty text-base-content/80" th:if="${st == 'PENDING'}">
+            MoMo chưa báo kết quả. Nếu bạn đã thanh toán, chờ vài giây rồi bấm “Kiểm tra lại”.
+        </p>
+
+        <dl class="mt-6 space-y-2 border-t border-base-300 pt-4 text-left text-sm">
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Mã đơn</dt>
+                <dd class="min-w-0 break-all font-semibold tabular" th:text="${payment.orderId}">LC1731000000001234</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Gói</dt>
+                <dd class="font-semibold" th:text="${payment.plan.label}">Premium</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Số tiền</dt>
+                <dd class="font-semibold tabular" th:text="${#numbers.formatInteger(payment.amount, 1, 'POINT')} + ' ₫'">49.000 ₫</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Thời gian</dt>
+                <dd class="tabular" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">08/11/2026 12:00</dd>
+            </div>
+            <div th:if="${st == 'FAILED' and payment.message != null}" class="flex justify-between gap-4">
+                <dt class="shrink-0 text-base-content/70">MoMo báo</dt>
+                <dd class="min-w-0 break-words text-right" th:text="${payment.message}">Giao dịch bị từ chối</dd>
+            </div>
+        </dl>
+
+        <div class="mt-6 flex flex-col gap-3">
+            <a th:if="${st == 'PENDING'}" th:href="@{/payments/{id}(id=${payment.orderId})}"
+               class="btn btn-primary h-12 rounded-full px-6">Kiểm tra lại</a>
+            <a th:if="${st == 'FAILED'}" th:href="@{/payments/checkout}" class="btn btn-primary h-12 rounded-full px-6">Thanh toán lại</a>
+            <a th:if="${st == 'SUCCESS'}" th:href="@{/scans/new}" class="btn btn-primary h-12 rounded-full px-6">Quét lá ngay</a>
+            <a th:href="@{/plans}" class="btn h-12 rounded-full px-6">Về trang gói</a>
+        </div>
+    </div>
+</section>
+</body>
+</html>

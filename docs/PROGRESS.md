@@ -5,8 +5,8 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 8 (MoMo sandbox), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: nút "Nâng cấp Premium" trỏ `/payments/checkout` (Task 8 mới có); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Vấn đề đang mở: chưa thử MoMo sandbox thật (container không gọi được test-payment.momo.vn; chờ Shin chạy); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -23,6 +23,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 8: MoMo sandbox
+- Đã làm: `MomoClient` (create/query captureWallet, ký HMAC-SHA256, kiểm chữ ký IPN, RestClient timeout 30s), `PaymentService` (`startPremium`, `handleIpn`, `refresh`; khoá dòng `PESSIMISTIC_WRITE` để IPN và trang kết quả không kích hoạt 2 lần), `PaymentController` (`/payments/checkout`, `POST /payments/momo`, `/payments/momo/return`, `POST /payments/momo/ipn` trả 204/400, `/payments/{orderId}`), 2 template `payments/*`; IPN công khai và bỏ CSRF trong `SecurityConfig`.
+- Test: `MomoClientTest` (9, chữ ký so với giá trị tính bằng Python), `PaymentServiceTest` (13), `PaymentControllerTest` (11).
+- Quyết định: Shin chọn key test công khai của MoMo (env `MOMO_*`); orderId = `LC` + millis + 4 số; resultCode 0 = thành công, 1000/7000/7002 = còn chờ, còn lại = thất bại; sai số tiền thì bỏ qua; trang kết quả chỉ đọc DB (gọi `query` khi PENDING), không tin tham số redirect. Nhánh: `feat/task-8-momo`.
+- Shin hỏi dùng QR tài khoản cá nhân: không tự xác nhận được (không IPN/chữ ký); đề xuất làm task phụ sau Task 10 nếu Shin muốn.
 
 ### 2026-11-08 – Task 7: Subscription, Payment + trang chọn gói
 - Đã làm: `V3__subscription_payment.sql`; entity `Subscription` (1 dòng/người, không có dòng = Free), `Payment`, enum `Plan`, `PaymentStatus`; `SubscriptionService` (`isPremium`, `premiumUntil`, `activatePremium` cộng dồn khi còn hạn); `AppUserService.current(auth)`; trang `/plans` + mục "Gói" trên navbar (điện thoại: bấm avatar).

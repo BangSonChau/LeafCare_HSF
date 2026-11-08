@@ -59,6 +59,19 @@ Mỗi người tự tạo OAuth client của mình (không chia sẻ secret, kh�
 
 Không đặt hai biến Google thì app vẫn chạy nhưng bấm đăng nhập sẽ lỗi `invalid_client`.
 
+### Cấu hình MoMo sandbox
+
+Thanh toán Premium dùng MoMo môi trường test (`https://test-payment.momo.vn`, tiền giả). Đặt biến môi trường:
+
+| Biến | Ý nghĩa |
+|---|---|
+| `MOMO_PARTNER_CODE` | Partner code sandbox |
+| `MOMO_ACCESS_KEY` | Access key sandbox |
+| `MOMO_SECRET_KEY` | Secret key sandbox (dùng ký HMAC-SHA256) |
+| `MOMO_IPN_URL` | (tuỳ chọn) URL công khai MoMo gọi IPN, ví dụ qua ngrok: `https://xxx.ngrok-free.app/payments/momo/ipn` |
+
+Chạy local thì MoMo không gọi được IPN vào `localhost`; trang kết quả `/payments/{orderId}` tự hỏi MoMo (API `query`) khi đơn còn "Đang xử lý", nên vẫn chạy đủ luồng. Thanh toán thử bằng app MoMo bản test theo hướng dẫn trên developers.momo.vn.
+
 ## Quy trình làm việc nhóm
 
 - Mỗi task một nhánh tách từ `main`: `feat/...`, `fix/...`, `docs/...`, `chore/...`.
