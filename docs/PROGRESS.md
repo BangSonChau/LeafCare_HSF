@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Phase 1 (5 task + Flyway + README) đã merge vào `main`. Timeline cập nhật ở `docs/TIMELINE.md` (thay bản PDF).
-- Việc tiếp theo: Giai đoạn 2 (tuần 4–5): Spring Security + Google OAuth2, Subscription/Payment, MoMo sandbox + IPN, trang chọn gói / kết quả / lịch sử giao dịch, giới hạn Free 5 lượt/ngày.
+- Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
+- Việc tiếp theo: Task 6 (Spring Security + Google login, USER/ADMIN), nhánh `feat/task-6-google-login`.
 - Vấn đề đang mở: xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -22,6 +22,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Kế hoạch Giai đoạn 2 (ngoài plan)
+- Đã làm: viết plan Giai đoạn 2, chia 5 task (6 Google login, 7 gói + entity, 8 MoMo, 9 lịch sử giao dịch, 10 giới hạn Free).
+- Quyết định: ADMIN theo danh sách email env `LEAFCARE_ADMIN_EMAILS`; khoá bí mật chỉ qua env; chạy local không có IPN thì trang kết quả gọi API `query` của MoMo; lượt quét gắn theo người dùng (V4). Nhánh: `docs/phase2-plan`.
+- File: `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (mới), `docs/PROGRESS.md`.
 
 ### 2026-11-08 – Cập nhật timeline (ngoài plan)
 - Đã làm: chuyển timeline sang Markdown `docs/TIMELINE.md`; đổi VNPay -> MoMo sandbox; liệt kê trang chọn gói, nút thanh toán MoMo, trang kết quả, lịch sử giao dịch; đánh dấu Phase 1 xong.
