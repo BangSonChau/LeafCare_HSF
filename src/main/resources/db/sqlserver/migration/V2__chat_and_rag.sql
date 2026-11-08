@@ -1,0 +1,88 @@
+-- V2: Chat AI, RAG knowledge base, and citations (SQL Server)
+CREATE TABLE knowledge_source (
+    id              BIGINT IDENTITY(1,1) PRIMARY KEY,
+    source_code     VARCHAR(100)  NOT NULL,
+    title           VARCHAR(500)  NOT NULL,
+    url             VARCHAR(1000) NOT NULL,
+    publisher       VARCHAR(255)  NOT NULL,
+    published_date  VARCHAR(100),
+    license_info    VARCHAR(255),
+    checksum        VARCHAR(128)  NOT NULL,
+    version         INT           NOT NULL,
+    review_status   VARCHAR(50)   NOT NULL,
+    reviewed_by     VARCHAR(255),
+    created_at      DATETIME2(6)  NOT NULL,
+    CONSTRAINT uk_knowledge_source_code UNIQUE (source_code)
+);
+
+CREATE TABLE knowledge_chunk (
+    id                  BIGINT IDENTITY(1,1) PRIMARY KEY,
+    chunk_code          VARCHAR(120)  NOT NULL,
+    source_id           BIGINT        NOT NULL,
+    source_version      INT           NOT NULL,
+    section_title       VARCHAR(500),
+    content             VARCHAR(MAX)  NOT NULL,
+    plant_tag           VARCHAR(255),
+    scientific_name_tag VARCHAR(255),
+    disease_tag         VARCHAR(255),
+    plant_part          VARCHAR(255),
+    region              VARCHAR(100),
+    content_hash        VARCHAR(128)  NOT NULL,
+    review_status       VARCHAR(50)   NOT NULL,
+    embedding_model     VARCHAR(100),
+    dimension           INT,
+    vector_json         VARCHAR(MAX),
+    index_version       INT           NOT NULL,
+    created_at          DATETIME2(6)  NOT NULL,
+    CONSTRAINT uk_knowledge_chunk_code UNIQUE (chunk_code),
+    CONSTRAINT fk_chunk_source FOREIGN KEY (source_id) REFERENCES knowledge_source (id)
+);
+
+CREATE TABLE chat_conversation (
+    id              BIGINT IDENTITY(1,1) PRIMARY KEY,
+    session_owner   VARCHAR(128) NOT NULL,
+    title           VARCHAR(255) NOT NULL,
+    plant_id        BIGINT,
+    scan_history_id BIGINT,
+    created_at      DATETIME2(6) NOT NULL,
+    updated_at      DATETIME2(6) NOT NULL,
+    expires_at      DATETIME2(6) NOT NULL,
+    CONSTRAINT fk_chat_conv_plant FOREIGN KEY (plant_id) REFERENCES plant (id) ON DELETE SET NULL,
+    CONSTRAINT fk_chat_conv_scan FOREIGN KEY (scan_history_id) REFERENCES scan_history (id) ON DELETE SET NULL
+);
+
+CREATE TABLE chat_message (
+    id                       BIGINT IDENTITY(1,1) PRIMARY KEY,
+    conversation_id          BIGINT        NOT NULL,
+    role                     VARCHAR(20)   NOT NULL,
+    content                  VARCHAR(4000) NOT NULL,
+    image_file_name          VARCHAR(255),
+    status                   VARCHAR(40)   NOT NULL,
+    client_request_id        VARCHAR(100),
+    model_name               VARCHAR(100),
+    prompt_version           VARCHAR(50),
+    index_version            INT,
+    prompt_tokens            INT,
+    completion_tokens        INT,
+    latency_ms               BIGINT,
+    follow_up_questions_json VARCHAR(2000),
+    created_at               DATETIME2(6)  NOT NULL,
+    CONSTRAINT fk_chat_msg_conv FOREIGN KEY (conversation_id) REFERENCES chat_conversation (id) ON DELETE CASCADE
+);
+
+CREATE TABLE chat_citation (
+    id             BIGINT IDENTITY(1,1) PRIMARY KEY,
+    message_id     BIGINT       NOT NULL,
+    chunk_id       BIGINT       NOT NULL,
+    chunk_code     VARCHAR(120) NOT NULL,
+    source_version INT          NOT NULL,
+    display_order  INT          NOT NULL,
+    snippet        VARCHAR(600),
+    CONSTRAINT fk_citation_msg FOREIGN KEY (message_id) REFERENCES chat_message (id) ON DELETE CASCADE,
+    CONSTRAINT fk_citation_chunk FOREIGN KEY (chunk_id) REFERENCES knowledge_chunk (id)
+);
+
+CREATE INDEX idx_chat_conv_owner ON chat_conversation (session_owner, updated_at DESC);
+CREATE INDEX idx_chat_msg_conv ON chat_message (conversation_id, created_at ASC);
+CREATE INDEX idx_chunk_status ON knowledge_chunk (review_status, index_version);
+

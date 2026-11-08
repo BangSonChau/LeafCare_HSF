@@ -1,0 +1,236 @@
+{
+  "manifestVersion": "1.0",
+  "updatedAt": "2026-11-08",
+  "reviewedByDefault": "Hội đồng kỹ thuật LeafCare (dựa trên tài liệu Chi cục TT&BVTV, Viện KHNN Việt Nam VAAS, Học viện Nông nghiệp Việt Nam VNUA)",
+  "sources": [
+    {
+      "sourceCode": "VNUA-TOMATO-2025",
+      "title": "Cẩm nang chẩn đoán và phòng trừ tổng hợp bệnh hại Cà chua trồng tại nhà và nông hộ",
+      "url": "https://plantclinic.vnua.edu.vn/tai-lieu/ca-chua-benh-hai-pho-bien",
+      "publisher": "Bệnh viện Cây trồng — Học viện Nông nghiệp Việt Nam (VNUA)",
+      "publishedDate": "2025-09",
+      "licenseInfo": "Tài liệu khuyến nông công khai — trích dẫn có ghi nguồn",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "TOMATO-LATE-BLIGHT-01",
+          "sectionTitle": "Bệnh mốc sương cà chua (Phytophthora infestans) — Triệu chứng và phân biệt",
+          "plantTag": "Cà chua",
+          "scientificNameTag": "Solanum lycopersicum",
+          "diseaseTag": "Bệnh mốc sương",
+          "plantPart": "Lá, thân, quả",
+          "region": "Toàn quốc (nặng vụ Đông Xuân ẩm lạnh)",
+          "content": "Cây trồng: Cà chua (Solanum lycopersicum). Tác nhân: Nấm giả Phytophthora infestans gây bệnh mốc sương (sương mai cà chua). Triệu chứng điển hình: Trên lá xuất hiện các vết đốm lớn màu xanh xám như luộc nước sôi ở mép lá hoặc chóp lá, sau chuyển nâu đen và lan rất nhanh. Khi trời ẩm hoặc sáng sớm có sương, mặt dưới lá tại rìa vết bệnh có lớp mốc trắng xám mịn như tơ. Trên thân và cuống lá có vết nâu sẫm kéo dài làm cành dễ gãy. Trên quả xanh có vết nâu sần sùi, cứng, lan rộng. Dấu hiệu phân biệt: Khác với bệnh đốm vòng (cháy lá sớm Alternaria solani có các vòng đồng tâm rõ như bia bắn và thường bắt đầu từ lá già phía gốc), bệnh mốc sương không có vòng đồng tâm rõ mà loang ướt nhanh cả lá non lẫn lá già chỉ trong 3-5 ngày mưa ẩm."
+        },
+        {
+          "chunkCode": "TOMATO-LATE-BLIGHT-02",
+          "sectionTitle": "Bệnh mốc sương cà chua — Xử lý canh tác và phòng ngừa an toàn",
+          "plantTag": "Cà chua",
+          "scientificNameTag": "Solanum lycopersicum",
+          "diseaseTag": "Bệnh mốc sương",
+          "plantPart": "Lá, thân, quả",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Cà chua (Solanum lycopersicum). Biện pháp xử lý trước mắt và phòng ngừa bệnh mốc sương (Phytophthora infestans): 1) Ngắt bỏ ngay các lá, cành, quả có vết mốc sương cho vào túi kín đem tiêu huỷ, không ủ phân tại vườn. 2) Tuyệt đối tránh tưới phun mưa lên tán lá vào chiều tối; chỉ tưới vào gốc buổi sáng để lá khô ráo trước đêm. 3) Tỉa bớt lá chân già dưới chùm quả đầu tiên để thông gió, làm giàn giữ cây không chạm đất. 4) Với vườn tại nhà, khi thời tiết sương mù ẩm độ cao trên 85% và nhiệt độ 18-22 độ C, có thể phun phòng bằng chế phẩm gốc đồng hoặc nấm đối kháng Trichoderma tưới gốc theo đúng hướng dẫn trên nhãn. Lưu ý an toàn: Không tự ý tăng liều thuốc bảo vệ thực vật và phải đảm bảo thời gian cách ly tối thiểu trước khi thu hoạch quả ăn tươi."
+        },
+        {
+          "chunkCode": "TOMATO-EARLY-BLIGHT-01",
+          "sectionTitle": "Bệnh đốm vòng (cháy lá sớm) cà chua (Alternaria solani)",
+          "plantTag": "Cà chua",
+          "scientificNameTag": "Solanum lycopersicum",
+          "diseaseTag": "Bệnh đốm vòng",
+          "plantPart": "Lá già, thân, quả",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Cà chua (Solanum lycopersicum). Tác nhân: Nấm Alternaria solani gây bệnh đốm vòng (cháy lá sớm). Triệu chứng: Xuất hiện trước tiên ở các lá già tầng dưới gần mặt đất. Vết bệnh hình tròn hoặc đa giác màu nâu sẫm, bên trong có các vòng tròn đồng tâm màu đen rõ rệt và xung quanh vết đốm có quầng vàng. Khi bệnh nặng, nhiều đốm liên kết làm lá vàng khô rồi rụng dần từ gốc lên ngọn. Điều kiện phát sinh: Nóng ẩm xen kẽ mưa rào, cây thiếu dinh dưỡng hoặc mang nhiều quả làm suy cây. Xử lý và phòng ngừa: Cắt tỉa lá già tầng dưới, phủ rơm hoặc màng phủ gốc để hạn chế nước tưới bắn bào tử nấm từ đất lên lá, bón bổ sung kali và hữu cơ hoai mục, luân canh với cây khác họ Cà ít nhất 1-2 vụ."
+        },
+        {
+          "chunkCode": "TOMATO-BER-CARE-01",
+          "sectionTitle": "Hội chứng thối đít quả và xoăn lá sinh lý trên cà chua (Rối loạn chăm sóc)",
+          "plantTag": "Cà chua",
+          "scientificNameTag": "Solanum lycopersicum",
+          "diseaseTag": "Thối đít quả do thiếu Canxi và tưới nước thất thường",
+          "plantPart": "Quả, lá",
+          "region": "Trồng chậu sân thượng, ban công",
+          "content": "Cây trồng: Cà chua (Solanum lycopersicum). Phân biệt bệnh truyền nhiễm và rối loạn sinh lý do chăm sóc: 1) Thối đít quả (Blossom End Rot): Đáy quả xuất hiện vết lõm khô màu nâu đen như da thuộc, không có mùi hôi thối nhũn ban đầu. Nguyên nhân KHÔNG phải do nấm hay vi khuẩn mà do thiếu hụt Canxi cục bộ ở quả non, thường xảy ra khi trồng chậu để đất khô hạn rồi tưới đẫm đột ngột hoặc bón thừa đạm. Cách khắc phục: Duy trì độ ẩm đất ổn định, che nắng trưa cho chậu, bổ sung vôi nông nghiệp hoặc phân bón lá giàu Canxi-Bo khi cây bắt đầu đậu quả. 2) Lá cà chua cuộn cong lên hình thìa nhưng vẫn xanh bóng, không có đốm mốc hay côn trùng: Thường là phản ứng sinh lý tự vệ khi nắng gắt, gió khô hoặc tỉa cành quá mạnh; chỉ cần che lưới giảm nắng và tưới đều."
+        }
+      ]
+    },
+    {
+      "sourceCode": "PPD-CHILI-2025",
+      "title": "Hướng dẫn quản lý dịch hại tổng hợp (IPM) trên cây Ớt gia đình và nông hộ",
+      "url": "https://www.ppd.gov.vn/trong-trot-va-bao-ve-thuc-vat.html#ot-ipm",
+      "publisher": "Cục Trồng trọt và Bảo vệ thực vật (PPD)",
+      "publishedDate": "2025-08",
+      "licenseInfo": "Tài liệu hướng dẫn kỹ thuật công khai",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "CHILI-ANTHRACNOSE-01",
+          "sectionTitle": "Bệnh thán thư ớt (Colletotrichum spp.) — Triệu chứng và xử lý",
+          "plantTag": "Ớt",
+          "scientificNameTag": "Capsicum annuum",
+          "diseaseTag": "Bệnh thán thư ớt",
+          "plantPart": "Quả, lá",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Ớt (Capsicum annuum). Tác nhân: Nấm Colletotrichum spp. gây bệnh thán thư (nổ trái, đốm vòng trên ớt). Triệu chứng: Trên quả ớt (đặc biệt quả sắp chín) và lá già xuất hiện vết bệnh hơi lõm xuống, hình tròn hoặc bầu dục, có các vòng đồng tâm. Giữa vết bệnh có các chấm nhỏ li ti màu đen hoặc lớp bào tử màu hồng cam nhầy khi trời ẩm. Trên lá có đốm nâu xám viền nâu đậm. Phân biệt: Khác với vết cháy nắng (chỉ nằm ở mặt quả hướng nắng, màu trắng bạc khô mỏng và không có vòng đồng tâm đen). Xử lý & phòng ngừa: Thu gom toàn bộ quả và lá bệnh tiêu huỷ ngay; trồng thưa, thoát nước tốt trong mùa mưa; không tưới phun lên quả; tăng cường phân chuồng hoai mục ủ Trichoderma và bổ sung Canxi-Kali."
+        },
+        {
+          "chunkCode": "CHILI-LEAF-CURL-01",
+          "sectionTitle": "Hiện tượng xoăn đọt, co rúm lá non trên cây ớt — Sâu hại và Virus",
+          "plantTag": "Ớt",
+          "scientificNameTag": "Capsicum annuum",
+          "diseaseTag": "Xoăn lá ớt do bọ trĩ, rệp và virus khảm",
+          "plantPart": "Đọt non, lá non",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Ớt (Capsicum annuum). Khi đọt non và lá non ớt bị xoăn tít, biến dạng cần phân biệt rõ 3 nguyên nhân: 1) Do Bọ trĩ (Thrips) chích hút: Lá non cong vênh lên trên như hình chiếc thuyền, gân lá mặt dưới có vệt sần màu nâu đồng, ngọn chùn lại. 2) Do Rệp muội / Mạt trắng (Broad mite): Lá non cụp cong xuống dưới, mặt dưới lá bóng dầu hoặc có rệp li ti kèm kiến và nấm muội đen. 3) Do Virus khảm vàng (Begomovirus do bọ phấn trắng truyền): Phiến lá loang lổ mảng xanh đậm xen vàng sáng, lá dày giòn và cây lùn hẳn. Xử lý an toàn tại nhà: Treo bẫy dính màu vàng/xanh bắt bọ phấn và bọ trĩ; phun dung dịch dầu khoáng sinh học hoặc dịch tỏi ớt gừng pha loãng vào mặt dưới lá; nếu cây đã nhiễm virus nặng từ nhỏ thì nên nhổ bỏ để tránh lây sang cây ớt và cà chua bên cạnh."
+        }
+      ]
+    },
+    {
+      "sourceCode": "VAAS-ROSE-2025",
+      "title": "Kỹ thuật nhận diện bệnh hại và chăm sóc Hoa hồng trồng chậu tại Việt Nam",
+      "url": "https://vaas.vn/ky-thuat-hoa-cay-canh/hoa-hong",
+      "publisher": "Viện Khoa học Nông nghiệp Việt Nam (VAAS)",
+      "publishedDate": "2025-10",
+      "licenseInfo": "Tài liệu phổ biến kỹ thuật công khai",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "ROSE-BLACK-SPOT-01",
+          "sectionTitle": "Bệnh đốm đen hoa hồng (Diplocarpon rosae) — Dấu hiệu và xử lý",
+          "plantTag": "Hoa hồng",
+          "scientificNameTag": "Rosa chinensis",
+          "diseaseTag": "Bệnh đốm đen hoa hồng",
+          "plantPart": "Lá",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Hoa hồng (Rosa spp. / Rosa chinensis). Tác nhân: Nấm Diplocarpon rosae gây bệnh đốm đen. Triệu chứng nhận biết: Mặt trên của lá xuất hiện các đốm tròn màu đen hoặc tím đen đường kính 2-10mm, viền đốm có dạng tia tua rua như lông chim (đặc điểm phân biệt quan trọng). Sau vài ngày, mô lá xung quanh đốm đen chuyển sang màu vàng tươi, lá rụng hàng loạt từ tầng lá dưới lên trên làm cây trơ cành. Điều kiện phát sinh: Mưa phùn, sương mù, hoặc thói quen tưới nước lên lá vào chiều tối khiến lá ướt liên tục trên 6 giờ. Bước xử lý trước mắt: Cắt bỏ các lá có đốm đen trên cây và nhặt sạch toàn bộ lá rụng trên mặt chậu đem vứt bỏ (vì bào tử nấm tồn tại trong lá rụng); tỉa cành tăm tạo độ thông thoáng; chỉ tưới nước vào gốc buổi sáng."
+        },
+        {
+          "chunkCode": "ROSE-POWDERY-MITE-01",
+          "sectionTitle": "Phân biệt bệnh phấn trắng và nhện đỏ hại hoa hồng trồng ban công",
+          "plantTag": "Hoa hồng",
+          "scientificNameTag": "Rosa chinensis",
+          "diseaseTag": "Bệnh phấn trắng và nhện đỏ hoa hồng",
+          "plantPart": "Lá non, nụ hoa, mặt dưới lá",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Hoa hồng (Rosa chinensis). Phân biệt 2 vấn đề phổ biến trên hoa hồng ban công: 1) Bệnh phấn trắng (nấm Podosphaera pannosa): Xuất hiện lớp bột trắng như phấn rôm phủ trên lá non, chồi non và cổ nụ hoa; lá non bị cong queo, biến dạng, nụ không nở được. Phát sinh mạnh khi giao mùa, đêm ẩm lạnh ngày nắng ấm. Xử lý: Cắt tỉa chồi nhiễm nặng, có thể phun dung dịch baking soda loãng (2g/lít nước + vài giọt dầu thực vật/nước rửa chén sinh học) hoặc chế phẩm lưu huỳnh/sinh học vào sáng mát. 2) Nhện đỏ (Tetranychus urticae - sâu hại, không phải nấm): Mặt trên lá có vô số chấm li ti màu trắng vàng như mũi kim châm, lá mất màu xanh trở nên xám bạc khô ráp; mặt dưới lá có lớp tơ mỏng và các chấm đỏ/nâu di động khi soi kỹ. Phát sinh mạnh khi thời tiết nắng nóng, khô hanh. Xử lý: Dùng vòi nước tia mạnh xịt rửa mặt dưới lá vào buổi sáng và phun dầu neem (dầu sầu đâu) định kỳ 5-7 ngày/lần."
+        }
+      ]
+    },
+    {
+      "sourceCode": "VNUA-ORCHID-2025",
+      "title": "Hướng dẫn chẩn đoán bệnh hại và rối loạn sinh lý trên Lan hồ điệp và phong lan",
+      "url": "https://plantclinic.vnua.edu.vn/tai-lieu/hoa-lan-ho-diep",
+      "publisher": "Bệnh viện Cây trồng — Học viện Nông nghiệp Việt Nam (VNUA)",
+      "publishedDate": "2025-07",
+      "licenseInfo": "Tài liệu khuyến nông công khai",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "ORCHID-SOFT-ROT-01",
+          "sectionTitle": "Bệnh thối nhũn vi khuẩn trên Lan hồ điệp (Erwinia / Pectobacterium)",
+          "plantTag": "Lan hồ điệp",
+          "scientificNameTag": "Phalaenopsis spp.",
+          "diseaseTag": "Bệnh thối nhũn lan",
+          "plantPart": "Lá, nõn (đỉnh sinh trưởng)",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Lan hồ điệp (Phalaenopsis spp.). Tác nhân: Vi khuẩn Pectobacterium (Erwinia carotovora) gây bệnh thối nhũn. Triệu chứng: Ban đầu là vết nhỏ mọng nước màu xanh sẫm hoặc nâu nhạt như bị bỏng nước sôi trên lá. Vết bệnh lan cực nhanh chỉ trong 24-48 giờ ra toàn bộ phiến lá hoặc ăn sâu vào nõn (đỉnh sinh trưởng); phần mô bệnh nhũn nước, ấn vào chảy dịch nhầy và có mùi hôi tanh đặc trưng. Phân biệt: Khác với bệnh thán thư do nấm (vết khô, lõm, màu nâu đen có vòng đồng tâm và không có mùi hôi). Xử lý khẩn cấp: Tách riêng chậu lan bệnh ngay lập tức; dùng dao kéo đã khử trùng bằng cồn 70 độ cắt bỏ toàn bộ phần lá thối (cắt lẹm vào phần mô lành 1-2 cm); bôi bột vôi, bột quế hoặc keo liền sẹo vào vết cắt; ngừng tưới nước hoàn toàn 4-5 ngày và đặt nơi thoáng gió, mát mẻ."
+        },
+        {
+          "chunkCode": "ORCHID-SUNBURN-CARE-01",
+          "sectionTitle": "Phân biệt cháy nắng, đọng nước nõn và vàng lá già sinh lý ở Lan hồ điệp",
+          "plantTag": "Lan hồ điệp",
+          "scientificNameTag": "Phalaenopsis spp.",
+          "diseaseTag": "Cháy nắng và vàng lá sinh lý ở lan",
+          "plantPart": "Lá, rễ",
+          "region": "Trồng trong nhà, ban công",
+          "content": "Cây trồng: Lan hồ điệp (Phalaenopsis spp.). Phân biệt dấu hiệu chăm sóc sai với bệnh truyền nhiễm: 1) Cháy nắng (Sunburn): Xuất hiện mảng trắng bệch hoặc vàng nhạt ở phần gồ cao nhất của phiến lá (nơi hứng nắng trực tiếp buổi trưa), sau đó khô lõm thành mảng nâu đen có viền vàng rõ, vết khô cứng và không lan rộng thêm khi đã đưa vào mát. 2) Vàng lá chân sinh lý: Chỉ 1-2 lá dưới cùng sát gốc chuyển vàng từ từ rồi khô rụng trong khi các lá trên vẫn cứng cáp và rễ xanh bạc khỏe mạnh — đây là quá trình lão hóa tự nhiên, không cần dùng thuốc. 3) Ngược lại, nếu nhiều lá cùng nhăn nheo mềm rũ dù dớn/vỏ thông luôn ướt sũng: Rễ lan đã bị thối đen rỗng ruột do giá thể bí nước; cần tháo bỏ dớn cũ, cắt rễ thối, để khô 1-2 ngày rồi trồng lại bằng vỏ thông thoáng khí."
+        }
+      ]
+    },
+    {
+      "sourceCode": "VAAS-INDOOR-POTHOS-2025",
+      "title": "Sổ tay chăm sóc và xử lý triệu chứng trên cây Trầu bà và cây cảnh nội thất",
+      "url": "https://vaas.vn/ky-thuat-hoa-cay-canh/cay-noi-that-trau-ba",
+      "publisher": "Viện Khoa học Nông nghiệp Việt Nam (VAAS)",
+      "publishedDate": "2025-11",
+      "licenseInfo": "Tài liệu phổ biến kỹ thuật công khai",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "POTHOS-ROOT-ROT-01",
+          "sectionTitle": "Vàng lá, thối rễ ở Trầu bà (Epipremnum aureum) do tưới dư nước và úng giá thể",
+          "plantTag": "Trầu bà",
+          "scientificNameTag": "Epipremnum aureum",
+          "diseaseTag": "Thối rễ vàng lá do úng nước",
+          "plantPart": "Lá, rễ, gốc thân",
+          "region": "Cây nội thất, văn phòng, ban công",
+          "content": "Cây trồng: Trầu bà (Epipremnum aureum). Triệu chứng: Nhiều lá già và lá bánh tẻ chuyển màu vàng tươi hoặc vàng úa hàng loạt, cuống lá mềm rũ dù đất trong chậu vẫn ẩm ướt; gốc thân sát mặt đất chuyển màu nâu đen mềm nhũn; khi nhổ kiểm tra thấy rễ màu đen nâu, mềm mủn và dễ tuột lớp vỏ rễ. Với trầu bà thủy sinh, nước có mùi hôi, rễ nhớt đen. Nguyên nhân chính: Do tưới nước quá thường xuyên khi đất chưa kịp khô, chậu không có lỗ thoát nước hoặc đất thịt quá chặt gây thiếu oxy vùng rễ, tạo điều kiện cho nấm Pythium phát triển. Cách xử lý: Ngừng tưới ngay; cắt bỏ toàn bộ lá vàng và đoạn rễ/thân đã đen thối; nếu trồng đất thì thay giá thể mới tơi xốp (trộn xơ dừa đã xử lý chát, trấu hun, đá perlite); chỉ tưới lại khi mặt đất khô sâu 2-3 cm. Nếu trồng thủy sinh, rửa sạch nhớt rễ, cắt hết rễ thối và thay nước sạch 2-3 ngày/lần."
+        },
+        {
+          "chunkCode": "POTHOS-LEAF-TIP-01",
+          "sectionTitle": "Cháy khô chóp lá, rìa lá nâu và mất vân cẩm thạch trên Trầu bà",
+          "plantTag": "Trầu bà",
+          "scientificNameTag": "Epipremnum aureum",
+          "diseaseTag": "Cháy chóp lá do khô không khí hoặc sóc phân",
+          "plantPart": "Lá",
+          "region": "Cây nội thất, phòng máy lạnh",
+          "content": "Cây trồng: Trầu bà (Epipremnum aureum). Phân biệt các biểu hiện rối loạn chăm sóc trên lá: 1) Chóp lá và mép lá khô cháy màu nâu giòn, có viền vàng hẹp: Thường xảy ra khi đặt cây ngay luồng gió điều hòa làm độ ẩm không khí quá thấp, để đất khô kiệt quá lâu giữa các lần tưới, hoặc bón phân hóa học quá liều gây tích tụ muối ở chóp lá. Khắc phục: Đổi vị trí tránh gió lùa trực tiếp từ máy lạnh, xả nước đẫm qua đáy chậu nếu nghi dư phân, lau bụi mặt lá bằng khăn ẩm. 2) Lá mới ra nhỏ, lóng thân vươn dài mảnh khảnh, các giống trầu bà sữa/cẩm thạch mất vệt trắng chuyển xanh hoàn toàn: Dấu hiệu cây thiếu ánh sáng tán xạ; cần chuyển cây ra gần cửa sổ sáng (tránh nắng gắt trực tiếp buổi trưa)."
+        }
+      ]
+    },
+    {
+      "sourceCode": "PPD-CUCUMBER-RICE-COFFEE-2025",
+      "title": "Tài liệu tra cứu bệnh hại Dưa leo tại nhà, Lúa và Cà phê phổ biến ở Việt Nam",
+      "url": "https://www.ppd.gov.vn/trong-trot-va-bao-ve-thuc-vat.html#tong-hop",
+      "publisher": "Cục Trồng trọt và Bảo vệ thực vật (PPD)",
+      "publishedDate": "2025-06",
+      "licenseInfo": "Tài liệu hướng dẫn kỹ thuật công khai",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "reviewedBy": "Nhóm biên tập LeafCare",
+      "chunks": [
+        {
+          "chunkCode": "CUCUMBER-DOWNY-MILDEW-01",
+          "sectionTitle": "Bệnh giả sương mai (Pseudoperonospora cubensis) và phấn trắng trên Dưa leo",
+          "plantTag": "Dưa leo",
+          "scientificNameTag": "Cucumis sativus",
+          "diseaseTag": "Bệnh sương mai dưa leo",
+          "plantPart": "Lá",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Dưa leo / Dưa chuột (Cucumis sativus). 1) Bệnh giả sương mai (Pseudoperonospora cubensis): Mặt trên lá có các đốm màu vàng nhạt sau chuyển nâu, hình đa giác góc cạnh rõ rệt do bị giới hạn bởi các gân lá. Khi trời ẩm ướt vào sáng sớm, mặt dưới đúng vị trí vết đốm có lớp mốc màu xám tím hoặc tím đen. Lá bệnh khô cháy rất nhanh từ tầng lá dưới lên. 2) Phân biệt với bệnh phấn trắng dưa leo: Phấn trắng tạo lớp bột trắng như bột mì phủ cả mặt trên và mặt dưới lá, không bị giới hạn thành hình góc cạnh bởi gân lá. Xử lý và phòng ngừa: Làm giàn chữ A thông thoáng, cắt tỉa lá già sát gốc, không tưới ướt lá buổi chiều tối, luân canh với cây khác họ Bầu bí."
+        },
+        {
+          "chunkCode": "RICE-BLAST-01",
+          "sectionTitle": "Bệnh đạo ôn lúa (Pyricularia oryzae) — Triệu chứng mắt én và phòng trừ",
+          "plantTag": "Lúa",
+          "scientificNameTag": "Oryza sativa",
+          "diseaseTag": "Bệnh đạo ôn",
+          "plantPart": "Lá, cổ bông",
+          "region": "Toàn quốc",
+          "content": "Cây trồng: Lúa (Oryza sativa). Tác nhân: Nấm Pyricularia oryzae (Magnaporthe oryzae) gây bệnh đạo ôn. Triệu chứng: Trên lá lúa, vết bệnh ban đầu nhỏ như đầu mũi kim màu xám xanh, sau lớn dần thành hình thoi (hình mắt én) hai đầu nhọn, tâm vết bệnh màu xám trắng, viền ngoài màu nâu đậm và tiếp giáp mô khỏe có quầng vàng. Khi bệnh nặng các vết nối liền nhau làm lá cháy khô (cháy rầy giả). Trên cổ bông và gié lúa có vết nâu đen làm bông bạc trắng hoặc gãy cổ bông. Điều kiện phát sinh: Trời âm u, sương mù nhiều, đêm lạnh ngày ấm và ruộng lúa bón thừa phân đạm, gieo sạ dày. Biện pháp xử lý: Ngừng bón đạm ngay khi phát hiện vết bệnh và ngừng phun phân bón lá; giữ mực nước ruộng ổn định 3-5cm; sử dụng thuốc đặc trị đạo ôn theo nguyên tắc 4 đúng của cơ quan bảo vệ thực vật địa phương."
+        },
+        {
+          "chunkCode": "COFFEE-RUST-01",
+          "sectionTitle": "Bệnh gỉ sắt cà phê (Hemileia vastatrix) — Nhận biết và quản lý",
+          "plantTag": "Cà phê",
+          "scientificNameTag": "Coffea canephora",
+          "diseaseTag": "Bệnh gỉ sắt",
+          "plantPart": "Lá",
+          "region": "Tây Nguyên và vùng trồng cà phê",
+          "content": "Cây trồng: Cà phê (Coffea canephora / Coffea arabica). Tác nhân: Nấm Hemileia vastatrix gây bệnh gỉ sắt. Triệu chứng đặc trưng: Mặt trên lá có các đốm tròn màu vàng nhạt; lật mặt dưới lá tương ứng thấy phủ một lớp bột mịn màu vàng da cam đến cam đỏ (như màu gỉ sắt), dùng tay quệt vào thấy dính lớp bột bào tử màu cam. Lá bị bệnh nặng sẽ rụng hàng loạt làm cành khô kiệt và giảm năng suất. Biện pháp quản lý tổng hợp: Tạo hình, tỉa cành thông thoáng sau thu hoạch; trồng cây che bóng hợp lý; bón phân cân đối N-P-K kết hợp phân hữu cơ để tăng sức đề kháng; phun phòng bằng chế phẩm gốc đồng vào đầu mùa mưa khi bệnh mới chớm xuất hiện."
+        }
+      ]
+    }
+  ]
+}
+

@@ -36,17 +36,26 @@
             <a th:href="@{/scans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
+            <a th:href="@{/chat}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/chat')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/chat')} ? 'page'">Hỏi AI</a>
         </nav>
 
-        <a th:href="@{/scans/new}"
-           class="btn ml-auto hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
-                <circle cx="12" cy="13" r="3"/>
-            </svg>
-            Quét lá
-        </a>
+        <div class="ml-auto flex items-center gap-2">
+            <a th:href="@{/chat}"
+               class="btn h-10 rounded-full border border-white/40 bg-secondary px-4 text-sm font-semibold text-white hover:bg-secondary/80 md:hidden">
+                Hỏi AI
+            </a>
+            <a th:href="@{/scans/new}"
+               class="btn hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                </svg>
+                Quét lá
+            </a>
+        </div>
     </div>
 </header>
 

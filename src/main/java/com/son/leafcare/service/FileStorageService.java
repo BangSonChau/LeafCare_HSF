@@ -67,4 +67,33 @@ public class FileStorageService {
             // shortcut: an undeletable file leaves an orphan (row already gone); add a cleanup job if it matters.
         }
     }
+
+    public byte[] readBytes(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return new byte[0];
+        }
+        Path target = dir.resolve(fileName).normalize();
+        if (!target.startsWith(dir) || !Files.isRegularFile(target)) {
+            return new byte[0];
+        }
+        try {
+            return Files.readAllBytes(target);
+        } catch (IOException e) {
+            return new byte[0];
+        }
+    }
+
+    public String detectMimeType(String fileName) {
+        if (fileName == null) {
+            return "image/jpeg";
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lower.endsWith(".webp")) {
+            return "image/webp";
+        }
+        return "image/jpeg";
+    }
 }

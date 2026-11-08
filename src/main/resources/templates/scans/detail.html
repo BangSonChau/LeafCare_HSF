@@ -31,11 +31,17 @@
                 </div>
             </dl>
 
-            <form th:action="@{/scans/{id}/delete(id=${scan.id})}" method="post" class="mt-6"
-                  onsubmit="return confirm('Xoá lượt quét này? Ảnh cũng bị xoá và không thể hoàn tác.');">
-                <button type="submit"
-                        class="btn h-12 w-full rounded-full border-error text-error hover:bg-error hover:text-error-content sm:w-auto sm:px-6">Xoá lượt quét</button>
-            </form>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a th:href="@{/chat(scanId=${scan.id})}"
+                   class="btn btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6">
+                    Hỏi AI phân tích ảnh này
+                </a>
+                <form th:action="@{/scans/{id}/delete(id=${scan.id})}" method="post" class="w-full sm:w-auto"
+                      onsubmit="return confirm('Xoá lượt quét này? Ảnh cũng bị xoá và không thể hoàn tác.');">
+                    <button type="submit"
+                            class="btn h-12 w-full rounded-full border-error text-error hover:bg-error hover:text-error-content sm:w-auto sm:px-6">Xoá lượt quét</button>
+                </form>
+            </div>
         </div>
     </div>
 </section>

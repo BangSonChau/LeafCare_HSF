@@ -67,6 +67,9 @@
                 </td>
                 <td class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
                     <div class="flex gap-2 md:justify-end">
+                        <a th:href="@{/chat(diseaseId=${d.id})}"
+                           class="btn h-12 min-w-12 flex-1 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-content md:flex-none"
+                           th:attr="aria-label='Hỏi AI về ' + ${d.name}">Hỏi AI</a>
                         <a th:href="@{/diseases/{id}/edit(id=${d.id})}"
                            class="btn h-12 min-w-12 flex-1 rounded-full md:flex-none"
                            th:attr="aria-label='Sửa ' + ${d.name}">Sửa</a>
