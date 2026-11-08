@@ -131,7 +131,9 @@
 
 Vấn đề: chạy local, `cloudflared tunnel --url` cho link `trycloudflare.com` mới mỗi lần, phải sửa URL webhook trên SePay.
 
-Chọn 1 trong 3 (hỏi Shin trước):
+Shin chọn (08/11): deploy lên **Render**, làm sau Task 9 và 10. Lưu ý gói free: app ngủ sau 15 phút (webhook SePay đã bật gửi lại), ảnh upload mất khi deploy lại, PostgreSQL free của Render có hạn (cân nhắc Neon/Supabase).
+
+Các hướng đã xét:
 - ngrok tài khoản miễn phí: 1 domain cố định `*.ngrok-free.app`, chạy `ngrok http --url=<domain> 8080`. Không cần code, chỉ cập nhật README.
 - Cloudflare named tunnel: cần tên miền riêng trỏ về Cloudflare.
 - Deploy thật (Render/Railway/VPS, có thể dùng Docker + PostgreSQL): `Dockerfile`, biến môi trường production, redirect URI Google cho domain mới, webhook SePay trỏ về domain đó.

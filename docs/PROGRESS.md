@@ -5,7 +5,7 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Task 11 (link cố định cho webhook / deploy) để sau, đã ghi trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Task 11 = deploy lên Render, làm sau Task 9 và 10 (Shin chọn), chi tiết trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
