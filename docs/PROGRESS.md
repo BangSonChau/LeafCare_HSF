@@ -6,10 +6,11 @@
 
 - Đang ở: Giai đoạn 2 xong. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
 - Việc tiếp theo: Giai đoạn 2 xong (Task 6–12). Tiếp theo theo `docs/TIMELINE.md` là Giai đoạn 3 (AI: nhận diện lá, chatbot, RAG), chờ Shin chọn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: ảnh upload trên Render mất mỗi lần deploy lại (gói Free không có đĩa); ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
+- Ảnh upload lưu trong DB (bảng `image_file`, `FileStorageService`), không lưu ra đĩa, vì Render Free xoá đĩa.
 - Spring Boot 4.1.2 + Thymeleaf (layout dialect) + Tailwind v4 + DaisyUI v5, render phía server, không React/JS library mới.
 - Package gốc `com.son.leafcare`. Test chạy trên H2, không đụng PostgreSQL thật.
 - CI (GitHub Actions) chạy `npm run build` + `./mvnw verify` mỗi push/PR; test fail là build fail.
@@ -23,6 +24,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Lưu ảnh quét vào database (ngoài plan)
+- Lý do: Shin thấy ảnh quét trên Render bị mất (gói Free xoá đĩa mỗi lần deploy/khởi động lại); Shin chọn lưu vào DB Neon thay vì Cloudinary.
+- Đã làm: `V6__image_file.sql` (bảng `image_file`: name PK, content_type, data BYTEA), entity `ImageFile`, `ImageFileRepository`; `FileStorageService` giữ nguyên kiểm tra (đuôi, content-type, <=5 MB, tên UUID) nhưng ghi/xoá trong DB; `ImageController` phục vụ `GET /uploads/{name}` (cache 1 năm, private, 404 khi không có); bỏ `WebConfig` và `leafcare.upload-dir`. Ảnh và dòng quét chung 1 transaction nên lỗi thì cả hai cùng rollback.
+- Test: `FileStorageServiceTest` viết lại bằng `@DataJpaTest` (11), `ImageControllerTest` (3), `ScanHistoryServiceTest` đếm ảnh trong DB; chạy thêm trên PostgreSQL thật (cột `bytea`): qua. 190 test xanh.
+- Còn lại: ảnh đã mất trên Render và ảnh cũ trong thư mục `uploads/` ở máy Shin không được chuyển vào DB (hiện ảnh lỗi). Nhánh: `fix/store-images-in-db`.
 
 ### 2026-11-08 – Task 12: Dashboard quản trị
 - Đã làm: `/admin` (chỉ ADMIN, chặn trong `SecurityConfig`): 4 thẻ (người dùng + mới 7 ngày, Premium còn hạn, doanh thu tổng + tháng này, lượt quét hôm nay + 7 ngày), biểu đồ cột 14 ngày bằng HTML/CSS (có danh sách ẩn cho trình đọc màn hình), 5 giao dịch mới nhất, 5 người quét nhiều nhất; `/admin/users` (tìm theo email/tên, gói + hạn Premium, số lượt quét, ngày tham gia, 20 dòng/trang, pager chung). Menu desktop thêm "Quản trị"; điện thoại: nút "Trang quản trị" trên trang chủ ADMIN.

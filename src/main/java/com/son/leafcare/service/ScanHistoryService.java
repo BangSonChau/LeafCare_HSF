@@ -60,12 +60,7 @@ public class ScanHistoryService {
         s.setOwner(user);
         String trimmed = note == null ? "" : note.trim();
         s.setNote(trimmed.isEmpty() ? null : trimmed);
-        try {
-            return repo.saveAndFlush(s);
-        } catch (RuntimeException e) {
-            files.delete(name); // no orphan file when the row fails
-            throw e;
-        }
+        return repo.saveAndFlush(s); // image and row share this transaction, so a failure rolls back both
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +87,7 @@ public class ScanHistoryService {
         ScanHistory s = get(id, user);
         repo.delete(s);
         repo.flush();
-        files.delete(s.getImageFileName()); // row first, then file
+        files.delete(s.getImageFileName());
     }
 
     private Page<ScanHistory> find(AppUser user, Pageable p) {

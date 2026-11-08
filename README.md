@@ -34,7 +34,7 @@ export DB_PASSWORD=...  # Windows: set DB_PASSWORD=...
 
 4. Mở http://localhost:8080, đăng nhập bằng Google (cần làm mục "Cấu hình Google OAuth" trước).
 
-Lần chạy đầu Flyway tự tạo bảng (`db/migration`) và nạp dữ liệu mẫu (`db/seed`). Ảnh upload được lưu ở thư mục `uploads/`.
+Lần chạy đầu Flyway tự tạo bảng (`db/migration`) và nạp dữ liệu mẫu (`db/seed`). Ảnh upload được lưu trong database (bảng `image_file`), mở qua `/uploads/{tên}`.
 
 Chạy test (dùng H2, không cần PostgreSQL):
 
@@ -102,7 +102,7 @@ Render tự đặt `PORT`; app đọc `X-Forwarded-*` nên link đăng nhập Go
 
 **Cập nhật code:** merge PR vào `main` là Render tự build và deploy lại (3–5 phút); Flyway tự chạy migration mới trên DB Neon. Nên đặt Settings → Auto-Deploy = **After CI Checks Pass** để code đỏ CI không lên. Thêm biến môi trường mới thì nhớ thêm cả trên Render.
 
-Giới hạn gói Free: app ngủ sau 15 phút không có truy cập (mở lại mất ~1 phút; SePay tự gửi lại webhook); ảnh upload mất mỗi lần deploy lại (đĩa không lưu lâu dài).
+Giới hạn gói Free: app ngủ sau 15 phút không có truy cập (mở lại mất ~1 phút; SePay tự gửi lại webhook); đĩa của server bị xoá mỗi lần deploy, vì vậy ảnh được lưu trong database chứ không lưu ra đĩa.
 
 ## Quy trình làm việc nhóm
 
