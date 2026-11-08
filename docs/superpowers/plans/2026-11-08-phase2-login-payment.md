@@ -138,6 +138,8 @@ Các hướng đã xét:
 - Cloudflare named tunnel: cần tên miền riêng trỏ về Cloudflare.
 - Deploy thật (Render/Railway/VPS, có thể dùng Docker + PostgreSQL): `Dockerfile`, biến môi trường production, redirect URI Google cho domain mới, webhook SePay trỏ về domain đó.
 
-### Task 12 (Shin đề xuất, chưa lên chi tiết): Dashboard quản trị cho ADMIN
+### Task 12 (xong 08/11, nhánh `feat/task-12-admin-dashboard`): Dashboard quản trị cho ADMIN
+
+Đã chốt: trang riêng `/admin` + `/admin/users`; số liệu như mục Task 12 trong `docs/PROGRESS.md`.
 
 Shin muốn trang ADMIN đổi sang giao diện dashboard để dễ quản lý số liệu. Hỏi Shin trước khi làm: cần những số liệu nào (người dùng, Premium, doanh thu SePay, lượt quét theo ngày...), có biểu đồ không, đặt ở `/` cho ADMIN hay trang riêng `/admin`. Task 10 chỉ làm phần tối thiểu: Trang chủ của ADMIN tính lượt quét của tất cả.

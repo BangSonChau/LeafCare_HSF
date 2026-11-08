@@ -1,6 +1,7 @@
 package com.son.leafcare.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -52,7 +53,18 @@ class HomeControllerTest {
                 .andExpect(content().string(containsString(">2<")))
                 .andExpect(content().string(containsString(">7<")))
                 .andExpect(content().string(containsString("Chưa có lượt quét nào")))
-                .andExpect(content().string(containsString("Quét lá")));
+                .andExpect(content().string(containsString("Quét lá")))
+                .andExpect(content().string(containsString("href=\"/admin\"")))
+                .andExpect(content().string(containsString("Trang quản trị")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userSeesNoAdminLinks() throws Exception {
+        when(dashboard.stats(any())).thenReturn(new DashboardStats(3, 2, 7, List.of()));
+        mvc.perform(get("/")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("href=\"/admin\""))))
+                .andExpect(content().string(not(containsString("Trang quản trị"))));
     }
 
     @Test
