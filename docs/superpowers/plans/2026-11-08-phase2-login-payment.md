@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Secrets only from env vars**, never in git: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `LEAFCARE_ADMIN_EMAILS` (comma list). `application.properties` reads them with `${...}`; test properties use dummy values.
-- Schema changes = new Flyway files (`V2__users.sql`, `V3__subscription_payment.sql`, `V4__scan_owner.sql`). Never edit `V1__init.sql`.
+- Schema changes = new Flyway files (`V2__users.sql`, `V3__subscription_payment.sql`, `V5__scan_owner.sql`). Never edit `V1__init.sql`.
 - Roles: `USER`, `ADMIN`. A user is ADMIN when their Google email is in `leafcare.admin-emails` (checked at every login, so editing the env var + re-login changes it).
 - Access rules:
   - Public: `/login`, `/css/**`, `/error/**`, `POST /payments/momo/ipn` (CSRF ignored for this path only; MoMo calls it server-to-server). `/` and `/uploads/**` need login (the dashboard shows scan photos).
@@ -112,7 +112,7 @@
 **Branch:** `feat/task-10-free-limit`
 
 **Files:**
-- Create: `db/migration/V4__scan_owner.sql` (`scan_history.user_id` BIGINT null FK → `app_user`; old rows stay null = only ADMIN sees them)
+- Create: `db/migration/V5__scan_owner.sql` (`scan_history.user_id` BIGINT null FK → `app_user`; old rows stay null = only ADMIN sees them)
 - Modify: `ScanHistory` (`@ManyToOne owner`), `ScanHistoryRepository` (`countByOwnerAndCreatedAtGreaterThanEqual`, `findByOwner(..., Pageable)`)
 - Modify: `ScanHistoryService` (`create(file, note, user)` checks limit **before** storing the file → `ScanLimitException`; `list/get/delete` scoped to owner unless ADMIN)
 - Create: `exception/ScanLimitException.java`

@@ -32,11 +32,11 @@
             Thanh toán thêm sẽ cộng <span th:text="${days}">30</span> ngày vào sau ngày này.
         </p>
 
-        <form th:action="@{/payments/momo}" method="post" class="mt-6">
-            <button type="submit" class="btn btn-primary h-12 w-full rounded-full px-6 text-base">Thanh toán bằng MoMo</button>
+        <form th:action="@{/payments/premium}" method="post" class="mt-6">
+            <button type="submit" class="btn btn-primary h-12 w-full rounded-full px-6 text-base">Tạo mã QR chuyển khoản</button>
         </form>
         <p class="mt-3 text-center text-sm text-base-content/70">
-            Bạn sẽ được chuyển sang trang thanh toán của MoMo (môi trường thử nghiệm).
+            Quét mã bằng app ngân hàng bất kỳ. Premium được bật tự động khi tiền về.
         </p>
     </div>
 </section>

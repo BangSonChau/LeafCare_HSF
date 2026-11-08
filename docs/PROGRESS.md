@@ -5,8 +5,8 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: Shin đã tạo đơn MoMo sandbox thật thành công (key công khai chạy được); chưa thử trả bằng thẻ ATM test; xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Việc tiếp theo: Shin thử SePay thật (tài khoản SePay + tunnel cho webhook), rồi Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Vấn đề đang mở: chưa thử SePay với tiền thật (container không gọi được SePay); Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -17,12 +17,18 @@
 - Thiết kế: hướng "Phòng khám cây" (xanh lâm sàng #0B7A4B trên nền trắng men #F4F8F5, font Be Vietnam Pro, nút "Quét lá" luôn trong tầm ngón cái). Chi tiết ở `DESIGN.md`, `PRODUCT.md`, `.impeccable/surfaces/`.
 - Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
-- Thanh toán dùng MoMo sandbox (không dùng VNPay). Trang kết quả đọc trạng thái từ DB (cập nhật qua IPN), không tin tham số redirect.
+- Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `service/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
 - DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan)
+- Lý do: thẻ ATM test của MoMo sandbox bị "nhà phát hành từ chối"; Shin chọn thay MoMo bằng SePay (QR thật, tài khoản cá nhân).
+- Đã làm: `POST /payments/premium` tạo đơn PENDING rồi mở `/payments/{orderId}` (VietQR `vietqr.app/img`, thông tin tài khoản, tự tải lại 5s); `POST /payments/sepay/webhook` (công khai, bỏ CSRF, header `Authorization: Apikey`, trả `{"success":true}`); `PaymentService.handleWebhook` lấy mã đơn từ `code` hoặc `LC`+17 số trong nội dung, chỉ tiền vào, thiếu tiền giữ PENDING, thừa vẫn nhận; `V4__payment_sepay.sql` đổi `momo_trans_id` -> `trans_id`. Bỏ endpoint MoMo; README hướng dẫn SePay.
+- Test: `PaymentServiceTest` (12), `PaymentControllerTest` (9); 150 test xanh.
+- Env mới: `SEPAY_BANK`, `SEPAY_ACCOUNT`, `SEPAY_ACCOUNT_NAME`, `SEPAY_API_KEY`, `LEAFCARE_PREMIUM_PRICE`. Nhánh: `feat/sepay-qr`.
 
 ### 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan)
 - Lý do: QR sandbox chỉ quét được bằng app MoMo bản test; Shin muốn nhập thẻ ngân hàng giả để demo.
