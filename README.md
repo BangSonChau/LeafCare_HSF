@@ -100,6 +100,8 @@ Render tự đặt `PORT`; app đọc `X-Forwarded-*` nên link đăng nhập Go
 4. **Google Console** → Credentials → OAuth client → thêm Authorized redirect URI `https://<tên>.onrender.com/login/oauth2/code/google`.
 5. **SePay** → Webhook: đổi URL thành `https://<tên>.onrender.com/payments/sepay/webhook`.
 
+**Cập nhật code:** merge PR vào `main` là Render tự build và deploy lại (3–5 phút); Flyway tự chạy migration mới trên DB Neon. Nên đặt Settings → Auto-Deploy = **After CI Checks Pass** để code đỏ CI không lên. Thêm biến môi trường mới thì nhớ thêm cả trên Render.
+
 Giới hạn gói Free: app ngủ sau 15 phút không có truy cập (mở lại mất ~1 phút; SePay tự gửi lại webhook); ảnh upload mất mỗi lần deploy lại (đĩa không lưu lâu dài).
 
 ## Quy trình làm việc nhóm
