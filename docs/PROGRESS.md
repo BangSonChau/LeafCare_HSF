@@ -5,7 +5,7 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Task 11 = deploy lên Render, làm sau Task 9 và 10 (Shin chọn), chi tiết trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Việc tiếp theo: Task 10 (giới hạn Free 5 lượt/ngày), chờ Shin đồng ý. Task 11 = deploy lên Render, làm sau Task 9 và 10 (Shin chọn), chi tiết trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -23,6 +23,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 9: Lịch sử giao dịch
+- Đã làm: `PaymentRepository.findByUser(user, Pageable)`, `PaymentService.history(user, page)` (10 dòng/trang, mới nhất trên, trang quá cuối -> trang cuối như Plant), `GET /payments` -> `payments/history.html` (mã đơn, gói, thời gian, số tiền, badge trạng thái, bấm vào mở trang đơn; trống thì nút "Xem các gói"; pager chung), link "Lịch sử giao dịch" ở trang Gói.
+- Test: thêm 3 test `PaymentServiceTest` (chỉ đơn của mình, phân trang/clamp, rỗng), 3 test `PaymentControllerTest`, 1 assert `PlanControllerTest`; 156 test xanh. Kiểm tay 390/1280 (10 dòng, số tiền 499.000.000 ₫, trống): không tràn ngang.
+- Quyết định: nhãn PENDING đổi "Đang xử lý" -> "Chờ thanh toán" (với QR chuyển khoản, đơn chưa trả tiền nằm ở trạng thái này). Nhánh: `feat/task-9-payment-history`.
 
 ### 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan)
 - Lý do: thẻ ATM test của MoMo sandbox bị "nhà phát hành từ chối"; Shin chọn thay MoMo bằng SePay (QR thật, tài khoản cá nhân).

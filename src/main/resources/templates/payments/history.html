@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Lịch sử giao dịch</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <a th:href="@{/plans}" class="inline-flex min-h-12 items-center text-sm font-semibold text-primary">&larr; Gói dịch vụ</a>
+    <h1 class="mt-2 text-2xl font-bold leading-tight">Lịch sử giao dịch</h1>
+
+    <div th:if="${page.empty}" class="mt-8 rounded-xl border border-base-300 bg-base-100 px-6 py-12 text-center">
+        <span class="mx-auto grid size-16 place-items-center rounded-xl bg-primary text-primary-content">
+            <svg th:replace="~{fragments/brand :: leafMark}"></svg>
+        </span>
+        <p class="mt-4 text-lg font-bold">Chưa có giao dịch nào</p>
+        <p class="mt-1 text-base-content/70">Các lần nâng cấp hoặc gia hạn Premium sẽ hiện ở đây.</p>
+        <a th:href="@{/plans}" class="btn btn-primary mt-6 h-12 rounded-full px-6">Xem các gói</a>
+    </div>
+
+    <ul th:unless="${page.empty}" class="mt-6 overflow-hidden rounded-xl border border-base-300 bg-base-100">
+        <li th:each="p : ${page.content}" class="border-b border-base-300 last:border-b-0"
+            th:with="st=${p.status.name()}">
+            <a th:href="@{/payments/{id}(id=${p.orderId})}"
+               class="flex min-h-16 items-center gap-4 p-3 hover:bg-base-200 md:p-4">
+                <div class="min-w-0 flex-1">
+                    <p class="break-all font-semibold tabular" th:text="${p.orderId}">LC17941158639378946</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/70">
+                        <span th:text="${p.plan.label}">Premium</span>
+                        <span class="whitespace-nowrap tabular"
+                              th:text="${#temporals.format(p.createdAt, 'dd/MM/yyyy HH:mm')}">08/11/2026 13:28</span>
+                    </div>
+                </div>
+                <div class="flex shrink-0 flex-col items-end gap-1">
+                    <span class="whitespace-nowrap font-semibold tabular"
+                          th:text="${#numbers.formatInteger(p.amount, 1, 'POINT')} + ' ₫'">49.000 ₫</span>
+                    <span class="badge whitespace-nowrap"
+                          th:classappend="${st == 'SUCCESS'} ? 'badge-primary' : (${st == 'FAILED'} ? 'badge-error' : 'badge-warning')"
+                          th:text="${p.status.label}">Thành công</span>
+                </div>
+            </a>
+        </li>
+    </ul>
+
+    <div th:replace="~{fragments/pagination :: pager(${page}, '/payments', '')}"></div>
+</section>
+</body>
+</html>

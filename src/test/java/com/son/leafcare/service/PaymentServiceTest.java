@@ -12,12 +12,14 @@ import com.son.leafcare.repository.AppUserRepository;
 import com.son.leafcare.repository.PaymentRepository;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @Import({PaymentService.class, SubscriptionService.class})
@@ -179,5 +181,40 @@ class PaymentServiceTest {
         pending(ORDER);
         AppUser other = user("b@x.com");
         assertThatThrownBy(() -> service.getForUser(ORDER, other)).isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void historyShowsOnlyOwnOrdersNewestFirst() {
+        Payment older = pending("LC00000000000000001");
+        Payment newer = pending("LC00000000000000002");
+        ReflectionTestUtils.setField(older, "createdAt", LocalDateTime.of(2026, 11, 1, 8, 0));
+        ReflectionTestUtils.setField(newer, "createdAt", LocalDateTime.of(2026, 11, 2, 8, 0));
+        payments.saveAllAndFlush(List.of(older, newer));
+        AppUser other = user("b@x.com");
+        Payment theirs = pending("LC00000000000000003");
+        theirs.setUser(other);
+        payments.saveAndFlush(theirs);
+
+        assertThat(service.history(user, 0).getContent()).extracting(Payment::getOrderId)
+                .containsExactly("LC00000000000000002", "LC00000000000000001");
+        assertThat(service.history(other, 0).getContent()).extracting(Payment::getOrderId)
+                .containsExactly("LC00000000000000003");
+    }
+
+    @Test
+    void historyPagesTenAndClampsTooLargePage() {
+        for (int i = 0; i < 12; i++) {
+            pending("LC%017d".formatted(i));
+        }
+
+        assertThat(service.history(user, 0).getContent()).hasSize(10);
+        assertThat(service.history(user, 0).getTotalPages()).isEqualTo(2);
+        assertThat(service.history(user, 99).getNumber()).isEqualTo(1);
+        assertThat(service.history(user, -3).getNumber()).isZero();
+    }
+
+    @Test
+    void emptyHistory() {
+        assertThat(service.history(user, 5).getContent()).isEmpty();
     }
 }

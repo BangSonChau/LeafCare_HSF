@@ -25,6 +25,10 @@ import com.son.leafcare.service.AppUserService;
 import com.son.leafcare.service.PaymentService;
 import com.son.leafcare.service.SubscriptionService;
 import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,5 +147,30 @@ class PaymentControllerTest {
     void otherUsersOrderIs404() throws Exception {
         when(payments.getForUser(eq("LC9"), any())).thenThrow(new NotFoundException());
         mvc.perform(get("/payments/LC9")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void historyEmptyState() throws Exception {
+        when(payments.history(me, 0)).thenReturn(Page.empty(PageRequest.of(0, 10)));
+        mvc.perform(get("/payments")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Chưa có giao dịch nào")))
+                .andExpect(content().string(containsString("href=\"/plans\"")));
+    }
+
+    @Test
+    void historyListsOrdersWithStatusAndLink() throws Exception {
+        when(payments.history(me, 1)).thenReturn(new PageImpl<>(
+                List.of(payment(PaymentStatus.SUCCESS)), PageRequest.of(1, 10), 11));
+        mvc.perform(get("/payments").param("page", "1")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/payments/LC1\"")))
+                .andExpect(content().string(containsString("Thành công")))
+                .andExpect(content().string(containsString("49.000 ₫")))
+                .andExpect(content().string(containsString("08/11/2026 12:00")))
+                .andExpect(content().string(containsString("aria-label=\"Phân trang\"")));
+    }
+
+    @Test
+    void anonymousCannotSeeHistory() throws Exception {
+        mvc.perform(get("/payments").with(anonymous())).andExpect(redirectedUrl("/login"));
     }
 }

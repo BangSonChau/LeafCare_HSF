@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriUtils;
 
 @Controller
@@ -52,6 +53,12 @@ public class PaymentController {
         model.addAttribute("price", subscriptions.premiumPrice());
         model.addAttribute("days", subscriptions.premiumDays());
         return "payments/checkout";
+    }
+
+    @GetMapping("/payments")
+    public String history(@RequestParam(defaultValue = "0") int page, Authentication auth, Model model) {
+        model.addAttribute("page", payments.history(users.current(auth), page));
+        return "payments/history";
     }
 
     @PostMapping("/payments/premium")
