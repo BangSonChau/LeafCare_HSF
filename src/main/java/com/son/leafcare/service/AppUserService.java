@@ -2,12 +2,14 @@ package com.son.leafcare.service;
 
 import com.son.leafcare.entity.AppUser;
 import com.son.leafcare.entity.Role;
+import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.repository.AppUserRepository;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,12 @@ public class AppUserService {
                 .map(e -> e.trim().toLowerCase(Locale.ROOT))
                 .filter(e -> !e.isEmpty())
                 .collect(Collectors.toSet());
+    }
+
+    /** The logged-in user; the principal name is the Google email (see SecurityConfig). */
+    @Transactional(readOnly = true)
+    public AppUser current(Authentication auth) {
+        return repo.findByEmail(auth.getName().toLowerCase(Locale.ROOT)).orElseThrow(NotFoundException::new);
     }
 
     /** Called at every Google login: creates the user once, then refreshes name, avatar and role. */

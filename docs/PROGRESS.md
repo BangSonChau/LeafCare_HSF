@@ -5,8 +5,8 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 7 (Subscription, Payment + trang chọn gói), nhánh `feat/task-7-plans` (tách từ Task 6 nếu chưa merge).
-- Vấn đề đang mở: chưa thử đăng nhập Google thật (chờ Shin tạo OAuth client); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Việc tiếp theo: Task 8 (MoMo sandbox), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Vấn đề đang mở: nút "Nâng cấp Premium" trỏ `/payments/checkout` (Task 8 mới có); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -23,6 +23,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 7: Subscription, Payment + trang chọn gói
+- Đã làm: `V3__subscription_payment.sql`; entity `Subscription` (1 dòng/người, không có dòng = Free), `Payment`, enum `Plan`, `PaymentStatus`; `SubscriptionService` (`isPremium`, `premiumUntil`, `activatePremium` cộng dồn khi còn hạn); `AppUserService.current(auth)`; trang `/plans` + mục "Gói" trên navbar (điện thoại: bấm avatar).
+- Test: `SubscriptionServiceTest` (5), `PlanControllerTest` (2), thêm 2 test `current` trong `AppUserServiceTest`.
+- Quyết định: giá/số ngày ở `leafcare.premium.price=49000`, `leafcare.premium.days=30`; tiền là `long` VND. Nhánh: `feat/task-7-plans`.
+- Shin đã thử đăng nhập Google thật trên PostgreSQL: chạy được (Task 6 xong).
 
 ### 2026-11-08 – Task 6: Google login, USER/ADMIN
 - Đã làm: `spring-boot-starter-security-oauth2-client` + `thymeleaf-extras-springsecurity6`; `V2__users.sql` + `AppUser`/`Role`/`AppUserService.upsertFromGoogle`; `SecurityConfig` (OIDC user service gắn ROLE_USER/ROLE_ADMIN, principal name = email); trang `/login`, `error/403.html`; navbar avatar/tên/Đăng xuất, ẩn nav khi chưa đăng nhập; nút Thêm/Sửa/Xoá cây, bệnh chỉ hiện cho ADMIN.

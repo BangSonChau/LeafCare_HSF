@@ -36,6 +36,9 @@
             <a th:href="@{/scans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
+            <a th:href="@{/plans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/plans') or #strings.startsWith(currentPath, '/payments')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/plans')} ? 'page'">Gói</a>
         </nav>
 
         <div class="ml-auto flex min-w-0 items-center gap-3">
@@ -51,6 +54,7 @@
 
         <!-- Logged-in user: avatar (initial when Google gives no photo), name from lg up, logout. -->
         <div th:if="${me}" class="flex min-w-0 items-center gap-2">
+            <a th:href="@{/plans}" class="flex min-w-0 items-center gap-2 rounded-full" aria-label="Gói của bạn">
             <img th:if="${me.avatarUrl}" th:src="${me.avatarUrl}" alt="" referrerpolicy="no-referrer"
                  class="size-10 shrink-0 rounded-full bg-secondary object-cover">
             <span th:unless="${me.avatarUrl}" aria-hidden="true"
@@ -58,6 +62,7 @@
                   th:text="${#strings.toUpperCase(#strings.substring(me.name, 0, 1))}">S</span>
             <span class="hidden max-w-40 truncate text-sm font-semibold lg:block"
                   th:text="${me.name}" th:title="${me.name}">Shin</span>
+            </a>
             <form th:action="@{/logout}" method="post">
                 <button type="submit"
                         class="btn btn-ghost h-10 min-h-10 rounded-full px-3 text-primary-content hover:bg-secondary">

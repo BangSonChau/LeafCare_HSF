@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Gói dịch vụ</title>
+</head>
+<body>
+<section layout:fragment="content" th:with="premium=${premiumUntil != null}">
+    <h1 class="text-2xl font-bold leading-tight">Gói dịch vụ</h1>
+    <p class="mt-1 max-w-prose text-pretty text-base-content/80">
+        Free đủ để chăm vài chậu cây. Premium dành cho vườn nhiều cây, cần quét thường xuyên.
+    </p>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <!-- Free -->
+        <article class="flex flex-col rounded-xl border bg-base-100 p-5 md:p-6"
+                 th:classappend="${premium} ? 'border-base-300' : 'border-primary'">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="text-lg font-bold">Free</h2>
+                <span th:unless="${premium}" class="badge badge-primary">Gói đang dùng</span>
+            </div>
+            <p class="mt-2"><span class="text-3xl font-bold tabular">0 ₫</span></p>
+            <ul class="mt-4 space-y-2">
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>5 lượt quét lá mỗi ngày</li>
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Tra cứu cây và bệnh</li>
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Lưu lịch sử quét</li>
+            </ul>
+        </article>
+
+        <!-- Premium -->
+        <article class="flex flex-col rounded-xl border bg-base-100 p-5 md:p-6"
+                 th:classappend="${premium} ? 'border-primary' : 'border-base-300'">
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="text-lg font-bold">Premium</h2>
+                <span th:if="${premium}" class="badge badge-primary">Gói đang dùng</span>
+            </div>
+            <p class="mt-2">
+                <span class="text-3xl font-bold tabular" th:text="${#numbers.formatInteger(price, 1, 'POINT')} + ' ₫'">49.000 ₫</span>
+                <span class="text-base-content/70" th:text="'/ ' + ${days} + ' ngày'">/ 30 ngày</span>
+            </p>
+            <ul class="mt-4 space-y-2">
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Quét lá không giới hạn</li>
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Mọi quyền lợi của gói Free</li>
+                <li class="flex gap-2"><svg th:replace="~{plans/index :: check}"></svg>Thanh toán qua ví MoMo</li>
+            </ul>
+            <p th:if="${premium}" class="mt-4 text-sm text-base-content/80">
+                Hết hạn: <span class="font-semibold tabular" th:text="${#temporals.format(premiumUntil, 'dd/MM/yyyy HH:mm')}">08/12/2026 10:00</span>.
+                Gia hạn thì số ngày được cộng thêm vào sau ngày này.
+            </p>
+            <a th:href="@{/payments/checkout}" class="btn btn-primary mt-6 h-12 rounded-full px-6 md:self-start"
+               th:text="${premium} ? 'Gia hạn thêm ' + ${days} + ' ngày' : 'Nâng cấp Premium'">Nâng cấp Premium</a>
+        </article>
+    </div>
+</section>
+
+<!-- Check icon used by both plan cards. -->
+<svg th:fragment="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0 text-primary"
+     aria-hidden="true">
+    <path d="m5 12 5 5L20 7"/>
+</svg>
+</body>
+</html>

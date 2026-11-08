@@ -1,14 +1,17 @@
 package com.son.leafcare.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.son.leafcare.entity.AppUser;
 import com.son.leafcare.entity.Role;
+import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 @DataJpaTest
 @Import(AppUserService.class)
@@ -49,5 +52,18 @@ class AppUserServiceTest {
         service.upsertFromGoogle("admin@test.com", "A", null);
         AppUser u = new AppUserService(repo, "").upsertFromGoogle("admin@test.com", "A", null);
         assertThat(u.getRole()).isEqualTo(Role.USER);
+    }
+
+    @Test
+    void currentFindsUserByPrincipalEmail() {
+        service.upsertFromGoogle("a@b.com", "A", null);
+        AppUser u = service.current(new TestingAuthenticationToken("a@b.com", null));
+        assertThat(u.getEmail()).isEqualTo("a@b.com");
+    }
+
+    @Test
+    void currentUnknownUserIsNotFound() {
+        assertThatThrownBy(() -> service.current(new TestingAuthenticationToken("ghost@b.com", null)))
+                .isInstanceOf(NotFoundException.class);
     }
 }
