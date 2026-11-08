@@ -24,6 +24,12 @@
 
 ## Nhật ký (mới nhất ở trên)
 
+### 2026-11-08 – ADMIN thấy người quét (ngoài plan)
+- Lý do: Shin thấy ADMIN xem được mọi lượt quét nhưng không biết của tài khoản nào.
+- Đã làm: danh sách và trang chi tiết lượt quét hiện "Người quét: tên · email" chỉ cho ADMIN (`sec:authorize`); lượt cũ không có chủ hiện "Chưa rõ"; fragment `scans/list :: owner`; `ScanHistoryRepository.findAll(Pageable)` thêm `@EntityGraph("owner")` để không N+1.
+- Test: `ScanControllerTest` +4 (ADMIN thấy tên/email/"Chưa rõ", USER không thấy, ở cả list và detail).
+- Lọc theo người dùng, thống kê theo tài khoản để cho Task 12 (dashboard admin). Nhánh: `fix/admin-sees-scan-owner`.
+
 ### 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free
 - Đã làm: `V5__scan_owner.sql` (`scan_history.user_id` null được, FK, index), `ScanHistory.owner`; `ScanHistoryService` nhận `AppUser`: `remainingToday` (null = không giới hạn cho Premium/ADMIN), `create` chặn lượt thứ 6 **trước** khi lưu file (`ScanLimitException`), `list/get/delete` chỉ của mình (người khác hoặc dòng không chủ -> 404), ADMIN thấy hết; `DashboardService.stats(user)` (số cây/bệnh chung, lượt quét của mình; ADMIN tính tất cả).
 - Giao diện: trang Quét lá hiện "Còn X/5 lượt hôm nay (gói Free)"; hết lượt thì hộp cảnh báo + nút "Nâng cấp Premium", nút Lưu ảnh bị khoá. Kiểm tay 390: không tràn ngang.

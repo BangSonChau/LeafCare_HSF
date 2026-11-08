@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import com.son.leafcare.entity.AppUser;
 import com.son.leafcare.entity.ScanHistory;
 import com.son.leafcare.exception.InvalidImageException;
 import com.son.leafcare.exception.ScanLimitException;
@@ -68,6 +69,47 @@ class ScanControllerTest {
         when(service.list(any(), eq(0))).thenReturn(new PageImpl<>(List.of(scan(1)), PageRequest.of(0, 10), 1));
         mvc.perform(get("/scans")).andExpect(status().isOk()).andExpect(view().name("scans/list"))
                 .andExpect(model().attributeExists("page"));
+    }
+
+    @Test
+    void adminListShowsOwnerOrUnknown() throws Exception {
+        AppUser u = new AppUser();
+        u.setName("Shin");
+        u.setEmail("shin@x.com");
+        ScanHistory owned = scan(1);
+        owned.setOwner(u);
+        when(service.list(any(), eq(0))).thenReturn(new PageImpl<>(List.of(owned, scan(2)), PageRequest.of(0, 10), 2));
+        mvc.perform(get("/scans"))
+                .andExpect(content().string(containsString("Shin · shin@x.com")))
+                .andExpect(content().string(containsString("Chưa rõ (quét trước khi có đăng nhập)")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userListHidesOwner() throws Exception {
+        when(service.list(any(), eq(0))).thenReturn(new PageImpl<>(List.of(scan(1)), PageRequest.of(0, 10), 1));
+        mvc.perform(get("/scans")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Người quét"))));
+    }
+
+    @Test
+    void adminDetailShowsOwnerEmailWhenNoName() throws Exception {
+        AppUser u = new AppUser();
+        u.setEmail("noname@x.com");
+        ScanHistory s = scan(1);
+        s.setOwner(u);
+        when(service.get(eq(1L), any())).thenReturn(s);
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("Người quét")))
+                .andExpect(content().string(containsString("noname@x.com")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userDetailHidesOwner() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(scan(1));
+        mvc.perform(get("/scans/1")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Người quét"))));
     }
 
     @Test

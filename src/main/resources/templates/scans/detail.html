@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
@@ -23,6 +24,10 @@
                 <div>
                     <dt class="text-sm font-semibold text-base-content/70">Thời gian</dt>
                     <dd class="tabular" th:text="${#temporals.format(scan.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</dd>
+                </div>
+                <div sec:authorize="hasRole('ADMIN')">
+                    <dt class="text-sm font-semibold text-base-content/70">Người quét</dt>
+                    <dd><span th:replace="~{scans/list :: owner(${scan.owner})}"></span></dd>
                 </div>
                 <div>
                     <dt class="text-sm font-semibold text-base-content/70">Ghi chú</dt>
