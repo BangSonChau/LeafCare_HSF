@@ -12,7 +12,11 @@ import com.son.leafcare.entity.ScanHistory;
 import com.son.leafcare.service.DashboardService;
 import com.son.leafcare.service.DashboardStats;
 import java.util.List;
+import com.son.leafcare.config.SecurityConfig;
+import com.son.leafcare.service.AppUserService;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,10 +24,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(HomeController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(roles = "ADMIN")
 class HomeControllerTest {
 
     @Autowired
     MockMvc mvc;
+
+    @MockitoBean
+    AppUserService users;
 
     @MockitoBean
     DashboardService dashboard;

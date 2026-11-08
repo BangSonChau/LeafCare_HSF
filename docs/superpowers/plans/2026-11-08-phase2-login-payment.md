@@ -14,7 +14,7 @@
 - Schema changes = new Flyway files (`V2__users.sql`, `V3__subscription_payment.sql`, `V4__scan_owner.sql`). Never edit `V1__init.sql`.
 - Roles: `USER`, `ADMIN`. A user is ADMIN when their Google email is in `leafcare.admin-emails` (checked at every login, so editing the env var + re-login changes it).
 - Access rules:
-  - Public: `/`, `/login`, `/css/**`, `/uploads/**`, `/error/**`, `POST /payments/momo/ipn` (CSRF ignored for this path only; MoMo calls it server-to-server).
+  - Public: `/login`, `/css/**`, `/error/**`, `POST /payments/momo/ipn` (CSRF ignored for this path only; MoMo calls it server-to-server). `/` and `/uploads/**` need login (the dashboard shows scan photos).
   - Logged in: everything else. Plants/diseases list = any user.
   - ADMIN only: `/plants/new`, `/plants/*/edit`, `POST /plants/**`, same for `/diseases`.
 - Plans: `FREE` (5 scans / day, default), `PREMIUM` (unlimited). Price and length from `leafcare.premium.price=49000` (VND) and `leafcare.premium.days=30`. Buying again while Premium is active extends from the current end date.
@@ -26,7 +26,7 @@
 
 ## Review Focus
 
-- Not logged in → any protected page redirects to Google login; `/` and static files stay public (Task 6).
+- Not logged in → any page except `/login`, CSS and error pages redirects to `/login` (Task 6).
 - USER calling `POST /plants` or opening `/plants/new` → 403 page, not a 500 (Task 6).
 - First login creates the user; second login updates name/avatar, does not duplicate (Task 6).
 - IPN with wrong signature → 400, payment unchanged (Task 8).

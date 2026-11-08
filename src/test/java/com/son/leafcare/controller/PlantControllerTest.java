@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,7 +20,11 @@ import com.son.leafcare.exception.InUseException;
 import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.service.PlantService;
 import java.util.List;
+import com.son.leafcare.config.SecurityConfig;
+import com.son.leafcare.service.AppUserService;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
@@ -28,10 +33,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PlantController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(roles = "ADMIN")
 class PlantControllerTest {
 
     @Autowired
     MockMvc mvc;
+
+    @MockitoBean
+    AppUserService users;
 
     @MockitoBean
     PlantService service;
@@ -81,14 +91,14 @@ class PlantControllerTest {
     @Test
     void createValidRedirectsWithSuccess() throws Exception {
         when(service.save(any())).thenReturn(plant(1L, "Lan"));
-        mvc.perform(post("/plants").param("name", "Lan"))
+        mvc.perform(post("/plants").with(csrf()).param("name", "Lan"))
                 .andExpect(redirectedUrl("/plants"))
                 .andExpect(flash().attributeExists("success"));
     }
 
     @Test
     void createBlankNameShowsFieldError() throws Exception {
-        mvc.perform(post("/plants").param("name", "  "))
+        mvc.perform(post("/plants").with(csrf()).param("name", "  "))
                 .andExpect(status().isOk())
                 .andExpect(view().name("plants/form"))
                 .andExpect(model().attributeHasFieldErrors("plant", "name"));
@@ -97,7 +107,7 @@ class PlantControllerTest {
     @Test
     void createDuplicateShowsFieldError() throws Exception {
         when(service.save(any())).thenThrow(new DuplicateNameException());
-        mvc.perform(post("/plants").param("name", "Lan"))
+        mvc.perform(post("/plants").with(csrf()).param("name", "Lan"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("plants/form"))
                 .andExpect(model().attributeHasFieldErrorCode("plant", "name", "duplicate"))
@@ -114,7 +124,7 @@ class PlantControllerTest {
     void updateValidRedirects() throws Exception {
         when(service.get(1L)).thenReturn(plant(1L, "Lan"));
         when(service.save(any())).thenReturn(plant(1L, "Lan 2"));
-        mvc.perform(post("/plants/1").param("name", "Lan 2"))
+        mvc.perform(post("/plants/1").with(csrf()).param("name", "Lan 2"))
                 .andExpect(redirectedUrl("/plants"))
                 .andExpect(flash().attributeExists("success"));
     }
@@ -123,14 +133,14 @@ class PlantControllerTest {
     void updateDuplicateShowsFieldError() throws Exception {
         when(service.get(1L)).thenReturn(plant(1L, "Lan"));
         when(service.save(any())).thenThrow(new DuplicateNameException());
-        mvc.perform(post("/plants/1").param("name", "Cúc"))
+        mvc.perform(post("/plants/1").with(csrf()).param("name", "Cúc"))
                 .andExpect(view().name("plants/form"))
                 .andExpect(model().attributeHasFieldErrorCode("plant", "name", "duplicate"));
     }
 
     @Test
     void deleteOkFlashesSuccess() throws Exception {
-        mvc.perform(post("/plants/1/delete"))
+        mvc.perform(post("/plants/1/delete").with(csrf()))
                 .andExpect(redirectedUrl("/plants"))
                 .andExpect(flash().attributeExists("success"));
     }
@@ -138,7 +148,7 @@ class PlantControllerTest {
     @Test
     void deleteInUseFlashesError() throws Exception {
         doThrow(new InUseException()).when(service).delete(1L);
-        mvc.perform(post("/plants/1/delete"))
+        mvc.perform(post("/plants/1/delete").with(csrf()))
                 .andExpect(redirectedUrl("/plants"))
                 .andExpect(flash().attributeExists("error"));
     }
@@ -146,6 +156,6 @@ class PlantControllerTest {
     @Test
     void deleteUnknownIs404() throws Exception {
         doThrow(new NotFoundException()).when(service).delete(5L);
-        mvc.perform(post("/plants/5/delete")).andExpect(status().isNotFound());
+        mvc.perform(post("/plants/5/delete").with(csrf())).andExpect(status().isNotFound());
     }
 }

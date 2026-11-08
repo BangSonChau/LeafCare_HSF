@@ -32,7 +32,7 @@ export DB_PASSWORD=...  # Windows: set DB_PASSWORD=...
 ./mvnw spring-boot:run  # Windows: mvnw.cmd spring-boot:run
 ```
 
-4. Mở http://localhost:8080
+4. Mở http://localhost:8080, đăng nhập bằng Google (cần làm mục "Cấu hình Google OAuth" trước).
 
 Lần chạy đầu Flyway tự tạo bảng (`db/migration`) và nạp dữ liệu mẫu (`db/seed`). Ảnh upload được lưu ở thư mục `uploads/`.
 
@@ -41,6 +41,23 @@ Chạy test (dùng H2, không cần PostgreSQL):
 ```bash
 ./mvnw test
 ```
+
+### Cấu hình Google OAuth
+
+Mỗi người tự tạo OAuth client của mình (không chia sẻ secret, không commit):
+
+1. https://console.cloud.google.com → tạo project → **Google Auth Platform**.
+2. **Branding**: tên app, email. **Audience**: External, thêm email của mình vào **Test users**.
+3. **Clients → Create client** → Web application → **Authorized redirect URIs**: `http://localhost:8080/login/oauth2/code/google` (đường dẫn Spring Security tự tạo: `/login/oauth2/code/{registrationId}`, phải khớp từng ký tự).
+4. Đặt biến môi trường (IntelliJ: Run → Edit Configurations → Environment variables):
+
+| Biến | Ý nghĩa |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Client ID |
+| `GOOGLE_CLIENT_SECRET` | Client secret |
+| `LEAFCARE_ADMIN_EMAILS` | Email được quyền ADMIN, cách nhau bằng dấu phẩy (đổi xong đăng nhập lại) |
+
+Không đặt hai biến Google thì app vẫn chạy nhưng bấm đăng nhập sẽ lỗi `invalid_client`.
 
 ## Quy trình làm việc nhóm
 
