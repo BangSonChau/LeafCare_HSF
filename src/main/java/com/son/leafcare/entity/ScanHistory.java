@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.Size;
@@ -44,6 +45,11 @@ public class ScanHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Disease disease;
+
+    /** Who scanned it; null for scans made before login existed (only ADMIN sees those). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser owner;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -9,6 +9,15 @@
 <section layout:fragment="content">
     <h1 class="text-2xl font-bold leading-tight">Quét lá</h1>
     <p class="mt-1 text-base-content/70">Chọn ảnh lá JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+    <p th:if="${remaining != null and remaining > 0}" class="mt-2 text-sm text-base-content/80">
+        Còn <strong class="tabular" th:text="${remaining} + '/5'">5/5</strong> lượt hôm nay (gói Free).
+        <a th:href="@{/plans}" class="font-semibold text-primary underline-offset-2 hover:underline">Nâng cấp Premium</a>
+    </p>
+    <div th:if="${remaining == 0}" role="alert"
+         class="mt-4 flex max-w-2xl flex-col gap-3 rounded-xl border border-warning bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p class="font-semibold">Tài khoản Free được quét 5 lượt/ngày. Nâng cấp Premium để quét không giới hạn.</p>
+        <a th:href="@{/plans}" class="btn btn-primary h-12 shrink-0 rounded-full px-6">Nâng cấp Premium</a>
+    </div>
 
     <form th:action="@{/scans}" method="post" enctype="multipart/form-data"
           class="mt-6 max-w-2xl space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
@@ -29,7 +38,7 @@
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <a th:href="@{/scans}" class="btn h-12 rounded-full px-6">Huỷ</a>
-            <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Lưu ảnh</button>
+            <button type="submit" class="btn btn-primary h-12 rounded-full px-6" th:disabled="${remaining == 0}">Lưu ảnh</button>
         </div>
     </form>
 </section>
