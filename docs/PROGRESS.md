@@ -4,9 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Task 5 (Dashboard) xong trên nhánh `feat/task-5-dashboard`; kế hoạch Phase 1 (5 task) đã hoàn tất, chờ PR/merge. Plan: `docs/superpowers/plans/2026-11-07-phase1-assignment.md`.
-- Còn lại: push + PR để CI chạy; chưa chạy finish review của impeccable; dashboard đã kiểm tay 1280/390 trên H2.
-- Mới thêm Flyway (nhánh `chore/flyway`): đổi schema thì thêm file `V<N>__...sql`, không sửa file cũ.
+- Đang ở: Phase 1 (5 task + Flyway + README) đã merge vào `main`. Timeline cập nhật ở `docs/TIMELINE.md` (thay bản PDF).
+- Việc tiếp theo: Giai đoạn 2 (tuần 4–5): Spring Security + Google OAuth2, Subscription/Payment, MoMo sandbox + IPN, trang chọn gói / kết quả / lịch sử giao dịch, giới hạn Free 5 lượt/ngày.
 - Vấn đề đang mở: xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -17,11 +16,16 @@
 - Thiết kế: hướng "Phòng khám cây" (xanh lâm sàng #0B7A4B trên nền trắng men #F4F8F5, font Be Vietnam Pro, nút "Quét lá" luôn trong tầm ngón cái). Chi tiết ở `DESIGN.md`, `PRODUCT.md`, `.impeccable/surfaces/`.
 - Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
+- Thanh toán dùng MoMo sandbox (không dùng VNPay). Trang kết quả đọc trạng thái từ DB (cập nhật qua IPN), không tin tham số redirect.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
 - DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Cập nhật timeline (ngoài plan)
+- Đã làm: chuyển timeline sang Markdown `docs/TIMELINE.md`; đổi VNPay -> MoMo sandbox; liệt kê trang chọn gói, nút thanh toán MoMo, trang kết quả, lịch sử giao dịch; đánh dấu Phase 1 xong.
+- File: `docs/TIMELINE.md` (mới), `docs/PROGRESS.md`. Giữ `LeafCare_Timeline.pdf` làm bản cũ.
 
 ### 2026-11-07 – Flyway migration (ngoài plan)
 - Đã làm: thêm `spring-boot-starter-flyway` + `flyway-database-postgresql`; `V1__init.sql` (plant, disease, scan_history từ entity); `db/seed/V1_1__seed_data.sql` (3 cây, 3 bệnh); `ddl-auto=validate` ở cả app và test.
