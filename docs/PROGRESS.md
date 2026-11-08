@@ -5,8 +5,8 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Shin thử SePay thật (tài khoản SePay + tunnel cho webhook), rồi Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: chưa thử SePay với tiền thật (container không gọi được SePay); Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; Task 10 dùng `V5__scan_owner.sql` (V4 đã dùng cho SePay); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -28,6 +28,7 @@
 - Lý do: thẻ ATM test của MoMo sandbox bị "nhà phát hành từ chối"; Shin chọn thay MoMo bằng SePay (QR thật, tài khoản cá nhân).
 - Đã làm: `POST /payments/premium` tạo đơn PENDING rồi mở `/payments/{orderId}` (VietQR `vietqr.app/img`, thông tin tài khoản, tự tải lại 5s); `POST /payments/sepay/webhook` (công khai, bỏ CSRF, header `Authorization: Apikey`, trả `{"success":true}`); `PaymentService.handleWebhook` lấy mã đơn từ `code` hoặc `LC`+17 số trong nội dung, chỉ tiền vào, thiếu tiền giữ PENDING, thừa vẫn nhận; `V4__payment_sepay.sql` đổi `momo_trans_id` -> `trans_id`. Bỏ endpoint MoMo; README hướng dẫn SePay.
 - Test: `PaymentServiceTest` (12), `PaymentControllerTest` (9); 150 test xanh.
+- 08/11: Shin thử thật thành công (MBBank cá nhân, webhook API Key qua `cloudflared tunnel`, 2.000đ -> Premium đến 08/12/2026). Vietcombank cá nhân SePay chưa hỗ trợ.
 - Env mới: `SEPAY_BANK`, `SEPAY_ACCOUNT`, `SEPAY_ACCOUNT_NAME`, `SEPAY_API_KEY`, `LEAFCARE_PREMIUM_PRICE`. Nhánh: `feat/sepay-qr`.
 
 ### 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan)
