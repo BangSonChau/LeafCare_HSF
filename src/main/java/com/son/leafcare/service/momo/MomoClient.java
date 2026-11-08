@@ -15,7 +15,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-/** MoMo payment gateway API v2 (captureWallet), signed with HMAC-SHA256 as in developers.momo.vn. */
+/** MoMo payment gateway API v2 (captureWallet / payWithATM / payWithCC), signed with HMAC-SHA256 as in developers.momo.vn. */
 @Component
 public class MomoClient {
 
@@ -37,6 +37,7 @@ public class MomoClient {
     private final String secretKey;
     private final String redirectUrl;
     private final String ipnUrl;
+    private final String requestType;
 
     @Autowired
     public MomoClient(@Value("${momo.endpoint}") String endpoint,
@@ -44,19 +45,21 @@ public class MomoClient {
                       @Value("${momo.access-key}") String accessKey,
                       @Value("${momo.secret-key}") String secretKey,
                       @Value("${momo.redirect-url}") String redirectUrl,
-                      @Value("${momo.ipn-url}") String ipnUrl) {
+                      @Value("${momo.ipn-url}") String ipnUrl,
+                      @Value("${momo.request-type}") String requestType) {
         this(RestClient.builder().requestFactory(timeout30s()), endpoint, partnerCode, accessKey, secretKey,
-                redirectUrl, ipnUrl);
+                redirectUrl, ipnUrl, requestType);
     }
 
     MomoClient(RestClient.Builder builder, String endpoint, String partnerCode, String accessKey, String secretKey,
-               String redirectUrl, String ipnUrl) {
+               String redirectUrl, String ipnUrl, String requestType) {
         this.http = builder.baseUrl(endpoint).build();
         this.partnerCode = partnerCode;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.redirectUrl = redirectUrl;
         this.ipnUrl = ipnUrl;
+        this.requestType = requestType;
     }
 
     private static SimpleClientHttpRequestFactory timeout30s() {
@@ -70,7 +73,7 @@ public class MomoClient {
     public String createPayUrl(String orderId, long amount, String orderInfo) {
         String raw = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=&ipnUrl=" + ipnUrl
                 + "&orderId=" + orderId + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode
-                + "&redirectUrl=" + redirectUrl + "&requestId=" + orderId + "&requestType=captureWallet";
+                + "&redirectUrl=" + redirectUrl + "&requestId=" + orderId + "&requestType=" + requestType;
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("partnerCode", partnerCode);
         body.put("requestId", orderId);
@@ -79,7 +82,7 @@ public class MomoClient {
         body.put("orderInfo", orderInfo);
         body.put("redirectUrl", redirectUrl);
         body.put("ipnUrl", ipnUrl);
-        body.put("requestType", "captureWallet");
+        body.put("requestType", requestType);
         body.put("extraData", "");
         body.put("lang", "vi");
         body.put("signature", sign(raw));
