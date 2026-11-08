@@ -9,6 +9,8 @@ import com.son.leafcare.service.SubscriptionService;
 import com.son.leafcare.service.momo.MomoException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,6 +25,8 @@ import org.springframework.web.util.UriUtils;
 
 @Controller
 public class PaymentController {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
 
     private final AppUserService users;
     private final SubscriptionService subscriptions;
@@ -47,6 +51,7 @@ public class PaymentController {
         try {
             return "redirect:" + payments.startPremium(users.current(auth));
         } catch (MomoException e) {
+            log.warn("MoMo create failed: {}", e.getMessage());
             ra.addFlashAttribute("error", "Chưa kết nối được MoMo, thử lại sau ít phút.");
             return "redirect:/payments/checkout";
         }
