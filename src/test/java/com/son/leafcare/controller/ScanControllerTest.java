@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,7 +21,11 @@ import com.son.leafcare.exception.NotFoundException;
 import com.son.leafcare.service.ScanHistoryService;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.son.leafcare.config.SecurityConfig;
+import com.son.leafcare.service.AppUserService;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
@@ -31,10 +36,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @WebMvcTest(ScanController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(roles = "ADMIN")
 class ScanControllerTest {
 
     @Autowired
     MockMvc mvc;
+
+    @MockitoBean
+    AppUserService users;
 
     @MockitoBean
     ScanHistoryService service;
@@ -70,14 +80,14 @@ class ScanControllerTest {
     @Test
     void createRedirectsToDetail() throws Exception {
         when(service.create(any(), eq("hi"))).thenReturn(scan(7));
-        mvc.perform(multipart("/scans").file(file).param("note", "hi"))
+        mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "hi"))
                 .andExpect(redirectedUrl("/scans/7")).andExpect(flash().attributeExists("success"));
     }
 
     @Test
     void invalidImageReShowsForm() throws Exception {
         when(service.create(any(), any())).thenThrow(new InvalidImageException("Ảnh không hợp lệ"));
-        mvc.perform(multipart("/scans").file(file).param("note", "keep me"))
+        mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "keep me"))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attribute("error", "Ảnh không hợp lệ"))
                 .andExpect(model().attribute("note", "keep me"));
@@ -85,7 +95,7 @@ class ScanControllerTest {
 
     @Test
     void tooLongNoteReShowsForm() throws Exception {
-        mvc.perform(multipart("/scans").file(file).param("note", "x".repeat(1001)))
+        mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "x".repeat(1001)))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attributeExists("error"));
     }
@@ -93,7 +103,7 @@ class ScanControllerTest {
     @Test
     void maxUploadSizeShowsForm() throws Exception {
         when(service.create(any(), any())).thenThrow(new MaxUploadSizeExceededException(5));
-        mvc.perform(multipart("/scans").file(file))
+        mvc.perform(multipart("/scans").with(csrf()).file(file))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attribute("error", "Ảnh tối đa 5 MB"));
     }
@@ -112,7 +122,7 @@ class ScanControllerTest {
 
     @Test
     void deleteRedirects() throws Exception {
-        mvc.perform(post("/scans/1/delete")).andExpect(redirectedUrl("/scans"))
+        mvc.perform(post("/scans/1/delete").with(csrf())).andExpect(redirectedUrl("/scans"))
                 .andExpect(flash().attributeExists("success"));
         verify(service).delete(1L);
     }
@@ -120,6 +130,6 @@ class ScanControllerTest {
     @Test
     void deleteUnknownIs404() throws Exception {
         doThrow(new NotFoundException()).when(service).delete(5L);
-        mvc.perform(post("/scans/5/delete")).andExpect(status().isNotFound());
+        mvc.perform(post("/scans/5/delete").with(csrf())).andExpect(status().isNotFound());
     }
 }

@@ -23,7 +23,7 @@
             LeafCare
         </a>
 
-        <nav class="hidden md:flex items-center gap-1 ml-4" aria-label="Điều hướng chính">
+        <nav th:if="${me}" class="hidden md:flex items-center gap-1 ml-4" aria-label="Điều hướng chính">
             <a th:href="@{/}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${currentPath == '/'} ? 'bg-secondary'"
                th:attr="aria-current=${currentPath == '/'} ? 'page'">Trang chủ</a>
@@ -38,8 +38,9 @@
                th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
         </nav>
 
-        <a th:href="@{/scans/new}"
-           class="btn ml-auto hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
+        <div class="ml-auto flex min-w-0 items-center gap-3">
+        <a th:if="${me}" th:href="@{/scans/new}"
+           class="btn hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
@@ -47,6 +48,26 @@
             </svg>
             Quét lá
         </a>
+
+        <!-- Logged-in user: avatar (initial when Google gives no photo), name from lg up, logout. -->
+        <div th:if="${me}" class="flex min-w-0 items-center gap-2">
+            <img th:if="${me.avatarUrl}" th:src="${me.avatarUrl}" alt="" referrerpolicy="no-referrer"
+                 class="size-10 shrink-0 rounded-full bg-secondary object-cover">
+            <span th:unless="${me.avatarUrl}" aria-hidden="true"
+                  class="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-bold"
+                  th:text="${#strings.toUpperCase(#strings.substring(me.name, 0, 1))}">S</span>
+            <span class="hidden max-w-40 truncate text-sm font-semibold lg:block"
+                  th:text="${me.name}" th:title="${me.name}">Shin</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                        class="btn btn-ghost h-10 min-h-10 rounded-full px-3 text-primary-content hover:bg-secondary">
+                    Đăng xuất
+                </button>
+            </form>
+        </div>
+        <a th:unless="${me != null or currentPath == '/login'}" th:href="@{/login}"
+           class="btn h-10 min-h-10 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200">Đăng nhập</a>
+        </div>
     </div>
 </header>
 
@@ -79,7 +100,7 @@
 </footer>
 
 <!-- Phone bottom bar: four tabs and a raised "Quét lá" button inside the thumb zone. -->
-<nav class="fixed inset-x-0 bottom-0 z-30 border-t border-base-300 bg-base-100 shadow-[0_-2px_12px_rgba(20,38,28,0.12)] md:hidden"
+<nav th:if="${me}" class="fixed inset-x-0 bottom-0 z-30 border-t border-base-300 bg-base-100 shadow-[0_-2px_12px_rgba(20,38,28,0.12)] md:hidden"
      aria-label="Điều hướng chính (điện thoại)">
     <div class="mx-auto grid max-w-md grid-cols-5 items-end px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         <a th:href="@{/}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"

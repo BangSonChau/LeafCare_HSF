@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout/base}">
 <head>
     <title>Cây</title>
@@ -9,7 +10,7 @@
 <section layout:fragment="content">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold leading-tight">Cây</h1>
-        <a th:href="@{/plants/new}" class="btn btn-primary h-12 rounded-full px-6">
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/plants/new}" class="btn btn-primary h-12 rounded-full px-6">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
                 <path d="M12 5v14M5 12h14"/>
@@ -33,7 +34,7 @@
         <th:block th:if="${#strings.isEmpty(q)}">
             <p class="mt-4 text-lg font-bold">Chưa có cây nào</p>
             <p class="mt-1 text-base-content/70">Thêm cây đầu tiên để bắt đầu theo dõi.</p>
-            <a th:href="@{/plants/new}" class="btn btn-primary mt-6 h-12 rounded-full px-6">Thêm cây</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/plants/new}" class="btn btn-primary mt-6 h-12 rounded-full px-6">Thêm cây</a>
         </th:block>
         <th:block th:unless="${#strings.isEmpty(q)}">
             <p class="mt-4 text-lg font-bold">Không tìm thấy cây nào</p>
@@ -51,17 +52,18 @@
             <tr class="border-b border-base-300 text-left text-sm font-semibold text-base-content/70">
                 <th scope="col" class="px-4 py-3">Tên cây</th>
                 <th scope="col" class="px-4 py-3">Tên khoa học</th>
-                <th scope="col" class="px-4 py-3 text-right">Thao tác</th>
+                <th sec:authorize="hasRole('ADMIN')" scope="col" class="px-4 py-3 text-right">Thao tác</th>
             </tr>
             </thead>
             <tbody class="block md:table-row-group">
             <tr th:each="p : ${page.content}"
-                class="block border-b border-base-300 last:border-b-0 md:table-row">
+                class="block border-b border-base-300 last:border-b-0 md:table-row"
+                th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? '' : 'pb-4 md:pb-0'">
                 <td class="block break-words px-4 pt-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle"
                     th:text="${p.name}">Lan hồ điệp</td>
                 <td class="block break-words px-4 pt-1 italic text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle"
                     th:text="${p.scientificName}">Phalaenopsis</td>
-                <td class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
+                <td sec:authorize="hasRole('ADMIN')" class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
                     <div class="flex gap-2 md:justify-end">
                         <a th:href="@{/plants/{id}/edit(id=${p.id})}"
                            class="btn h-12 min-w-12 flex-1 rounded-full md:flex-none"

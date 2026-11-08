@@ -4,15 +4,16 @@
 
 ## Hiện trạng
 
-- Đang ở: Phase 1 (5 task + Flyway + README) đã merge vào `main`. Timeline cập nhật ở `docs/TIMELINE.md` (thay bản PDF).
-- Việc tiếp theo: Giai đoạn 2 (tuần 4–5): Spring Security + Google OAuth2, Subscription/Payment, MoMo sandbox + IPN, trang chọn gói / kết quả / lịch sử giao dịch, giới hạn Free 5 lượt/ngày.
-- Vấn đề đang mở: xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
+- Việc tiếp theo: Task 7 (Subscription, Payment + trang chọn gói), nhánh `feat/task-7-plans` (tách từ Task 6 nếu chưa merge).
+- Vấn đề đang mở: chưa thử đăng nhập Google thật (chờ Shin tạo OAuth client); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
 - Spring Boot 4.1.2 + Thymeleaf (layout dialect) + Tailwind v4 + DaisyUI v5, render phía server, không React/JS library mới.
 - Package gốc `com.son.leafcare`. Test chạy trên H2, không đụng PostgreSQL thật.
 - CI (GitHub Actions) chạy `npm run build` + `./mvnw verify` mỗi push/PR; test fail là build fail.
+- Đăng nhập: Spring Security + Google OIDC; `authentication.getName()` là email (tra `AppUser` theo email); ADMIN = email trong `LEAFCARE_ADMIN_EMAILS`. Test controller cần `@Import(SecurityConfig.class)` + `@MockitoBean AppUserService`.
 - Thiết kế: hướng "Phòng khám cây" (xanh lâm sàng #0B7A4B trên nền trắng men #F4F8F5, font Be Vietnam Pro, nút "Quét lá" luôn trong tầm ngón cái). Chi tiết ở `DESIGN.md`, `PRODUCT.md`, `.impeccable/surfaces/`.
 - Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
@@ -22,6 +23,17 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 6: Google login, USER/ADMIN
+- Đã làm: `spring-boot-starter-security-oauth2-client` + `thymeleaf-extras-springsecurity6`; `V2__users.sql` + `AppUser`/`Role`/`AppUserService.upsertFromGoogle`; `SecurityConfig` (OIDC user service gắn ROLE_USER/ROLE_ADMIN, principal name = email); trang `/login`, `error/403.html`; navbar avatar/tên/Đăng xuất, ẩn nav khi chưa đăng nhập; nút Thêm/Sửa/Xoá cây, bệnh chỉ hiện cho ADMIN.
+- Test: `SecurityConfigTest` (10), `AppUserServiceTest` (4); test controller cũ thêm `@Import(SecurityConfig.class)`, `@WithMockUser(roles="ADMIN")`, `.with(csrf())`; `ErrorPageTest` mở `/plants/**` bằng filter chain riêng trong test. 110 test xanh.
+- Quyết định: chỉ `/login`, CSS, trang lỗi là công khai (`/` cũng cần đăng nhập vì có ảnh quét); ADMIN theo `LEAFCARE_ADMIN_EMAILS`, xét lại mỗi lần đăng nhập; client id mặc định `chua-cau-hinh` để app vẫn chạy khi chưa có env. Thông tin navbar lấy từ model `me` (`GlobalModelAdvice`). Nhánh: `feat/task-6-google-login` (tách từ `docs/phase2-plan`).
+- File: `pom.xml`, 2 `application.properties`, `README.md` (hướng dẫn Google OAuth), 8 file main mới, 2 template mới, `base.html`, 2 `list.html`, 6 test.
+
+### 2026-11-08 – Kế hoạch Giai đoạn 2 (ngoài plan)
+- Đã làm: viết plan Giai đoạn 2, chia 5 task (6 Google login, 7 gói + entity, 8 MoMo, 9 lịch sử giao dịch, 10 giới hạn Free).
+- Quyết định: ADMIN theo danh sách email env `LEAFCARE_ADMIN_EMAILS`; khoá bí mật chỉ qua env; chạy local không có IPN thì trang kết quả gọi API `query` của MoMo; lượt quét gắn theo người dùng (V4). Nhánh: `docs/phase2-plan`.
+- File: `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (mới), `docs/PROGRESS.md`.
 
 ### 2026-11-08 – Cập nhật timeline (ngoài plan)
 - Đã làm: chuyển timeline sang Markdown `docs/TIMELINE.md`; đổi VNPay -> MoMo sandbox; liệt kê trang chọn gói, nút thanh toán MoMo, trang kết quả, lịch sử giao dịch; đánh dấu Phase 1 xong.
