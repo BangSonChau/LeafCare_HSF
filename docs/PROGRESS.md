@@ -6,7 +6,7 @@
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
 - Việc tiếp theo: Task 9 (lịch sử giao dịch), chờ Shin đồng ý. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
-- Vấn đề đang mở: chưa thử MoMo sandbox thật (container không gọi được test-payment.momo.vn; chờ Shin chạy); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
+- Vấn đề đang mở: Shin đã tạo đơn MoMo sandbox thật thành công (key công khai chạy được); chưa thử trả bằng thẻ ATM test; xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
 
@@ -23,6 +23,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan)
+- Lý do: QR sandbox chỉ quét được bằng app MoMo bản test; Shin muốn nhập thẻ ngân hàng giả để demo.
+- Đã làm: `momo.request-type` (env `MOMO_REQUEST_TYPE`, mặc định `payWithATM`; `captureWallet` = QR), dùng trong chữ ký và body `create`; thêm 1 test; README ghi thẻ test `9704 0000 0000 0018`.
+- Sau này Shin muốn ngân hàng/QR thật: cần tài khoản MoMo doanh nghiệp production (đăng ký kinh doanh), chỉ đổi env, không đổi code. Nhánh: `fix/momo-atm-test-card`.
 
 ### 2026-11-08 – Task 8: MoMo sandbox
 - Đã làm: `MomoClient` (create/query captureWallet, ký HMAC-SHA256, kiểm chữ ký IPN, RestClient timeout 30s), `PaymentService` (`startPremium`, `handleIpn`, `refresh`; khoá dòng `PESSIMISTIC_WRITE` để IPN và trang kết quả không kích hoạt 2 lần), `PaymentController` (`/payments/checkout`, `POST /payments/momo`, `/payments/momo/return`, `POST /payments/momo/ipn` trả 204/400, `/payments/{orderId}`), 2 template `payments/*`; IPN công khai và bỏ CSRF trong `SecurityConfig`.

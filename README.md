@@ -70,7 +70,7 @@ Thanh toán Premium dùng MoMo môi trường test (`https://test-payment.momo.v
 | `MOMO_SECRET_KEY` | Secret key sandbox (dùng ký HMAC-SHA256) |
 | `MOMO_IPN_URL` | (tuỳ chọn) URL công khai MoMo gọi IPN, ví dụ qua ngrok: `https://xxx.ngrok-free.app/payments/momo/ipn` |
 
-Chạy local thì MoMo không gọi được IPN vào `localhost`; trang kết quả `/payments/{orderId}` tự hỏi MoMo (API `query`) khi đơn còn "Đang xử lý", nên vẫn chạy đủ luồng. Thanh toán thử bằng app MoMo bản test theo hướng dẫn trên developers.momo.vn.
+Chạy local thì MoMo không gọi được IPN vào `localhost`; trang kết quả `/payments/{orderId}` tự hỏi MoMo (API `query`) khi đơn còn "Đang xử lý", nên vẫn chạy đủ luồng. Mặc định `MOMO_REQUEST_TYPE=payWithATM`: trang MoMo cho nhập thẻ ATM test (theo developers.momo.vn, mục Test Instructions): số thẻ `9704 0000 0000 0018`, tên `NGUYEN VAN A`, ngày `03/07`, OTP theo trang MoMo hiện. Đặt `MOMO_REQUEST_TYPE=captureWallet` để hiện mã QR (chỉ quét được bằng app MoMo bản test).
 
 ## Quy trình làm việc nhóm
 

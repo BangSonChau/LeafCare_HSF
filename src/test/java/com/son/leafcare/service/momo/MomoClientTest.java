@@ -27,7 +27,7 @@ class MomoClientTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new MomoClient(builder, "http://momo.test", "MOMO", "AK", "secret", "http://h/ret", "http://h/ipn");
+        client = new MomoClient(builder, "http://momo.test", "MOMO", "AK", "secret", "http://h/ret", "http://h/ipn", "captureWallet");
     }
 
     @Test
@@ -123,5 +123,21 @@ class MomoClientTest {
         assertThat(new MomoResult("x", 1, 1000, null, "").pending()).isTrue();
         assertThat(new MomoResult("x", 1, 7000, null, "").pending()).isTrue();
         assertThat(new MomoResult("x", 1, 1006, null, "").pending()).isFalse();
+    }
+
+    @Test
+    void requestTypeComesFromConfig() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer atmServer = MockRestServiceServer.bindTo(builder).build();
+        MomoClient atm = new MomoClient(builder, "http://momo.test", "MOMO", "AK", "secret", "http://h/ret",
+                "http://h/ipn", "payWithATM");
+        String expectedSig = atm.sign("accessKey=AK&amount=49000&extraData=&ipnUrl=http://h/ipn&orderId=LC1"
+                + "&orderInfo=x&partnerCode=MOMO&redirectUrl=http://h/ret&requestId=LC1&requestType=payWithATM");
+        atmServer.expect(requestTo("http://momo.test/v2/gateway/api/create"))
+                .andExpect(jsonPath("$.requestType").value("payWithATM"))
+                .andExpect(jsonPath("$.signature").value(expectedSig))
+                .andRespond(withSuccess("{\"resultCode\":0,\"payUrl\":\"https://pay.test/atm\"}", MediaType.APPLICATION_JSON));
+
+        assertThat(atm.createPayUrl("LC1", 49000, "x")).isEqualTo("https://pay.test/atm");
     }
 }
