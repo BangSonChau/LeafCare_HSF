@@ -24,10 +24,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/login", "/css/**", "/error", "/error/**", "/favicon.ico").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payments/momo/ipn").permitAll()
                         .requestMatchers("/plants/new", "/plants/*/edit", "/diseases/new", "/diseases/*/edit")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/plants/**", "/diseases/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                // MoMo calls the IPN server-to-server, without our session or CSRF token; the signature protects it.
+                .csrf(c -> c.ignoringRequestMatchers("/payments/momo/ipn"))
                 .oauth2Login(o -> o
                         .loginPage("/login")
                         .userInfoEndpoint(u -> u.oidcUserService(req -> withAppRole(google.loadUser(req), users))))

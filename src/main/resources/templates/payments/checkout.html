@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Thanh toán</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <a th:href="@{/plans}" class="inline-flex min-h-12 items-center text-sm font-semibold text-primary">&larr; Gói dịch vụ</a>
+    <h1 class="mt-2 text-2xl font-bold leading-tight">Thanh toán</h1>
+
+    <div class="mt-6 max-w-md rounded-xl border border-base-300 bg-base-100 p-5 md:p-6">
+        <dl class="space-y-3">
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Gói</dt>
+                <dd class="font-semibold">Premium</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-base-content/70">Thời hạn</dt>
+                <dd class="font-semibold" th:text="${days} + ' ngày'">30 ngày</dd>
+            </div>
+            <div class="flex justify-between gap-4 border-t border-base-300 pt-3">
+                <dt class="font-semibold">Số tiền</dt>
+                <dd class="text-xl font-bold tabular" th:text="${#numbers.formatInteger(price, 1, 'POINT')} + ' ₫'">49.000 ₫</dd>
+            </div>
+        </dl>
+
+        <p th:if="${premiumUntil}" class="mt-4 text-sm text-base-content/80">
+            Bạn đang dùng Premium đến
+            <span class="font-semibold tabular" th:text="${#temporals.format(premiumUntil, 'dd/MM/yyyy HH:mm')}">08/12/2026</span>.
+            Thanh toán thêm sẽ cộng <span th:text="${days}">30</span> ngày vào sau ngày này.
+        </p>
+
+        <form th:action="@{/payments/momo}" method="post" class="mt-6">
+            <button type="submit" class="btn btn-primary h-12 w-full rounded-full px-6 text-base">Thanh toán bằng MoMo</button>
+        </form>
+        <p class="mt-3 text-center text-sm text-base-content/70">
+            Bạn sẽ được chuyển sang trang thanh toán của MoMo (môi trường thử nghiệm).
+        </p>
+    </div>
+</section>
+</body>
+</html>
