@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/plants/new", "/plants/*/edit", "/diseases/new", "/diseases/*/edit")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/plants/**", "/diseases/**").hasRole("ADMIN")
+                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 // SePay calls the webhook server-to-server, without our session or CSRF token; the API key protects it.
                 .csrf(c -> c.ignoringRequestMatchers("/payments/sepay/webhook"))

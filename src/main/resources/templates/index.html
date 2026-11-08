@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout/base}">
 <head>
     <title>Trang chủ</title>
@@ -11,6 +12,12 @@
         <h1 class="text-2xl font-bold leading-tight text-balance">Chăm sóc cây trồng của bạn</h1>
         <p class="mt-1 max-w-prose text-pretty text-base-content/80">Chụp ảnh lá, lưu lại lịch sử và tra cứu cây, bệnh.</p>
     </div>
+
+    <!-- Phones have no room for "Quản trị" in the bottom bar, so ADMIN gets the link here. -->
+    <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}"
+       class="mt-4 flex min-h-12 items-center justify-between rounded-xl border border-primary bg-base-100 px-4 font-semibold text-primary md:hidden">
+        Trang quản trị <span aria-hidden="true">&rarr;</span>
+    </a>
 
     <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
         <a th:href="@{/plants}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 sm:p-4 transition-colors duration-150 hover:bg-base-200">

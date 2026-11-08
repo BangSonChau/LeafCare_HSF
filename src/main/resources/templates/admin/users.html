@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Người dùng</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <a th:href="@{/admin}" class="inline-flex min-h-12 items-center text-sm font-semibold text-primary">&larr; Quản trị</a>
+    <h1 class="mt-2 text-2xl font-bold leading-tight">Người dùng</h1>
+
+    <form th:action="@{/admin/users}" method="get" role="search" class="mt-6 flex gap-2">
+        <label for="q" class="sr-only">Tìm theo email hoặc tên</label>
+        <input id="q" name="q" type="search" th:value="${q}" maxlength="100" placeholder="Tìm theo email hoặc tên"
+               class="input h-12 min-w-0 flex-1 text-base">
+        <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Tìm</button>
+    </form>
+
+    <div th:if="${page.empty}" class="mt-8 rounded-xl border border-base-300 bg-base-100 px-6 py-12 text-center">
+        <th:block th:if="${#strings.isEmpty(q)}">
+            <p class="text-lg font-bold">Chưa có người dùng nào</p>
+            <p class="mt-1 text-base-content/70">Người dùng xuất hiện ở đây sau lần đăng nhập Google đầu tiên.</p>
+        </th:block>
+        <th:block th:unless="${#strings.isEmpty(q)}">
+            <p class="text-lg font-bold">Không tìm thấy người dùng nào</p>
+            <p class="mt-1 break-words text-base-content/70">
+                Không có email hay tên nào khớp với “<span th:text="${q}">từ khoá</span>”.
+            </p>
+            <a th:href="@{/admin/users}" class="btn mt-6 h-12 rounded-full px-6">Xoá tìm kiếm</a>
+        </th:block>
+    </div>
+
+    <!-- Table on md+, stacked rows on phones (same pattern as the plant list). -->
+    <div th:unless="${page.empty}" class="mt-6 overflow-hidden rounded-xl border border-base-300 bg-base-100">
+        <table class="block w-full md:table">
+            <thead class="hidden md:table-header-group">
+            <tr class="border-b border-base-300 text-left text-sm font-semibold text-base-content/70">
+                <th scope="col" class="px-4 py-3">Người dùng</th>
+                <th scope="col" class="px-4 py-3">Gói</th>
+                <th scope="col" class="px-4 py-3 text-right">Lượt quét</th>
+                <th scope="col" class="px-4 py-3 text-right">Tham gia</th>
+            </tr>
+            </thead>
+            <tbody class="block md:table-row-group">
+            <tr th:each="r : ${page.content}" class="block border-b border-base-300 py-3 last:border-b-0 md:table-row md:py-0">
+                <td class="block px-4 md:table-cell md:max-w-xs md:py-3 md:align-middle">
+                    <p class="flex flex-wrap items-center gap-2">
+                        <span th:if="${r.user.name != null}" class="break-words font-semibold" th:text="${r.user.name}">Bình</span>
+                        <span th:if="${r.user.role.name() == 'ADMIN'}" class="badge badge-outline">ADMIN</span>
+                    </p>
+                    <p class="break-all text-sm text-base-content/70" th:text="${r.user.email}">b@x.com</p>
+                </td>
+                <td class="block px-4 pt-2 md:table-cell md:py-3 md:align-middle">
+                    <span th:if="${r.premiumUntil != null}" class="badge badge-primary whitespace-nowrap"
+                          th:text="'Premium đến ' + ${#temporals.format(r.premiumUntil, 'dd/MM/yyyy')}">Premium đến 08/12/2026</span>
+                    <span th:unless="${r.premiumUntil != null}" class="badge badge-outline">Free</span>
+                </td>
+                <td class="flex justify-between px-4 pt-2 text-sm md:table-cell md:py-3 md:text-right md:align-middle md:text-base">
+                    <span class="text-base-content/70 md:hidden">Lượt quét</span>
+                    <span class="font-semibold tabular" th:text="${#numbers.formatInteger(r.scans, 1, 'POINT')}">7</span>
+                </td>
+                <td class="flex justify-between px-4 pt-1 text-sm md:table-cell md:py-3 md:text-right md:align-middle md:text-base">
+                    <span class="text-base-content/70 md:hidden">Tham gia</span>
+                    <span class="whitespace-nowrap tabular" th:text="${#temporals.format(r.user.createdAt, 'dd/MM/yyyy')}">01/11/2026</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/pagination :: pager(${page}, '/admin/users', ${q})}"></div>
+</section>
+</body>
+</html>

@@ -93,6 +93,8 @@ class SecurityConfigTest {
     void userCannotOpenOrPostAdminRoutes() throws Exception {
         mvc.perform(get("/plants/new").with(user("u@x.com").roles("USER"))).andExpect(status().isForbidden());
         mvc.perform(get("/plants/1/edit").with(user("u@x.com").roles("USER"))).andExpect(status().isForbidden());
+        mvc.perform(get("/admin").with(user("u@x.com").roles("USER"))).andExpect(status().isForbidden());
+        mvc.perform(get("/admin/users").with(user("u@x.com").roles("USER"))).andExpect(status().isForbidden());
         mvc.perform(post("/plants").with(csrf()).with(user("u@x.com").roles("USER")).param("name", "X"))
                 .andExpect(status().isForbidden());
         mvc.perform(post("/plants/1/delete").with(csrf()).with(user("u@x.com").roles("USER")))

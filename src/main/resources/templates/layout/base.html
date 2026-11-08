@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8">
@@ -39,6 +40,9 @@
             <a th:href="@{/plans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${#strings.startsWith(currentPath, '/plans') or #strings.startsWith(currentPath, '/payments')} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/plans')} ? 'page'">Gói</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/admin')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/admin')} ? 'page'">Quản trị</a>
         </nav>
 
         <div class="ml-auto flex min-w-0 items-center gap-3">

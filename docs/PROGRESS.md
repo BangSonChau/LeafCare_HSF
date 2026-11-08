@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 12 = dashboard quản trị cho ADMIN (Shin đề xuất, cần hỏi chi tiết), ghi trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Giai đoạn 2 xong. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
+- Việc tiếp theo: Giai đoạn 2 xong (Task 6–12). Tiếp theo theo `docs/TIMELINE.md` là Giai đoạn 3 (AI: nhận diện lá, chatbot, RAG), chờ Shin chọn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh upload trên Render mất mỗi lần deploy lại (gói Free không có đĩa); ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -23,6 +23,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 12: Dashboard quản trị
+- Đã làm: `/admin` (chỉ ADMIN, chặn trong `SecurityConfig`): 4 thẻ (người dùng + mới 7 ngày, Premium còn hạn, doanh thu tổng + tháng này, lượt quét hôm nay + 7 ngày), biểu đồ cột 14 ngày bằng HTML/CSS (có danh sách ẩn cho trình đọc màn hình), 5 giao dịch mới nhất, 5 người quét nhiều nhất; `/admin/users` (tìm theo email/tên, gói + hạn Premium, số lượt quét, ngày tham gia, 20 dòng/trang, pager chung). Menu desktop thêm "Quản trị"; điện thoại: nút "Trang quản trị" trên trang chủ ADMIN.
+- Code: `AdminService` + record `AdminStats`, `DayCount`, `TopScanner`, `UserRow`; `AdminController`; query mới ở 4 repository (đếm/tổng tiền bằng JPQL, top người quét lấy id + count rồi `findAllById` để chạy được cả H2 lẫn PostgreSQL).
+- Test: `AdminServiceTest` (9, chạy thêm trên PostgreSQL thật: qua), `AdminControllerTest` (5), `SecurityConfigTest`/`HomeControllerTest` thêm assert; 191 test xanh. Kiểm tay 390/1280 (số rất lớn, email dài, 20 dòng, trống): không tràn ngang.
+- Quyết định: Shin chọn trang riêng `/admin` (không thay trang chủ), số liệu và trang người dùng theo đề xuất; ngày tính theo giờ Việt Nam như Task 10; doanh thu = tổng đơn SUCCESS. Cập nhật `docs/TIMELINE.md` (SePay, Render, dashboard, Giai đoạn 2 xong). Nhánh: `feat/task-12-admin-dashboard`.
 
 ### 2026-11-08 – Task 11: Deploy lên Render (phần code)
 - Đã làm: `Dockerfile` (build Maven JDK 17, chạy JRE 17, `MaxRAMPercentage=75` cho 512 MB), `.dockerignore`; `application.properties` đọc `DB_URL`, `DB_USERNAME`, `PORT`, `SHOW_SQL` (mặc định vẫn như local), `server.forward-headers-strategy=framework` để redirect URI Google là https sau proxy Render; README mục "Deploy lên Render".
