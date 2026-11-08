@@ -78,6 +78,30 @@ Thanh toán Premium bằng chuyển khoản: trang `/payments/{orderId}` hiện 
 
 Code MoMo sandbox cũ vẫn còn ở `service/momo/` (không còn nút trên giao diện).
 
+### Deploy lên Render (Docker + Neon PostgreSQL)
+
+App có `Dockerfile`; Render tự build từ nhánh `main` mỗi khi có commit mới.
+
+1. **Database (Neon, miễn phí):** https://neon.tech → New project, region **Singapore** → Connect, lấy chuỗi `postgresql://<user>:<pass>@<host>/<db>?sslmode=require`.
+2. **Render:** https://render.com → New → Web Service → chọn repo GitHub → Language **Docker**, Branch `main`, Region **Singapore**, Instance **Free**.
+3. **Environment** trên Render:
+
+| Biến | Giá trị |
+|---|---|
+| `DB_URL` | `jdbc:postgresql://<host>/<db>?sslmode=require` (lấy từ chuỗi Neon, bỏ phần `user:pass@`) |
+| `DB_USERNAME`, `DB_PASSWORD` | user và mật khẩu trong chuỗi Neon |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | như khi chạy local |
+| `LEAFCARE_ADMIN_EMAILS` | email ADMIN |
+| `SEPAY_BANK`, `SEPAY_ACCOUNT`, `SEPAY_ACCOUNT_NAME`, `SEPAY_API_KEY` | như khi chạy local |
+| `SHOW_SQL` | `false` (đỡ rác log) |
+
+Render tự đặt `PORT`; app đọc `X-Forwarded-*` nên link đăng nhập Google là `https://`.
+
+4. **Google Console** → Credentials → OAuth client → thêm Authorized redirect URI `https://<tên>.onrender.com/login/oauth2/code/google`.
+5. **SePay** → Webhook: đổi URL thành `https://<tên>.onrender.com/payments/sepay/webhook`.
+
+Giới hạn gói Free: app ngủ sau 15 phút không có truy cập (mở lại mất ~1 phút; SePay tự gửi lại webhook); ảnh upload mất mỗi lần deploy lại (đĩa không lưu lâu dài).
+
 ## Quy trình làm việc nhóm
 
 - Mỗi task một nhánh tách từ `main`: `feat/...`, `fix/...`, `docs/...`, `chore/...`.

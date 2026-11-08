@@ -5,7 +5,7 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–10).
-- Việc tiếp theo: Task 11 = deploy lên Render (Shin chọn làm sau Task 9, 10), chờ Shin đồng ý. Task 12 = dashboard quản trị cho ADMIN (Shin đề xuất, cần hỏi chi tiết), ghi trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Việc tiếp theo: Task 11 = Shin làm theo README "Deploy lên Render" (Neon, Render, Google redirect URI, SePay webhook). Task 12 = dashboard quản trị cho ADMIN (Shin đề xuất, cần hỏi chi tiết), ghi trong plan. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: link tunnel `trycloudflare.com` đổi mỗi lần chạy `cloudflared`, phải sửa URL webhook trên SePay; ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -23,6 +23,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Task 11: Deploy lên Render (phần code)
+- Đã làm: `Dockerfile` (build Maven JDK 17, chạy JRE 17, `MaxRAMPercentage=75` cho 512 MB), `.dockerignore`; `application.properties` đọc `DB_URL`, `DB_USERNAME`, `PORT`, `SHOW_SQL` (mặc định vẫn như local), `server.forward-headers-strategy=framework` để redirect URI Google là https sau proxy Render; README mục "Deploy lên Render".
+- Kiểm: jar chạy với PostgreSQL tạm + `PORT=9091`: Flyway áp 6 migration, `/login` 200, redirect URI = `https://leafcare.onrender.com/...` khi có `X-Forwarded-*`. Không build được image Docker ở máy Claude (không có Docker daemon), Render sẽ build lần đầu. 175 test xanh.
+- Quyết định: DB dùng Neon (Singapore) thay PostgreSQL free của Render (hết hạn); ảnh upload mất khi deploy lại (chấp nhận cho demo). Shin tự làm phần tạo tài khoản theo hướng dẫn. Nhánh: `feat/task-11-render`.
 
 ### 2026-11-08 – ADMIN thấy người quét (ngoài plan)
 - Lý do: Shin thấy ADMIN xem được mọi lượt quét nhưng không biết của tài khoản nào.
