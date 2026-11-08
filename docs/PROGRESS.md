@@ -5,7 +5,7 @@
 ## Hiện trạng
 
 - Đang ở: Giai đoạn 2 xong. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
-- Việc tiếp theo: Giai đoạn 2 xong (Task 6–12). Tiếp theo theo `docs/TIMELINE.md` là Giai đoạn 3 (AI: nhận diện lá, chatbot, RAG), chờ Shin chọn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -24,6 +24,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-08 – Tài liệu + slide Assignment (ngoài plan)
+- Đã làm: `docs/assignment/USER_GUIDE.md` (setup code, Tailwind v4 + DaisyUI v5 trong Thymeleaf, setup Claude Code, quy trình dùng AI làm back-end/UI, kịch bản demo), `LeafCare_Assignment.pptx` (8 slide, có ghi chú người nói), 9 ảnh chụp app trong `docs/assignment/images/`.
+- Quyết định: Shin muốn slide ít, tập trung setup code, setup AI, dùng AI làm back-end + demo; bỏ Bootstrap trong đề, lấy stack thật. Ảnh chụp từ app chạy local với dữ liệu demo (QR VietQR không tải được nên không dùng ảnh QR).
+- Còn lại: ảnh chụp prompt thật (timeline yêu cầu), tên thành viên. Nhánh: `docs/assignment-guide-slides`.
 
 ### 2026-11-08 – Lưu ảnh quét vào database (ngoài plan)
 - Lý do: Shin thấy ảnh quét trên Render bị mất (gói Free xoá đĩa mỗi lần deploy/khởi động lại); Shin chọn lưu vào DB Neon thay vì Cloudinary.
