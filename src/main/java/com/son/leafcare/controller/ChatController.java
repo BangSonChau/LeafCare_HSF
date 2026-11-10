@@ -9,6 +9,7 @@ import com.son.leafcare.rag.KnowledgeIndex;
 import com.son.leafcare.service.ChatDtos.ChatTurnResponseDto;
 import com.son.leafcare.service.ChatDtos.ConversationSummaryDto;
 import com.son.leafcare.service.ChatDtos.MessageDto;
+import com.son.leafcare.service.ChatDtos.StarterPromptDto;
 import com.son.leafcare.service.ChatRateLimiter;
 import com.son.leafcare.service.ChatService;
 import com.son.leafcare.service.DiseaseService;
@@ -18,6 +19,8 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -99,16 +102,25 @@ public class ChatController {
 
         List<MessageDto> messages = chatService.getMessages(activeConv.id(), owner);
 
+        Long effectivePlantId = activeConv.plantId() != null ? activeConv.plantId() : plantId;
         model.addAttribute("conversations", conversations);
         model.addAttribute("activeConversation", activeConv);
         model.addAttribute("messages", messages);
         model.addAttribute("plants", plantService.findAll());
-        model.addAttribute("selectedPlantId", activeConv.plantId() != null ? activeConv.plantId() : plantId);
+        model.addAttribute("selectedPlantId", effectivePlantId);
+        model.addAttribute("starterPrompts", chatService.getStarterPrompts(effectivePlantId));
         model.addAttribute("initialPrompt", initialPromptSuggestion);
         model.addAttribute("aiAvailable", geminiGateway.isAvailable());
         model.addAttribute("activeChunksCount", knowledgeIndex.getChunkCount());
         model.addAttribute("activeIndexVersion", knowledgeIndex.getActiveIndexVersion());
         return "chat/index";
+    }
+
+    @GetMapping(value = "/api/chat/starter-prompts", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<List<StarterPromptDto>> getStarterPrompts(
+            @RequestParam(required = false) Long plantId) {
+        return ResponseEntity.ok(chatService.getStarterPrompts(plantId));
     }
 
     @PostMapping(value = "/api/chat/conversations", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -202,6 +214,91 @@ public class ChatController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @PostMapping(
+            value = "/api/chat/conversations/{id}/messages/stream",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamJsonMessage(
+            @PathVariable Long id,
+            @RequestBody SendMessageRequest req,
+            HttpSession session) {
+        String owner = resolveSessionOwner(session);
+        if (!rateLimiter.tryAcquire(owner)) {
+            SseEmitter emitter = new SseEmitter(10000L);
+            try {
+                emitter.send(SseEmitter.event().name("error").data(Map.of("error", "Bạn gửi tin nhắn quá nhanh (tối đa 10 yêu cầu/phút). Vui lòng đợi một chút rồi thử lại.")));
+                emitter.complete();
+            } catch (Exception ignored) {}
+            return emitter;
+        }
+        SseEmitter emitter = new SseEmitter(120_000L);
+        CompletableFuture.runAsync(() -> {
+            try {
+                chatService.streamMessage(
+                        id,
+                        owner,
+                        req != null ? req.text() : "",
+                        req != null ? req.plantId() : null,
+                        req != null ? req.clientRequestId() : null,
+                        null,
+                        emitter);
+            } catch (Throwable e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "Có lỗi xảy ra khi xử lý yêu cầu.";
+                try {
+                    emitter.send(SseEmitter.event().name("error").data(Map.of("error", msg)));
+                    emitter.complete();
+                } catch (Exception ignored) {
+                    emitter.completeWithError(e);
+                }
+            }
+        });
+        return emitter;
+    }
+
+    @PostMapping(
+            value = "/api/chat/conversations/{id}/messages/stream",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMultipartMessage(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "") String text,
+            @RequestParam(required = false) Long plantId,
+            @RequestParam(required = false) String clientRequestId,
+            @RequestParam(required = false) MultipartFile image,
+            HttpSession session) {
+        String owner = resolveSessionOwner(session);
+        if (!rateLimiter.tryAcquire(owner)) {
+            SseEmitter emitter = new SseEmitter(10000L);
+            try {
+                emitter.send(SseEmitter.event().name("error").data(Map.of("error", "Bạn gửi tin nhắn quá nhanh (tối đa 10 yêu cầu/phút). Vui lòng đợi một chút rồi thử lại.")));
+                emitter.complete();
+            } catch (Exception ignored) {}
+            return emitter;
+        }
+        SseEmitter emitter = new SseEmitter(120_000L);
+        CompletableFuture.runAsync(() -> {
+            try {
+                chatService.streamMessage(
+                        id,
+                        owner,
+                        text,
+                        plantId,
+                        clientRequestId,
+                        image,
+                        emitter);
+            } catch (Throwable e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "Có lỗi xảy ra khi xử lý yêu cầu.";
+                try {
+                    emitter.send(SseEmitter.event().name("error").data(Map.of("error", msg)));
+                    emitter.complete();
+                } catch (Exception ignored) {
+                    emitter.completeWithError(e);
+                }
+            }
+        });
+        return emitter;
     }
 
     @DeleteMapping(value = "/api/chat/conversations/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

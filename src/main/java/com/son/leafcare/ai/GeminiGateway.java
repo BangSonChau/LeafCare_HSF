@@ -14,6 +14,18 @@ public interface GeminiGateway {
             byte[] imageBytes,
             String imageMimeType);
 
+    default void generateStreamAnswer(
+            String systemPrompt,
+            String userPrompt,
+            byte[] imageBytes,
+            String imageMimeType,
+            java.util.function.Consumer<String> tokenConsumer) {
+        GeminiChatResponse resp = generateStructuredAnswer(systemPrompt, userPrompt, imageBytes, imageMimeType);
+        if (resp != null && resp.answer() != null) {
+            tokenConsumer.accept(resp.answer());
+        }
+    }
+
     record GeminiChatResponse(
             String answer,
             boolean needsClarification,

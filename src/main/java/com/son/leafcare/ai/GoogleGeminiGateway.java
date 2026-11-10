@@ -1,5 +1,15 @@
 package com.son.leafcare.ai;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
@@ -15,13 +25,6 @@ import com.google.genai.types.Part;
 import com.google.genai.types.Schema;
 import com.google.genai.types.Type;
 import com.son.leafcare.config.GeminiProperties;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 @Component
 public class GoogleGeminiGateway implements GeminiGateway {
@@ -170,6 +173,58 @@ public class GoogleGeminiGateway implements GeminiGateway {
         });
     }
 
+    @Override
+    public void generateStreamAnswer(
+            String systemPrompt,
+            String userPrompt,
+            byte[] imageBytes,
+            String imageMimeType,
+            Consumer<String> tokenConsumer) {
+
+        if (!isAvailable()) {
+            throw new GeminiGatewayException(
+                    GeminiGatewayException.ErrorCode.AUTH_ERROR,
+                    "Gemini API is disabled or missing GEMINI_API_KEY");
+        }
+
+        List<Part> parts = new ArrayList<>();
+        if (imageBytes != null && imageBytes.length > 0 && imageMimeType != null && !imageMimeType.isBlank()) {
+            parts.add(Part.fromBytes(imageBytes, imageMimeType));
+        }
+        parts.add(Part.fromText(userPrompt));
+
+        Content userContent = Content.builder()
+                .role("user")
+                .parts(parts)
+                .build();
+
+        Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
+
+        GenerateContentConfig config = GenerateContentConfig.builder()
+                .systemInstruction(systemInstruction)
+                .temperature(0.3f)
+                .maxOutputTokens(props.getMaxOutputTokens())
+                .httpOptions(HttpOptions.builder().timeout(props.getTimeoutMs()).build())
+                .build();
+
+        try (Client client = createClient()) {
+            try (com.google.genai.ResponseStream<GenerateContentResponse> stream = client.models.generateContentStream(
+                    props.getChatModel(),
+                    userContent,
+                    config)) {
+                for (GenerateContentResponse resp : stream) {
+                    String piece = resp.text();
+                    if (piece != null && !piece.isEmpty()) {
+                        tokenConsumer.accept(piece);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Gemini streaming failed: {}", e.getMessage());
+            throw classifyException("generateContentStream", e);
+        }
+    }
+
     GeminiChatResponse parseStructuredJson(
             String rawText, int promptTokens, int completionTokens, String modelName) {
         if (rawText == null || rawText.isBlank()) {
@@ -218,6 +273,7 @@ public class GoogleGeminiGateway implements GeminiGateway {
         } catch (GeminiGatewayException e) {
             throw e;
         } catch (Exception e) {
+            log.warn("Failed to parse structured JSON from Gemini. Raw text was: [{}]", rawText, e);
             throw new GeminiGatewayException(
                     GeminiGatewayException.ErrorCode.PARSE_ERROR,
                     "Failed to parse structured JSON from Gemini", e);
@@ -225,16 +281,27 @@ public class GoogleGeminiGateway implements GeminiGateway {
     }
 
     private String stripMarkdownCodeFence(String text) {
-        if (text.startsWith("```")) {
-            int firstNewline = text.indexOf('\n');
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.trim();
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
             if (firstNewline > 0) {
-                text = text.substring(firstNewline + 1);
+                trimmed = trimmed.substring(firstNewline + 1);
             }
-            if (text.endsWith("```")) {
-                text = text.substring(0, text.length() - 3);
+            int lastFence = trimmed.lastIndexOf("```");
+            if (lastFence >= 0) {
+                trimmed = trimmed.substring(0, lastFence);
             }
         }
-        return text.trim();
+        trimmed = trimmed.trim();
+        int firstBrace = trimmed.indexOf('{');
+        int lastBrace = trimmed.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            trimmed = trimmed.substring(firstBrace, lastBrace + 1);
+        }
+        return trimmed.trim();
     }
 
     private Client createClient() {

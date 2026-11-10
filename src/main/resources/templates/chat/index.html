@@ -7,171 +7,139 @@
 </head>
 <body>
 <section layout:fragment="content">
-    <div class="flex flex-wrap items-start justify-between gap-3">
+    <!-- Top Compact Clinical Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-4">
         <div class="min-w-0">
-            <h1 class="text-2xl font-bold leading-tight">Trợ lý AI &amp; Tra cứu bệnh cây</h1>
-            <p class="mt-1 text-sm text-base-content/70">
-                Hỏi triệu chứng bằng tiếng Việt hoặc gửi ảnh lá để đối chiếu kho tài liệu đã kiểm duyệt (<span th:text="${activeChunksCount}">14</span> đoạn chuyên môn · chỉ mục v<span th:text="${activeIndexVersion}">1</span>).
+            <div class="flex flex-wrap items-center gap-2.5">
+                <h1 class="text-xl font-bold leading-tight md:text-2xl">Trợ lý AI &amp; Tra cứu bệnh cây</h1>
+                <span th:if="${aiAvailable}" class="badge badge-outline border-primary/40 bg-primary/5 text-primary text-xs font-semibold">
+                    Gemini 3.5 Flash Lite · Stream phản hồi
+                </span>
+                <span th:unless="${aiAvailable}" class="badge badge-outline text-xs font-semibold">
+                    Chế độ tra cứu RAG cục bộ (chưa bật GEMINI_API_KEY)
+                </span>
+            </div>
+            <p class="mt-1 text-xs text-base-content/70 md:text-sm">
+                Trò chuyện trực tiếp và đối chiếu kho tài liệu đã kiểm duyệt (<span th:text="${activeChunksCount}">15</span> đoạn chuyên môn · chỉ mục v<span th:text="${activeIndexVersion}">1</span>).
             </p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <span th:if="${aiAvailable}" class="badge badge-outline text-primary font-semibold">Gemini Multimodal sẵn sàng</span>
-            <span th:unless="${aiAvailable}" class="badge badge-outline font-semibold">Chế độ tra cứu RAG cục bộ (chưa bật GEMINI_API_KEY)</span>
-            <button type="button" id="btn-new-chat" class="btn btn-primary h-12 rounded-full px-5">
-                + Hội thoại mới
+        <div class="flex items-center gap-2">
+            <button type="button" id="btn-new-chat" class="btn btn-primary h-10 rounded-full px-4 text-sm font-semibold">
+                + Đoạn chat mới
             </button>
         </div>
     </div>
 
-    <!-- Privacy & Clinical Disclaimer Notice -->
-    <div class="mt-4 rounded-xl border border-base-300 bg-base-100 px-4 py-3 text-xs text-base-content/80">
-        <strong>Lưu ý sử dụng &amp; Quyền riêng tư:</strong> Khi dịch vụ Gemini được bật, nội dung câu hỏi và ảnh lá đính kèm trong cuộc trò chuyện sẽ được gửi tới Google Gemini API để phân tích kết hợp với kho tri thức Việt Nam đã duyệt. Nhận định của AI chỉ mang tính tham khảo chăm sóc ban đầu (ưu tiên canh tác &amp; IPM), không thay thế kết luận xét nghiệm chuyên môn.
-    </div>
-
-    <div class="mt-6 grid gap-6 lg:grid-cols-12"
+    <!-- Two-Column Workbench: Left (Chat Stream 8 cols) | Right (Inspector 4 cols) -->
+    <div class="mt-5 grid items-start gap-6 lg:grid-cols-12"
          id="chat-root"
          th:attr="data-conversation-id=${activeConversation.id}">
 
-        <!-- Sidebar: Conversation list + Plant selector -->
-        <aside class="space-y-4 lg:col-span-4">
-            <div class="rounded-xl border border-base-300 bg-base-100 p-4">
-                <label for="chat-plant-select" class="block text-sm font-semibold">Loài cây đang tư vấn</label>
-                <p class="mt-0.5 text-xs text-base-content/70">Chọn cây giúp trợ lý lọc đúng tài liệu bệnh hại theo loài.</p>
-                <select id="chat-plant-select" class="select mt-2 h-12 w-full rounded-xl border-base-300 bg-base-100 text-base">
-                    <option value="">— Chưa rõ / Tự nhận diện từ mô tả —</option>
-                    <option th:each="p : ${plants}"
-                            th:value="${p.id}"
-                            th:text="${p.name + (p.scientificName != null and !#strings.isEmpty(p.scientificName) ? ' (' + p.scientificName + ')' : '')}"
-                            th:selected="${selectedPlantId != null and selectedPlantId == p.id}">
-                        Cà chua
-                    </option>
-                </select>
-
-                <div th:if="${activeConversation.scanHistoryId != null}" class="mt-3 flex items-center gap-3 rounded-xl border border-base-300 bg-base-200 p-2.5">
-                    <img th:if="${activeConversation.scanImageUrl != null}"
-                         th:src="${activeConversation.scanImageUrl}"
-                         alt="Ảnh lượt quét"
-                         class="size-12 shrink-0 rounded-lg object-cover">
-                    <div class="min-w-0 flex-1 text-xs">
-                        <p class="font-semibold">Liên kết lượt quét #<span th:text="${activeConversation.scanHistoryId}">1</span></p>
-                        <a th:href="@{/scans/{id}(id=${activeConversation.scanHistoryId})}" class="link text-primary">Xem chi tiết lượt quét</a>
+        <!-- LEFT COLUMN: Main Conversation Panel (8/12) -->
+        <div class="flex flex-col rounded-2xl border border-base-300 bg-base-100 shadow-xs lg:col-span-8">
+            <!-- Conversation Top Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-4 py-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </span>
+                    <div class="min-w-0">
+                        <h2 id="active-conv-title" class="truncate text-sm font-bold md:text-base" th:text="${activeConversation.title}">Hội thoại mới</h2>
+                        <p class="text-xs text-base-content/60">Luồng trò chuyện trực tiếp · Tài liệu đối chiếu hiển thị ở cột bên phải</p>
                     </div>
                 </div>
+                <button type="button" id="btn-delete-conv"
+                        class="btn btn-xs h-8 rounded-full border-error/40 bg-base-100 px-3 text-xs text-error hover:bg-error hover:text-error-content"
+                        title="Xoá đoạn chat đang mở">
+                    Xoá đoạn chat
+                </button>
             </div>
 
-            <div class="rounded-xl border border-base-300 bg-base-100 p-4">
-                <div class="flex items-center justify-between gap-2">
-                    <h2 class="text-sm font-semibold">Lịch sử hội thoại (phiên hiện tại)</h2>
-                    <button type="button" id="btn-delete-conv"
-                            class="btn btn-xs h-8 rounded-full border-error bg-base-100 px-3 text-error hover:bg-error hover:text-error-content"
-                            title="Xoá hội thoại đang mở">
-                        Xoá hội thoại
-                    </button>
+            <!-- Messages Stream Area -->
+            <div id="chat-messages"
+                 class="flex-1 space-y-4 overflow-y-auto bg-base-200/40 p-4 md:p-5"
+                 style="min-height: 28rem; max-height: 38rem;"
+                 aria-live="polite">
+
+                <!-- Empty State with Built-in Starter Symptom Cards -->
+                <div th:if="${messages.empty}" id="chat-empty-state" class="rounded-2xl border border-base-300 bg-base-100 p-6">
+                    <div class="text-center">
+                        <span class="mx-auto grid size-12 place-items-center rounded-2xl bg-primary text-primary-content">
+                            <svg th:replace="~{fragments/brand :: leafMark}"></svg>
+                        </span>
+                        <p class="mt-3 text-base font-bold">Bắt đầu trò chuyện &amp; tư vấn chăm sóc cây</p>
+                        <p class="mx-auto mt-1 max-w-lg text-xs text-base-content/70 md:text-sm">
+                            Chọn loài cây ở cột bên phải (nếu biết), đính kèm ảnh lá hoặc chọn nhanh một câu hỏi mẫu dưới đây:
+                        </p>
+                    </div>
+
+                    <div id="starter-prompts-grid" th:if="${starterPrompts != null and !starterPrompts.empty}" class="mt-5 grid gap-2.5 sm:grid-cols-2">
+                        <button type="button"
+                                th:each="sp : ${starterPrompts}"
+                                class="quick-prompt-btn flex flex-col gap-1 rounded-xl border border-base-300 bg-base-200/60 p-3 text-left transition hover:border-primary hover:bg-base-100"
+                                th:attr="data-prompt=${sp.promptText},data-plant-id=${sp.plantId}">
+                            <span class="text-xs font-bold text-primary" th:text="${'🌿 ' + sp.title}">Cây trồng · Tên bệnh</span>
+                            <span class="line-clamp-2 text-xs text-base-content/80" th:text="${sp.symptomSummary}">Triệu chứng</span>
+                        </button>
+                    </div>
                 </div>
 
-                <ul id="conversation-list" class="mt-3 max-h-64 space-y-1.5 overflow-y-auto">
-                    <li th:each="c : ${conversations}">
-                        <a th:href="@{/chat(conversationId=${c.id})}"
-                           class="flex min-h-12 items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm transition-colors"
-                           th:classappend="${c.id == activeConversation.id} ? 'bg-primary text-primary-content font-semibold' : 'hover:bg-base-200 text-base-content'">
-                            <span class="line-clamp-1 break-words" th:text="${c.title}">Hội thoại mới</span>
-                            <span th:if="${c.plantName != null}"
-                                  class="badge badge-sm shrink-0"
-                                  th:classappend="${c.id == activeConversation.id} ? 'bg-white text-primary border-0' : 'badge-outline'"
-                                  th:text="${c.plantName}">Cà chua</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Quick starter prompts -->
-            <div class="rounded-xl border border-base-300 bg-base-100 p-4">
-                <h2 class="text-sm font-semibold">Câu hỏi mẫu thường gặp</h2>
-                <div class="mt-2.5 flex flex-col gap-2">
-                    <button type="button"
-                            class="quick-prompt-btn rounded-xl border border-base-300 bg-base-200 px-3 py-2.5 text-left text-xs font-semibold hover:border-primary hover:bg-base-100"
-                            data-prompt="Lá cà chua có đốm nâu sẫm loang nhanh ở mép lá, mặt dưới có mốc trắng khi trời ẩm là bệnh gì và xử lý thế nào?">
-                        🍅 Cà chua: Đốm nâu sẫm mép lá, mặt dưới có mốc trắng
-                    </button>
-                    <button type="button"
-                            class="quick-prompt-btn rounded-xl border border-base-300 bg-base-200 px-3 py-2.5 text-left text-xs font-semibold hover:border-primary hover:bg-base-100"
-                            data-prompt="Hoa hồng trồng ban công xuất hiện đốm tròn đen có viền tua rua, lá vàng rụng từ gốc lên là bệnh gì?">
-                        🌹 Hoa hồng: Đốm tròn đen viền tua rua, vàng rụng lá
-                    </button>
-                    <button type="button"
-                            class="quick-prompt-btn rounded-xl border border-base-300 bg-base-200 px-3 py-2.5 text-left text-xs font-semibold hover:border-primary hover:bg-base-100"
-                            data-prompt="Lan hồ điệp có vết mọng nước màu nâu nhạt trên lá non, lan nhanh và có mùi hôi tanh cần xử lý gấp thế nào?">
-                        🌸 Lan hồ điệp: Vết mọng nước nâu nhạt, mùi hôi tanh
-                    </button>
-                    <button type="button"
-                            class="quick-prompt-btn rounded-xl border border-base-300 bg-base-200 px-3 py-2.5 text-left text-xs font-semibold hover:border-primary hover:bg-base-100"
-                            data-prompt="Cây trầu bà trồng trong phòng bị vàng lá hàng loạt dù đất vẫn ướt, gốc thân mềm đen là bị làm sao?">
-                        🪴 Trầu bà: Vàng lá hàng loạt dù đất ướt, gốc mềm đen
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Chat Panel -->
-        <div class="flex flex-col rounded-xl border border-base-300 bg-base-100 lg:col-span-8">
-            <div class="flex items-center justify-between border-b border-base-300 px-4 py-3">
-                <div class="min-w-0">
-                    <h2 id="active-conv-title" class="truncate text-base font-bold" th:text="${activeConversation.title}">Hội thoại mới</h2>
-                    <p class="text-xs text-base-content/70">Trả lời có đối chiếu mã tài liệu và kiểm duyệt trích dẫn</p>
-                </div>
-            </div>
-
-            <!-- Messages Stream -->
-            <div id="chat-messages" class="flex-1 space-y-4 overflow-y-auto p-4" style="min-height: 24rem; max-height: 36rem;" aria-live="polite">
-                <div th:if="${messages.empty}" id="chat-empty-state" class="rounded-xl border border-base-300 bg-base-200 p-6 text-center">
-                    <span class="mx-auto grid size-14 place-items-center rounded-xl bg-primary text-primary-content">
-                        <svg th:replace="~{fragments/brand :: leafMark}"></svg>
-                    </span>
-                    <p class="mt-3 text-base font-bold">Bắt đầu chẩn đoán &amp; tư vấn chăm sóc cây</p>
-                    <p class="mx-auto mt-1 max-w-md text-sm text-base-content/70">
-                        Hãy chọn loài cây (nếu biết), đính kèm ảnh lá bị bệnh hoặc mô tả rõ: <strong>bộ phận bị hại, màu sắc vết đốm, vị trí trồng và chế độ tưới nước</strong>.
-                    </p>
-                </div>
-
+                <!-- Server-Rendered Messages -->
                 <div th:each="m : ${messages}"
-                     class="chat-msg-item rounded-xl border p-4"
-                     th:classappend="${m.role == 'USER'} ? 'ml-auto max-w-2xl border-primary/30 bg-base-200' : 'mr-auto w-full border-base-300 bg-base-100'">
-                    <div class="flex items-center justify-between gap-2 text-xs text-base-content/70">
-                        <span class="font-bold" th:text="${m.role == 'USER'} ? 'Bạn' : 'Trợ lý LeafCare'">Trợ lý LeafCare</span>
+                     class="chat-msg-item"
+                     th:attr="data-role=${m.role}"
+                     th:classappend="${m.role == 'USER'} ? 'ml-auto max-w-[85%] rounded-2xl rounded-tr-xs bg-primary px-4 py-3 text-primary-content shadow-xs' : 'mr-auto w-full rounded-2xl rounded-tl-xs border border-base-300 bg-base-100 p-4 shadow-xs'">
+
+                    <!-- Message Header -->
+                    <div class="flex items-center justify-between gap-2 text-xs"
+                         th:classappend="${m.role == 'USER'} ? 'text-primary-content/80' : 'text-base-content/70 border-b border-base-200 pb-2 mb-2.5'">
                         <div class="flex items-center gap-2">
-                            <span th:if="${m.role == 'ASSISTANT'}" class="badge badge-sm badge-outline" th:text="${m.statusLabel}">Hoàn tất</span>
+                            <span th:if="${m.role == 'ASSISTANT'}" class="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-content text-[11px] font-bold">LC</span>
+                            <span class="font-bold" th:classappend="${m.role == 'ASSISTANT'} ? 'text-base-content'" th:text="${m.role == 'USER'} ? 'Bạn' : 'Trợ lý LeafCare'">Trợ lý LeafCare</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span th:if="${m.role == 'ASSISTANT'}" class="chat-msg-status badge badge-xs badge-outline border-primary/40 text-primary" th:text="${m.statusLabel}">Hoàn tất</span>
                             <span class="tabular" th:text="${#temporals.format(m.createdAt, 'HH:mm dd/MM')}">18:30</span>
                         </div>
                     </div>
 
-                    <div th:if="${m.imageUrl != null}" class="mt-3">
-                        <img th:src="${m.imageUrl}" alt="Ảnh lá đính kèm" class="max-h-56 rounded-xl border border-base-300 object-contain">
+                    <!-- Attached Leaf Image -->
+                    <div th:if="${m.imageUrl != null}" class="mt-2.5 mb-2">
+                        <img th:src="${m.imageUrl}" alt="Ảnh lá đính kèm" class="chat-attached-img max-h-52 rounded-xl border border-base-300 object-contain">
                     </div>
 
-                    <div class="mt-2 whitespace-pre-line break-words text-sm leading-relaxed" th:text="${m.content}">Nội dung tin nhắn</div>
+                    <!-- Message Body (Formatted by JS Markdown Renderer on load) -->
+                    <div class="chat-msg-body break-words text-sm leading-relaxed"
+                         th:attr="data-raw-markdown=${m.content}"
+                         th:text="${m.content}">Nội dung tin nhắn</div>
 
-                    <!-- Citations -->
-                    <div th:if="${m.citations != null and !m.citations.empty}" class="mt-4 rounded-xl border border-base-300 bg-base-200 p-3">
-                        <p class="text-xs font-bold text-primary">Tài liệu tham khảo đã kiểm duyệt:</p>
-                        <ul class="mt-2 space-y-2 text-xs">
-                            <li th:each="c : ${m.citations}" class="rounded-lg border border-base-300 bg-base-100 p-2.5">
-                                <div class="flex flex-wrap items-center justify-between gap-1">
-                                    <span class="font-bold text-base-content" th:text="${'[' + c.chunkCode + '] ' + c.sectionTitle}">[TOMATO-01] Tiêu đề</span>
-                                    <a th:href="${c.sourceUrl}" target="_blank" rel="noopener noreferrer" class="link text-primary font-semibold">Mở nguồn gốc &nearr;</a>
-                                </div>
-                                <p class="mt-1 text-base-content/70" th:text="${c.sourceTitle + ' — ' + c.publisher + (c.publishedDate != null and !#strings.isEmpty(c.publishedDate) ? ' (' + c.publishedDate + ')' : '')}">Nguồn</p>
-                                <p th:if="${c.snippet != null}" class="mt-1 line-clamp-2 italic text-base-content/80" th:text="${c.snippet}">Trích đoạn</p>
-                            </li>
-                        </ul>
+                    <!-- Compact Citation Badge (Links to Right Clinical Inspector instead of cluttering chat) -->
+                    <div th:if="${m.citations != null and !m.citations.empty}"
+                         class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="font-bold text-primary">📚 Tài liệu đối chiếu:</span>
+                            <span th:each="c : ${m.citations}"
+                                  class="inline-flex items-center rounded-md bg-primary/15 px-2 py-0.5 font-bold text-primary"
+                                  th:text="${c.chunkCode}"
+                                  th:attr="data-chunk-code=${c.chunkCode},data-section-title=${c.sectionTitle},data-source-title=${c.sourceTitle},data-publisher=${c.publisher},data-published-date=${c.publishedDate},data-source-url=${c.sourceUrl},data-snippet=${c.snippet}">
+                                CODE
+                            </span>
+                        </div>
+                        <button type="button" class="btn-focus-inspector link text-primary font-semibold">
+                            Xem nguồn tham khảo &rarr;
+                        </button>
                     </div>
 
-                    <!-- Follow-up questions -->
-                    <div th:if="${m.followUpQuestions != null and !m.followUpQuestions.empty}" class="mt-3">
-                        <p class="text-xs font-semibold text-base-content/70">Gợi ý hỏi tiếp:</p>
+                    <!-- Follow-up Questions -->
+                    <div th:if="${m.followUpQuestions != null and !m.followUpQuestions.empty}" class="mt-3 border-t border-base-200 pt-2.5">
+                        <p class="text-xs font-semibold text-base-content/60">Gợi ý hỏi tiếp:</p>
                         <div class="mt-1.5 flex flex-wrap gap-1.5">
                             <button type="button"
                                     th:each="fq : ${m.followUpQuestions}"
-                                    class="followup-chip rounded-full border border-base-300 bg-base-200 px-3 py-1.5 text-left text-xs font-semibold hover:border-primary hover:bg-base-100"
+                                    class="followup-chip rounded-full border border-base-300 bg-base-200/70 px-3 py-1 text-left text-xs font-semibold transition hover:border-primary hover:bg-base-100"
                                     th:attr="data-prompt=${fq}"
                                     th:text="${fq}">
                                 Câu hỏi gợi ý
@@ -182,21 +150,21 @@
             </div>
 
             <!-- Error / Status Alert Bar -->
-            <div id="chat-error-banner" role="alert" class="mx-4 mb-2 hidden items-center justify-between gap-3 rounded-xl border border-error bg-base-100 px-4 py-3 text-sm text-error">
+            <div id="chat-error-banner" role="alert" class="mx-4 mt-2 hidden items-center justify-between gap-3 rounded-xl border border-error bg-base-100 px-4 py-2.5 text-xs text-error">
                 <span id="chat-error-text">Có lỗi xảy ra.</span>
-                <button type="button" id="btn-retry-last" class="btn btn-xs h-8 rounded-full border-error bg-base-100 px-3 text-error hover:bg-error hover:text-error-content">
+                <button type="button" id="btn-retry-last" class="btn btn-xs h-7 rounded-full border-error bg-base-100 px-3 text-error hover:bg-error hover:text-error-content">
                     Thử lại
                 </button>
             </div>
 
             <!-- Composer Form -->
-            <form id="chat-form" class="border-t border-base-300 p-4" novalidate>
+            <form id="chat-form" class="border-t border-base-300 bg-base-100 p-4 rounded-b-2xl" novalidate>
                 <!-- Selected image preview -->
-                <div id="image-preview-box" class="mb-3 hidden items-center justify-between gap-3 rounded-xl border border-base-300 bg-base-200 p-2.5">
+                <div id="image-preview-box" class="mb-3 hidden items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-2.5">
                     <div class="flex items-center gap-3 min-w-0">
-                        <img id="image-preview-thumb" src="" alt="Ảnh lá chuẩn bị gửi" class="size-12 shrink-0 rounded-lg object-cover">
+                        <img id="image-preview-thumb" src="" alt="Ảnh lá chuẩn bị gửi" class="size-12 shrink-0 rounded-lg border border-base-300 object-cover">
                         <div class="min-w-0">
-                            <p id="image-preview-name" class="truncate text-xs font-semibold">leaf.jpg</p>
+                            <p id="image-preview-name" class="truncate text-xs font-bold text-primary">leaf.jpg</p>
                             <p class="text-xs text-base-content/70">Ảnh lá sẽ được gửi kèm câu hỏi để phân tích đa phương thức</p>
                         </div>
                     </div>
@@ -206,37 +174,127 @@
                 <label for="chat-input" class="sr-only">Mô tả triệu chứng cây trồng</label>
                 <textarea id="chat-input"
                           name="text"
-                          rows="3"
+                          rows="2"
                           maxlength="2000"
-                          placeholder="Mô tả triệu chứng (ví dụ: lá già dưới gốc có đốm đen viền vàng, tưới mỗi tối...) hoặc đính kèm ảnh lá"
-                          class="textarea w-full rounded-xl border-base-300 bg-base-100 text-base leading-relaxed"
+                          placeholder="Nhập triệu chứng (nhấn Enter để gửi, Shift+Enter xuống dòng) hoặc đính kèm ảnh lá..."
+                          class="textarea w-full rounded-xl border-base-300 bg-base-200/40 text-sm leading-relaxed focus:bg-base-100 md:text-base"
                           th:text="${initialPrompt}"></textarea>
 
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <label for="chat-image-input"
-                               class="btn h-12 cursor-pointer rounded-full border border-base-300 bg-base-100 px-4 text-sm font-semibold hover:bg-base-200">
+                               class="btn h-10 cursor-pointer rounded-full border border-base-300 bg-base-100 px-3.5 text-xs font-semibold hover:bg-base-200">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-primary" aria-hidden="true">
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 text-primary" aria-hidden="true">
                                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
                                 <circle cx="12" cy="13" r="3"/>
                             </svg>
                             Đính kèm ảnh lá
                         </label>
                         <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only">
-                        <span id="char-counter" class="text-xs text-base-content/70 tabular">0 / 2000</span>
+                        <span id="char-counter" class="text-xs text-base-content/60 tabular">0 / 2000</span>
                     </div>
 
-                    <button type="submit" id="btn-send-chat" class="btn btn-primary h-12 rounded-full px-6">
+                    <button type="submit" id="btn-send-chat" class="btn btn-primary h-10 rounded-full px-5 text-sm font-semibold">
                         <span id="send-btn-label">Gửi câu hỏi</span>
                     </button>
                 </div>
+
+                <!-- Subtle Privacy & Clinical Disclaimer Footer -->
+                <p class="mt-2.5 text-[11px] leading-normal text-base-content/60">
+                    <strong>Lưu ý sử dụng &amp; Quyền riêng tư:</strong> Nội dung câu hỏi và ảnh lá đính kèm được gửi tới Google Gemini API để phân tích kết hợp với kho tri thức Việt Nam đã duyệt. Nhận định chỉ mang tính tham khảo chăm sóc ban đầu (ưu tiên canh tác &amp; IPM).
+                </p>
             </form>
         </div>
+
+        <!-- RIGHT COLUMN: Context & Citations Panel (4/12) -->
+        <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6">
+
+            <!-- Card 1: Plant Context & Leaf Specimen Image -->
+            <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">🌿</span>
+                    <label for="chat-plant-select" class="text-sm font-bold">Loài cây trong đoạn chat</label>
+                </div>
+                <p class="mt-0.5 text-xs text-base-content/70">Chọn loài cây giúp hệ thống khoanh vùng đúng tài liệu bệnh học.</p>
+
+                <select id="chat-plant-select" class="select mt-2.5 h-11 w-full rounded-xl border-base-300 bg-base-100 text-sm font-semibold">
+                    <option value="">— Chưa rõ / Tự nhận diện từ mô tả —</option>
+                    <option th:each="p : ${plants}"
+                            th:value="${p.id}"
+                            th:text="${p.name + (p.scientificName != null and !#strings.isEmpty(p.scientificName) ? ' (' + p.scientificName + ')' : '')}"
+                            th:selected="${selectedPlantId != null and selectedPlantId == p.id}">
+                        Cà chua
+                    </option>
+                </select>
+
+                <!-- Linked Scan History or Active Leaf Image Specimen -->
+                <div th:if="${activeConversation.scanHistoryId != null}" class="mt-3 flex items-center gap-3 rounded-xl border border-base-300 bg-base-200/70 p-2.5">
+                    <img th:if="${activeConversation.scanImageUrl != null}"
+                         th:src="${activeConversation.scanImageUrl}"
+                         alt="Ảnh lượt quét"
+                         class="size-12 shrink-0 rounded-lg object-cover">
+                    <div class="min-w-0 flex-1 text-xs">
+                        <p class="font-semibold">Liên kết lượt quét #<span th:text="${activeConversation.scanHistoryId}">1</span></p>
+                        <a th:href="@{/scans/{id}(id=${activeConversation.scanHistoryId})}" class="link text-primary font-semibold">Xem chi tiết lượt quét</a>
+                    </div>
+                </div>
+
+                <div id="inspector-latest-image-box" class="mt-3 hidden rounded-xl border border-base-300 bg-base-200/50 p-2.5">
+                    <p class="mb-1.5 text-xs font-semibold text-base-content/70">Ảnh lá trong đoạn chat:</p>
+                    <img id="inspector-latest-image" src="" alt="Ảnh mẫu lá đang phân tích" class="max-h-40 w-full rounded-lg object-contain bg-base-100">
+                </div>
+            </div>
+
+            <!-- Card 2: Verified Knowledge Citations Inspector -->
+            <div id="inspector-citations-card" class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-xs transition-all">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📑</span>
+                        <h2 class="text-sm font-bold">Tài liệu tham khảo đối chiếu</h2>
+                    </div>
+                    <span id="inspector-citation-count" class="badge badge-sm bg-primary/15 text-primary border-0 font-bold">0 nguồn</span>
+                </div>
+                <p class="mt-0.5 text-xs text-base-content/70">Trích xuất tự động từ kho tri thức nông nghiệp Việt Nam đã duyệt.</p>
+
+                <!-- Empty Citation State -->
+                <div id="inspector-citations-empty" class="mt-3 rounded-xl border border-dashed border-base-300 bg-base-200/40 p-3.5 text-center text-xs text-base-content/70">
+                    Chưa có tài liệu bệnh học nào được trích dẫn ở lượt hỏi này. Hãy mô tả triệu chứng lá hoặc gửi ảnh để hệ thống đối chiếu nguồn chuyên môn.
+                </div>
+
+                <!-- Populated Citations List -->
+                <ul id="inspector-citations-list" class="mt-3 hidden max-h-80 space-y-2.5 overflow-y-auto pr-1 text-xs">
+                </ul>
+            </div>
+
+            <!-- Card 3: Session Conversation History -->
+            <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-xs">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">🕒</span>
+                        <h2 class="text-sm font-bold">Các đoạn chat gần đây</h2>
+                    </div>
+                    <span class="text-xs text-base-content/60" th:text="${#lists.size(conversations) + ' đoạn chat'}">1 đoạn chat</span>
+                </div>
+
+                <ul id="conversation-list" class="mt-2.5 max-h-44 space-y-1.5 overflow-y-auto">
+                    <li th:each="c : ${conversations}">
+                        <a th:href="@{/chat(conversationId=${c.id})}"
+                           class="flex min-h-10 items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs transition-colors"
+                           th:classappend="${c.id == activeConversation.id} ? 'bg-primary text-primary-content font-semibold' : 'hover:bg-base-200 text-base-content'">
+                            <span class="line-clamp-1 break-words" th:text="${c.title}">Hội thoại mới</span>
+                            <span th:if="${c.plantName != null}"
+                                  class="badge badge-xs shrink-0"
+                                  th:classappend="${c.id == activeConversation.id} ? 'bg-white text-primary border-0' : 'badge-outline'"
+                                  th:text="${c.plantName}">Cà chua</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
     </div>
 
     <script th:src="@{/js/chat.js}" defer></script>
 </section>
 </body>
 </html>
-

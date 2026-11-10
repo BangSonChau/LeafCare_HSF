@@ -46,5 +46,13 @@ public final class ChatDtos {
             MessageDto userMessage,
             MessageDto assistantMessage
     ) {}
+
+    public record StarterPromptDto(
+            Long plantId,
+            String plantName,
+            String title,
+            String symptomSummary,
+            String promptText
+    ) {}
 }
 
