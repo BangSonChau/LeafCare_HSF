@@ -19,6 +19,12 @@
         Trang quản trị <span aria-hidden="true">&rarr;</span>
     </a>
 
+    <!-- The phone bottom bar is full, so "Hỏi đáp" gets its link here. -->
+    <a th:href="@{/chat}"
+       class="mt-4 flex min-h-12 items-center justify-between rounded-xl border border-base-300 bg-base-100 px-4 font-semibold text-primary md:hidden">
+        Hỏi đáp về bệnh lá <span aria-hidden="true">&rarr;</span>
+    </a>
+
     <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
         <a th:href="@{/plants}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 sm:p-4 transition-colors duration-150 hover:bg-base-200">
             <p class="text-sm text-base-content/70">Cây trồng</p>

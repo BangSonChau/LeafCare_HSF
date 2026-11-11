@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2 xong; đang ghép RAG (nhánh `feat/rag`, chờ PR merge). Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
+- Đang ở: Giai đoạn 2 xong; RAG backend đã merge (PR #27), trang Hỏi đáp `/chat` ở nhánh `feat/rag-chat-page`; tiếp theo trang Tài liệu RAG cho ADMIN với giao diện sidebar (Shin muốn kiểu ảnh mẫu: sidebar tối, thanh tìm kiếm, card trắng bo góc). Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
 - Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -25,6 +25,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-11 – Trang Hỏi đáp `/chat`
+- Đã làm: `ChatPageController` (`GET/POST /chat`, form thường nên không cần JS/CSRF thủ công, mọi người đã đăng nhập dùng được), `chat/index.html` (ô hỏi, câu trả lời, danh sách nguồn); link "Hỏi đáp" ở thanh trên desktop và thẻ link ở trang chủ cho điện thoại (thanh dưới đã đủ 5 mục).
+- Test: `ChatPageControllerTest` (6: hiện form, trả lời + nguồn được escape, không nguồn thì ẩn khối nguồn, câu hỏi rỗng/>500 không gọi LLM, lỗi Gemini hiện thông báo thân thiện và giữ câu hỏi, thiếu CSRF bị 403); 206 test xanh. Chưa kiểm tay trên trình duyệt (máy Claude không có Gemini key/pgvector).
+- Quyết định: lỗi gọi Gemini không lộ chi tiết cho người dùng, chỉ ghi log. Nhánh: `feat/rag-chat-page`.
 
 ### 2026-11-11 – Ghép RAG chatbot (Giai đoạn 3, bước 1)
 - Đã làm: thêm Spring AI 2.0.2 (Gemini chat + embedding, pgvector, Tika) vào `pom.xml`; `RagDocumentService` (đọc file -> chia 400 token -> embedding -> lưu), `RagChatService` (top 4 đoạn, ngưỡng 0.3, trả lời tiếng Việt kèm nguồn `[1]`), record `RagAnswer`, `RagController` (`POST /api/rag/chat` cho người đăng nhập, `POST /api/rag/documents` chỉ ADMIN trong `SecurityConfig`); `compose.yaml` dùng `pgvector/pgvector:pg16`; README mục "Chatbot RAG".
