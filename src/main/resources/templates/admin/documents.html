@@ -55,6 +55,8 @@
                               th:attr="aria-label='Tiến độ nạp ' + ${j.fileName}"></progress>
                     <p class="mt-1 text-sm text-base-content/70 tabular" th:text="${j.done} + ' / ' + ${j.total} + ' đoạn'">20 / 300 đoạn</p>
                 </th:block>
+                <p class="mt-1 text-sm text-base-content/70 tabular"
+                   th:text="'Đã chạy ' + ${j.elapsedSeconds / 60} + ' phút ' + ${j.elapsedSeconds % 60} + ' giây'">Đã chạy 1 phút 5 giây</p>
                 <p th:if="${!#strings.isEmpty(j.message)}" class="mt-1 break-words text-sm"
                    th:classappend="${j.status.name() == 'FAILED'} ? 'text-error'" th:text="${j.message}">Lỗi</p>
             </li>
