@@ -1,0 +1,14 @@
+# Postgres có sẵn extension pgvector (postgres:16-alpine thường thì không có). Chạy: docker compose up -d
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: leafcare
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - leafcare-data:/var/lib/postgresql/data
+volumes:
+  leafcare-data:
