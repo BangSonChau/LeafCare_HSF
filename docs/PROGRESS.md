@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2 xong; RAG backend (#27) và trang Hỏi đáp `/chat` (#28) đã merge; khung admin sidebar + trang Tài liệu RAG ở nhánh `feat/admin-shell`.
+- Đang ở: Giai đoạn 2 xong; RAG (#27), trang Hỏi đáp (#28), khung admin + Tài liệu RAG (#29) đã merge; nạp file lớn (20 MB, theo lô, ở nền) ở nhánh `fix/rag-large-upload`.
 - Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -25,6 +25,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-11 – Nạp tài liệu lớn (20 MB, theo lô, ở nền)
+- Lý do: Shin upload cẩm nang bệnh cây (PDF 210 trang, bản text ~390 KB, tách thử ra 398 đoạn) lên Render thì lỗi hết; giới hạn 5 MB chắc chắn chặn PDF lớn, và nạp một lần cả trăm đoạn dễ chạm timeout request/quota embedding của Gemini. Chưa có log lỗi thật từ Render.
+- Đã làm: `multipart.max-file-size=20MB` (ảnh quét vẫn 5 MB vì `FileStorageService` tự kiểm); `RagDocumentService.split/store` (lô 20 đoạn, lỗi thì chờ 20s×lần rồi thử lại tối đa 5 lần, lô đã lưu được giữ); `RagIngestJobs` (nạp ở nền bằng 1 luồng, theo dõi tiến độ trong RAM, giữ 10 lần gần nhất); `/admin/documents` hiện thanh tiến độ, tự tải lại 5 giây khi đang chạy, báo lỗi file >20 MB bằng flash.
+- Test: `RagDocumentServiceTest` (lô, retry, bỏ cuộc), `RagIngestJobsTest` (5), `AdminDocumentControllerTest` viết lại; 222 test xanh. Chưa thử với Gemini và Render thật.
+- Quyết định: trạng thái nạp chỉ trong RAM (mất khi server khởi động lại, ghi `shortcut:`); nạp dở rồi lỗi thì upload lại sẽ lưu trùng các đoạn đã có (chưa có xoá theo tên file). Nhánh: `fix/rag-large-upload`.
 
 ### 2026-11-11 – Khung admin sidebar + trang Tài liệu RAG
 - Đã làm: `layout/admin.html` (sidebar tối `bg-neutral` #14261C, thanh trên trắng có ô tìm kiếm trỏ tới `/admin/users?q=`, nội dung nền enamel; điện thoại dùng DaisyUI drawer, không JS); Dashboard và Người dùng chuyển sang khung này (đổi `layout:decorate`, bỏ link "← Quản trị" và nút "Người dùng" thừa); trang `/admin/documents` (form upload, flash thành công/lỗi) + `AdminDocumentController`.

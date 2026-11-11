@@ -4,6 +4,8 @@
       layout:decorate="~{layout/admin}">
 <head>
     <title>Tài liệu RAG</title>
+    <!-- while a file is being processed, reload every 5 s to show progress -->
+    <meta th:if="${running}" http-equiv="refresh" content="5">
 </head>
 <body>
 <section layout:fragment="content">
@@ -16,13 +18,13 @@
         <form th:action="@{/admin/documents}" method="post" enctype="multipart/form-data"
               class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5 lg:col-span-2">
             <h2 class="text-lg font-bold">Nạp tài liệu mới</h2>
-            <label for="file" class="mt-4 block text-sm font-semibold">Chọn file (PDF, DOCX, TXT hoặc MD, tối đa 5 MB)</label>
+            <label for="file" class="mt-4 block text-sm font-semibold">Chọn file (PDF, DOCX, TXT hoặc MD, tối đa 20 MB)</label>
             <input id="file" name="file" type="file" required accept=".pdf,.docx,.txt,.md"
                    class="file-input mt-2 w-full">
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Tải lên</button>
             </div>
-            <p class="mt-2 text-sm text-base-content/70">Việc đọc và lưu tài liệu có thể mất vài giây, bạn đợi trang tải xong nhé.</p>
+            <p class="mt-2 text-sm text-base-content/70">File lớn được nạp ở nền và có thể mất vài phút. Bạn có thể rời trang, tiến độ hiện ở danh sách bên dưới.</p>
         </form>
 
         <aside class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
@@ -34,6 +36,30 @@
             </ul>
         </aside>
     </div>
+
+    <section class="mt-6" aria-labelledby="jobs-title">
+        <h2 id="jobs-title" class="text-lg font-bold">Tiến độ nạp</h2>
+        <p th:if="${jobs.empty}"
+           class="mt-3 rounded-xl border border-base-300 bg-base-100 px-6 py-8 text-center text-base-content/70">
+            Chưa có tài liệu nào được nạp từ lần khởi động server gần nhất.</p>
+        <ul th:unless="${jobs.empty}" class="mt-3 overflow-hidden rounded-xl border border-base-300 bg-base-100">
+            <li th:each="j : ${jobs}" class="border-b border-base-300 p-3 last:border-b-0 md:p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="min-w-0 break-all font-semibold" th:text="${j.fileName}">cam-nang.pdf</p>
+                    <span class="badge whitespace-nowrap"
+                          th:classappend="${j.status.name() == 'DONE'} ? 'badge-primary' : (${j.status.name() == 'FAILED'} ? 'badge-error' : 'badge-outline')"
+                          th:text="${j.status.label}">Đang nạp</span>
+                </div>
+                <th:block th:if="${j.total > 0}">
+                    <progress class="progress progress-primary mt-2 w-full" th:value="${j.done}" th:max="${j.total}"
+                              th:attr="aria-label='Tiến độ nạp ' + ${j.fileName}"></progress>
+                    <p class="mt-1 text-sm text-base-content/70 tabular" th:text="${j.done} + ' / ' + ${j.total} + ' đoạn'">20 / 300 đoạn</p>
+                </th:block>
+                <p th:if="${!#strings.isEmpty(j.message)}" class="mt-1 break-words text-sm"
+                   th:classappend="${j.status.name() == 'FAILED'} ? 'text-error'" th:text="${j.message}">Lỗi</p>
+            </li>
+        </ul>
+    </section>
 </section>
 </body>
 </html>
