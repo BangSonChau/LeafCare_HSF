@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2 xong; RAG backend đã merge (PR #27), trang Hỏi đáp `/chat` ở nhánh `feat/rag-chat-page`; tiếp theo trang Tài liệu RAG cho ADMIN với giao diện sidebar (Shin muốn kiểu ảnh mẫu: sidebar tối, thanh tìm kiếm, card trắng bo góc). Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
+- Đang ở: Giai đoạn 2 xong; RAG backend (#27) và trang Hỏi đáp `/chat` (#28) đã merge; khung admin sidebar + trang Tài liệu RAG ở nhánh `feat/admin-shell`.
 - Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -25,6 +25,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-11 – Khung admin sidebar + trang Tài liệu RAG
+- Đã làm: `layout/admin.html` (sidebar tối `bg-neutral` #14261C, thanh trên trắng có ô tìm kiếm trỏ tới `/admin/users?q=`, nội dung nền enamel; điện thoại dùng DaisyUI drawer, không JS); Dashboard và Người dùng chuyển sang khung này (đổi `layout:decorate`, bỏ link "← Quản trị" và nút "Người dùng" thừa); trang `/admin/documents` (form upload, flash thành công/lỗi) + `AdminDocumentController`.
+- Test: `AdminDocumentControllerTest` (7: form, upload ok, file không có chữ, file rỗng không gọi service, lỗi ingest, USER bị 403, thiếu CSRF), `AdminControllerTest` thêm assert sidebar; 214 test xanh. Kiểm bằng Playwright 1280/390 (không tràn ngang, drawer mở được); chưa kiểm trên app chạy thật.
+- Quyết định: Shin muốn giao diện admin kiểu ảnh mẫu nhưng cùng màu xanh LeafCare, áp dụng cả khu `/admin`. Skill `.claude/skills` (impeccable...) không có trong repo (chỉ có trên máy Shin), nên theo `DESIGN.md`/`PRODUCT.md` bằng tay. File upload tối đa 5 MB (giới hạn chung của app). Chưa làm: danh sách và xoá tài liệu đã nạp. Nhánh: `feat/admin-shell`.
 
 ### 2026-11-11 – Trang Hỏi đáp `/chat`
 - Đã làm: `ChatPageController` (`GET/POST /chat`, form thường nên không cần JS/CSRF thủ công, mọi người đã đăng nhập dùng được), `chat/index.html` (ô hỏi, câu trả lời, danh sách nguồn); link "Hỏi đáp" ở thanh trên desktop và thẻ link ở trang chủ cho điện thoại (thanh dưới đã đủ 5 mục).
