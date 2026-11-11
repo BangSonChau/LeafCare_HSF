@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Hỏi đáp bệnh lá</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h1 class="text-2xl font-bold leading-tight">Hỏi đáp bệnh lá</h1>
+    <p class="mt-1 max-w-prose text-pretty text-base-content/80">
+        Hỏi về triệu chứng và cách chăm sóc. Câu trả lời chỉ dựa trên tài liệu của LeafCare và có ghi nguồn.
+    </p>
+
+    <form th:action="@{/chat}" method="post" class="mt-6 rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
+        <label for="question" class="text-sm font-semibold">Câu hỏi của bạn</label>
+        <textarea id="question" name="question" rows="3" maxlength="500" required
+                  placeholder="Ví dụ: Lá cà chua có đốm nâu tròn thì xử lý thế nào?"
+                  class="textarea mt-2 w-full rounded-xl text-base" th:text="${question}"></textarea>
+        <div class="mt-3 flex justify-end">
+            <button type="submit" class="btn btn-primary h-12 rounded-full px-6">Hỏi</button>
+        </div>
+    </form>
+
+    <!-- error from the controller (validation or Gemini failure) -->
+    <div th:if="${error}" role="alert"
+         class="mt-4 rounded-xl border border-error bg-base-100 px-4 py-3 text-error" th:text="${error}">Có lỗi</div>
+
+    <div th:if="${result}" class="mt-4">
+        <article class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
+            <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
+            <p class="mt-2 whitespace-pre-line break-words" th:text="${result.answer}">Câu trả lời</p>
+        </article>
+
+        <div th:unless="${result.sources.empty}" class="mt-4">
+            <h2 class="text-sm font-semibold text-base-content/70">Nguồn</h2>
+            <ol class="mt-2 space-y-2">
+                <li th:each="s : ${result.sources}" class="rounded-xl border border-base-300 bg-base-100 p-3">
+                    <p class="break-words text-sm font-semibold">
+                        <span class="tabular" th:text="'[' + ${s.number} + ']'">[1]</span>
+                        <span th:text="${s.file}">benh-la.md</span>
+                    </p>
+                    <p class="mt-1 break-words text-sm text-base-content/80" th:text="${s.excerpt}">Trích đoạn</p>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+</body>
+</html>

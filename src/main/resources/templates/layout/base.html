@@ -34,6 +34,9 @@
             <a th:href="@{/diseases}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/diseases')} ? 'page'">Bệnh</a>
+            <a th:href="@{/chat}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+               th:classappend="${#strings.startsWith(currentPath, '/chat')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/chat')} ? 'page'">Hỏi đáp</a>
             <a th:href="@{/scans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
                th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
