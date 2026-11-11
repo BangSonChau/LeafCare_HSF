@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+      layout:decorate="~{layout/admin}">
 <head>
     <title>Quản trị</title>
 </head>
 <body>
 <section layout:fragment="content">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold leading-tight">Quản trị</h1>
-        <a th:href="@{/admin/users}" class="btn h-12 rounded-full px-6">Người dùng &rarr;</a>
-    </div>
+    <h1 class="text-2xl font-bold leading-tight">Tổng quan</h1>
 
     <!-- Key numbers: 2 columns on phones, 4 from md. -->
     <div class="mt-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">

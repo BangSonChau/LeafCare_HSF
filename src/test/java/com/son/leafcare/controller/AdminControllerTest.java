@@ -84,7 +84,11 @@ class AdminControllerTest {
                 .andExpect(content().string(containsString("LC12345678901234567")))
                 .andExpect(content().string(containsString("shin@x.com")))
                 .andExpect(content().string(containsString("Lượt quét 14 ngày")))
-                .andExpect(content().string(containsString("href=\"/admin/users\"")));
+                .andExpect(content().string(containsString("href=\"/admin/users\"")))
+                // shared admin shell: sidebar with all three sections and a search box that targets the user list
+                .andExpect(content().string(containsString("href=\"/admin/documents\"")))
+                .andExpect(content().string(containsString("action=\"/admin/users\"")))
+                .andExpect(content().string(containsString("Tổng quan")));
     }
 
     @Test
