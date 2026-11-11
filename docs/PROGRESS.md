@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2 xong. Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
+- Đang ở: Giai đoạn 2 xong; đang ghép RAG (nhánh `feat/rag`, chờ PR merge). Kế hoạch ở `docs/superpowers/plans/2026-11-08-phase2-login-payment.md` (Task 6–12).
 - Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -20,10 +20,16 @@
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
 - Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `service/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
+- RAG: Spring AI + pgvector, bảng `vector_store` do Spring AI tự tạo (ngoài Flyway); Postgres local/Neon phải có pgvector; test H2 tắt vectorstore + model.
 - DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-11 – Ghép RAG chatbot (Giai đoạn 3, bước 1)
+- Đã làm: thêm Spring AI 2.0.2 (Gemini chat + embedding, pgvector, Tika) vào `pom.xml`; `RagDocumentService` (đọc file -> chia 400 token -> embedding -> lưu), `RagChatService` (top 4 đoạn, ngưỡng 0.3, trả lời tiếng Việt kèm nguồn `[1]`), record `RagAnswer`, `RagController` (`POST /api/rag/chat` cho người đăng nhập, `POST /api/rag/documents` chỉ ADMIN trong `SecurityConfig`); `compose.yaml` dùng `pgvector/pgvector:pg16`; README mục "Chatbot RAG".
+- Test: 3 lớp mới (service x2, controller), test H2 tắt vectorstore/model bằng property + `RagTestBeans` (mock `VectorStore`, `ChatClient.Builder`) cho test full context; 200 test xanh. Chưa thử với Gemini key thật và Postgres pgvector thật.
+- Quyết định: key chỉ đọc từ env `GEMINI_API_KEY`; model chat `gemini-3.8-flash` (2.5-flash hết hiệu lực với tài khoản mới); file rỗng trả 0 đoạn (Tika ném lỗi với file 0 byte). Chưa làm: trang chat giao diện, Admin nhập key, nối với kết quả quét lá. Nhánh: `feat/rag`.
 
 ### 2026-11-08 – Tài liệu + slide Assignment (ngoài plan)
 - Đã làm: `docs/assignment/USER_GUIDE.md` (setup code, Tailwind v4 + DaisyUI v5 trong Thymeleaf, setup Claude Code, quy trình dùng AI làm back-end/UI, kịch bản demo), `LeafCare_Assignment.pptx` (8 slide, có ghi chú người nói), 9 ảnh chụp app trong `docs/assignment/images/`.

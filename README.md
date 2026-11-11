@@ -78,6 +78,13 @@ Thanh toán Premium bằng chuyển khoản: trang `/payments/{orderId}` hiện 
 
 Code MoMo sandbox cũ vẫn còn ở `service/momo/` (không còn nút trên giao diện).
 
+### Chatbot RAG (hỏi đáp theo tài liệu bệnh lá)
+
+- Cần Postgres có extension **pgvector**: chạy `docker compose up -d` (image `pgvector/pgvector:pg16`, cổng 5432) thay cho Postgres cũ. Neon có sẵn pgvector.
+- Lấy key ở https://aistudio.google.com/apikey, đặt biến môi trường `GEMINI_API_KEY` (không ghi vào file). Đổi model chat bằng `GEMINI_CHAT_MODEL` (mặc định `gemini-3.8-flash`).
+- ADMIN upload tài liệu (PDF/DOCX/TXT/MD, không nhận PDF scan): `POST /api/rag/documents`, form-data `file`. Mọi người đã đăng nhập hỏi: `POST /api/rag/chat`, JSON `{"question":"..."}` → `{answer, sources}`. Hai API này cần phiên đăng nhập và CSRF token như các form khác.
+- Lần chạy đầu Spring AI tự tạo extension `vector` và bảng `vector_store`. Upload cùng một file hai lần sẽ lưu hai lần.
+
 ### Deploy lên Render (Docker + Neon PostgreSQL)
 
 App có `Dockerfile`; Render tự build từ nhánh `main` mỗi khi có commit mới.
