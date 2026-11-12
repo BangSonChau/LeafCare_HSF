@@ -2,9 +2,18 @@ package com.son.leafcare.scan;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import com.son.leafcare.common.NotFoundException;
+import com.son.leafcare.disease.Disease;
+import com.son.leafcare.disease.DiseaseRepository;
 import com.son.leafcare.plan.SubscriptionService;
+import com.son.leafcare.plant.Plant;
+import com.son.leafcare.plant.PlantRepository;
 import com.son.leafcare.user.AppUser;
 import com.son.leafcare.user.AppUserRepository;
 import com.son.leafcare.user.Role;
@@ -15,10 +24,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.client.ResourceAccessException;
 
 @DataJpaTest
 @Import({ScanHistoryService.class, FileStorageService.class, SubscriptionService.class})
 class ScanHistoryServiceTest {
+
+    @MockitoBean
+    ScanClient model;
+
+    @Autowired
+    DiseaseRepository diseases;
+
+    @Autowired
+    PlantRepository plants;
 
     @Autowired
     ScanHistoryService service;
@@ -195,5 +215,84 @@ class ScanHistoryServiceTest {
         assertThat(images.existsById(theirs.getImageFileName())).isTrue();
         service.delete(theirs.getId(), admin);
         assertThat(repo.findById(theirs.getId())).isEmpty();
+    }
+
+    Disease tomatoEarlyBlight() {
+        Plant p = new Plant();
+        p.setName("Cà chua");
+        plants.save(p);
+        Disease d = new Disease();
+        d.setName("Bệnh đốm vòng");
+        d.setPlant(p);
+        d.setModelLabel("Tomato___Early_blight");
+        return diseases.save(d);
+    }
+
+    @Test
+    void analyzeLinksTheMatchingDiseaseAndItsPlant() {
+        Disease d = tomatoEarlyBlight();
+        ScanHistory s = service.create(img(), null, user);
+        when(model.predict(any(), eq(s.getImageFileName())))
+                .thenReturn(new ScanClient.Prediction("Tomato___Early_blight", 0.97));
+
+        ScanHistory done = service.analyze(s.getId(), user);
+
+        assertThat(done.getStatus()).isEqualTo(ScanStatus.DONE);
+        assertThat(done.getDisease()).isEqualTo(d);
+        assertThat(done.getPlant()).isEqualTo(d.getPlant());
+        assertThat(done.getConfidence()).isEqualTo(0.97);
+        assertThat(done.getModelLabel()).isEqualTo("Tomato___Early_blight");
+        verify(model).predict(new byte[] {1, 2}, s.getImageFileName());
+    }
+
+    @Test
+    void analyzeKeepsLabelWhenNoDiseaseMatches() {
+        ScanHistory s = service.create(img(), null, user);
+        when(model.predict(any(), any())).thenReturn(new ScanClient.Prediction("Tomato___healthy", 1.0));
+
+        ScanHistory done = service.analyze(s.getId(), user);
+
+        assertThat(done.getStatus()).isEqualTo(ScanStatus.DONE);
+        assertThat(done.getDisease()).isNull();
+        assertThat(done.getPlant()).isNull();
+        assertThat(done.getModelLabel()).isEqualTo("Tomato___healthy");
+    }
+
+    @Test
+    void analyzeMarksFailedWhenTheModelServiceFails() {
+        ScanHistory s = service.create(img(), null, user);
+        when(model.predict(any(), any())).thenThrow(new ResourceAccessException("timeout"));
+
+        ScanHistory failed = service.analyze(s.getId(), user);
+
+        assertThat(failed.getStatus()).isEqualTo(ScanStatus.FAILED);
+        assertThat(failed.getModelLabel()).isNull();
+        assertThat(repo.findById(s.getId()).orElseThrow().getStatus()).isEqualTo(ScanStatus.FAILED);
+    }
+
+    @Test
+    void analyzeAfterFailureCanSucceed() {
+        ScanHistory s = service.create(img(), null, user);
+        when(model.predict(any(), any())).thenThrow(new ResourceAccessException("down"))
+                .thenReturn(new ScanClient.Prediction("Background_without_leaves", 1.0));
+        service.analyze(s.getId(), user);
+        assertThat(service.analyze(s.getId(), user).getStatus()).isEqualTo(ScanStatus.DONE);
+    }
+
+    @Test
+    void analyzeWithMissingImageFailsWithoutCallingTheModel() {
+        ScanHistory s = service.create(img(), null, user);
+        images.deleteById(s.getImageFileName());
+
+        assertThat(service.analyze(s.getId(), user).getStatus()).isEqualTo(ScanStatus.FAILED);
+        verifyNoInteractions(model);
+    }
+
+    @Test
+    void userCannotAnalyzeSomeoneElsesScan() {
+        ScanHistory theirs = service.create(img(), null, other);
+        Long id = theirs.getId();
+        assertThatThrownBy(() -> service.analyze(id, user)).isInstanceOf(NotFoundException.class);
+        verifyNoInteractions(model);
     }
 }

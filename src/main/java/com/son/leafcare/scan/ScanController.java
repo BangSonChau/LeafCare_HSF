@@ -67,6 +67,17 @@ public class ScanController {
         return "scans/detail";
     }
 
+    @PostMapping("/scans/{id}/analyze")
+    public String analyze(@PathVariable Long id, Authentication auth, RedirectAttributes ra) {
+        ScanHistory s = service.analyze(id, users.current(auth));
+        if (s.getStatus() == ScanStatus.DONE) {
+            ra.addFlashAttribute("success", "Đã phân tích ảnh lá");
+        } else {
+            ra.addFlashAttribute("error", "Chưa phân tích được: máy phân tích đang bận hoặc đang khởi động. Thử lại sau ít phút.");
+        }
+        return "redirect:/scans/" + id;
+    }
+
     @PostMapping("/scans/{id}/delete")
     public String delete(@PathVariable Long id, Authentication auth, RedirectAttributes ra) {
         service.delete(id, users.current(auth));

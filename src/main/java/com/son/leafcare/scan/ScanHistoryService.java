@@ -1,6 +1,8 @@
 package com.son.leafcare.scan;
 
 import com.son.leafcare.common.NotFoundException;
+import com.son.leafcare.disease.Disease;
+import com.son.leafcare.disease.DiseaseRepository;
 import com.son.leafcare.plan.SubscriptionService;
 import com.son.leafcare.user.AppUser;
 import com.son.leafcare.user.Role;
@@ -8,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class ScanHistoryService {
 
+    private static final Logger log = LoggerFactory.getLogger(ScanHistoryService.class);
+
     static final int PAGE_SIZE = 10;
     public static final int FREE_PER_DAY = 5;
     private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -27,11 +33,16 @@ public class ScanHistoryService {
     private final ScanHistoryRepository repo;
     private final FileStorageService files;
     private final SubscriptionService subscriptions;
+    private final ScanClient model;
+    private final DiseaseRepository diseases;
 
-    public ScanHistoryService(ScanHistoryRepository repo, FileStorageService files, SubscriptionService subscriptions) {
+    public ScanHistoryService(ScanHistoryRepository repo, FileStorageService files, SubscriptionService subscriptions,
+                              ScanClient model, DiseaseRepository diseases) {
         this.repo = repo;
         this.files = files;
         this.subscriptions = subscriptions;
+        this.model = model;
+        this.diseases = diseases;
     }
 
     /** Scans left today, or null when the user has no limit (Premium or ADMIN). */
@@ -78,6 +89,32 @@ public class ScanHistoryService {
                 .filter(s -> user.getRole() == Role.ADMIN
                         || (s.getOwner() != null && Objects.equals(s.getOwner().getId(), user.getId())))
                 .orElseThrow(NotFoundException::new);
+    }
+
+    /**
+     * Sends the scan's photo to the model and stores its answer. A known label links the disease (and its plant);
+     * healthy / no-leaf / unknown labels keep only modelLabel. When the model service fails the scan becomes FAILED
+     * and the user can retry. No DB transaction is held while waiting for the model (up to 60s).
+     */
+    public ScanHistory analyze(Long id, AppUser user) {
+        ScanHistory s = get(id, user);
+        ImageFile image = files.find(s.getImageFileName()).orElse(null);
+        try {
+            if (image == null) {
+                throw new IllegalStateException("Image " + s.getImageFileName() + " is missing");
+            }
+            ScanClient.Prediction p = model.predict(image.getData(), image.getName());
+            Disease d = diseases.findByModelLabel(p.label()).orElse(null);
+            s.setModelLabel(p.label());
+            s.setConfidence(p.confidence());
+            s.setDisease(d);
+            s.setPlant(d == null ? null : d.getPlant());
+            s.setStatus(ScanStatus.DONE);
+        } catch (RuntimeException e) {
+            log.warn("Scan {} analysis failed: {}", id, e.toString());
+            s.setStatus(ScanStatus.FAILED);
+        }
+        return repo.save(s);
     }
 
     @Transactional

@@ -39,4 +39,8 @@ public class Disease {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Plant plant;
+
+    /** Label the scan model returns for this disease, e.g. Tomato___Early_blight; null = the model does not know it. */
+    @Column(length = 100, unique = true)
+    private String modelLabel;
 }

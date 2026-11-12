@@ -43,6 +43,10 @@ public class ScanHistory {
 
     private Double confidence;
 
+    /** Raw label from the scan model (set once analysed), kept even when no disease row matches it. */
+    @Column(length = 100)
+    private String modelLabel;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Plant plant;
 

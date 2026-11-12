@@ -85,6 +85,14 @@ Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên gia
 - ADMIN upload tài liệu (PDF/DOCX/TXT/MD, không nhận PDF scan): `POST /api/rag/documents`, form-data `file`. Mọi người đã đăng nhập hỏi: `POST /api/rag/chat`, JSON `{"question":"..."}` → `{answer, sources}`. Hai API này cần phiên đăng nhập và CSRF token như các form khác.
 - Lần chạy đầu Spring AI tự tạo extension `vector` và bảng `vector_store`. Upload cùng một file hai lần sẽ lưu hai lần.
 
+### Phân tích ảnh lá bằng model (nút "Phân tích")
+
+Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sang service Python `leafcare-scan-service` (FastAPI + model CNN PyTorch 39 nhãn, PlantVillage) và lưu bệnh, độ tin cậy vào lượt quét. Danh mục bệnh khớp với model qua cột `disease.model_label` (seed `db/seed/V7_1__seed_model_diseases.sql`: cà chua, khoai tây, ớt chuông, ngô).
+
+- Chạy service trên máy: trong thư mục service, `uvicorn main:app --port 7860` (cần file `plant_disease_model_1_latest.pt`, ~200 MB, không có trong repo này).
+- LeafCare đọc địa chỉ service từ env `SCAN_SERVICE_URL` (mặc định `http://localhost:7860`). Service chiếm ~1 GB RAM nên không chạy chung trên Render Free; đặt nó ở Hugging Face Spaces (Docker) rồi trỏ `SCAN_SERVICE_URL` tới đó.
+- Service tắt hoặc chậm quá 60 giây: lượt quét thành "Chưa phân tích được", người dùng bấm "Phân tích lại".
+
 ### Deploy lên Render (Docker + Neon PostgreSQL)
 
 App có `Dockerfile`; Render tự build từ nhánh `main` mỗi khi có commit mới.

@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 2 xong; RAG (#27), trang Hỏi đáp (#28), khung admin + Tài liệu RAG (#29) đã merge; nạp file lớn (20 MB, theo lô, ở nền) ở nhánh `fix/rag-large-upload`.
+- Đang ở: Giai đoạn 3 – quét lá bằng model: PR tái cấu trúc package (`refactor/package-by-feature`) và PR nút Phân tích (`feat/scan-analyze`) chờ Shin merge, theo đúng thứ tự đó. Trước đó: Giai đoạn 2 xong; RAG (#27), trang Hỏi đáp (#28), khung admin + Tài liệu RAG (#29) đã merge; nạp file lớn (20 MB, theo lô, ở nền) ở nhánh `fix/rag-large-upload`.
 - Việc tiếp theo: tài liệu Assignment đã có bản nháp (`docs/assignment/`); nhóm cần chụp ảnh prompt thật và điền tên thành viên. Giai đoạn 3 (AI) Shin tạm hoãn. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -26,6 +26,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-12 – Nút "Phân tích" ảnh lá bằng model (Giai đoạn 3)
+- Đã làm: `V7__scan_model_label.sql` (`disease.model_label` unique, `scan_history.model_label`), seed `V7_1` (thêm Khoai tây, Ớt chuông, Ngô và 15 bệnh có nhãn model; gắn nhãn cho "Bệnh mốc sương" cà chua có sẵn); `ScanClient` (RestClient multipart `POST /predict`, timeout 60s); `ScanHistoryService.analyze` (khớp bệnh theo nhãn, gán cây; lỗi service -> `FAILED`, không giữ transaction khi chờ model); `POST /scans/{id}/analyze`; trang chi tiết hiện bệnh, cây, độ tin cậy, cảnh báo khi < 60%, triệu chứng, cách xử lý, câu "chỉ mang tính tham khảo"; nút Phân tích / Phân tích lại.
+- Sửa kèm: xoá bệnh đang có trong kết quả quét -> `InUseException` + flash lỗi (trước đây sẽ lỗi FK); sửa bệnh qua form giữ nguyên `model_label`.
+- Test: `ScanClientTest` (3), `ScanHistoryServiceTest` (+6), `ScanControllerTest` (+9), `DiseaseRepositoryTest`/`DiseaseServiceDbTest`/`DiseaseControllerTest` (+5); 246 test xanh. Seed chạy thử trên PostgreSQL 16 (2 lần, không trùng); 15 nhãn khớp đúng `CNN.py`. Kiểm giao diện 390/1280 bằng HTML render từ test: không tràn ngang.
+- Quyết định: Shin chọn hỗ trợ 4 cây trước và nút Phân tích riêng (không chạy khi upload); nội dung triệu chứng/cách xử lý là kiến thức chung, cần đối chiếu cẩm nang; service model chạy riêng (env `SCAN_SERVICE_URL`), chưa deploy. Chưa làm: hiện top 3, hướng xử lý từ RAG, sửa `model_label` trên giao diện. Nhánh: `feat/scan-analyze` (tách từ `refactor/package-by-feature`).
 
 ### 2026-11-12 – Tái cấu trúc package theo feature (ngoài plan)
 - Lý do: Shin muốn folder chia theo chức năng thay vì theo tầng (controller/service/entity/repository/exception), trước khi ghép model quét lá.

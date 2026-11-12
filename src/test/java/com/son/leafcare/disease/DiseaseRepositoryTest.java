@@ -56,4 +56,17 @@ class DiseaseRepositoryTest {
         em.clear();
         assertThat(d.getPlant().getName()).isEqualTo("Lan"); // would throw if the entity graph were missing
     }
+
+    @Test
+    void findsByModelLabelWithPlant() {
+        Disease d = repo.findByNameContainingIgnoreCase("Đốm lá 01", PageRequest.of(0, 1)).getContent().get(0);
+        d.setModelLabel("Tomato___Early_blight");
+        repo.saveAndFlush(d);
+        em.clear();
+
+        Disease found = repo.findByModelLabel("Tomato___Early_blight").orElseThrow();
+        assertThat(found.getId()).isEqualTo(d.getId());
+        assertThat(found.getPlant().getName()).isEqualTo("Lan");
+        assertThat(repo.findByModelLabel("Tomato___healthy")).isEmpty();
+    }
 }
