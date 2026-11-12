@@ -131,6 +131,7 @@ public class ScanHistoryService {
             if (image == null) {
                 throw new IllegalStateException("Image " + s.getImageFileName() + " is missing");
             }
+            long started = System.nanoTime();
             ScanClient.Prediction p = model.predict(image.getData(), image.getName());
             Map<String, Double> probs = p.probs() == null || p.probs().isEmpty()
                     ? Map.of(p.label(), p.confidence()) : p.probs();
@@ -159,6 +160,9 @@ public class ScanHistoryService {
             s.setDisease(d);
             s.setPlant(d != null ? d.getPlant() : plants.findByModelPrefix(prefix(label)).orElse(null));
             s.setStatus(ScanStatus.DONE);
+            log.info("Scan {} analysed in {}s: {} {}% (chosen plant: {})", id,
+                    String.format(Locale.ROOT, "%.1f", (System.nanoTime() - started) / 1e9), label,
+                    Math.round(s.getConfidence() * 100), chosen == null ? "auto" : chosen.getModelPrefix());
         } catch (RuntimeException e) {
             log.warn("Scan {} analysis failed: {}", id, e.toString());
             s.setStatus(ScanStatus.FAILED);
