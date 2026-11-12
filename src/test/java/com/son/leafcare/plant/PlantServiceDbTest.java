@@ -62,4 +62,38 @@ class PlantServiceDbTest {
         assertThat(page.getNumber()).isZero();
         assertThat(page.getContent()).isEmpty();
     }
+
+    Plant plant(String name, String prefix) {
+        Plant p = new Plant();
+        p.setName(name);
+        p.setModelPrefix(prefix);
+        return repo.saveAndFlush(p);
+    }
+
+    @Test
+    void scannableListsOnlyPlantsTheModelKnowsByName() {
+        plant("Táo", "Apple");
+        plant("Hoa hồng", null);
+        plant("Cà chua", "Tomato");
+        assertThat(service.scannable()).extracting(Plant::getName).containsExactly("Cà chua", "Táo");
+        assertThat(repo.findByModelPrefix("Tomato")).map(Plant::getName).contains("Cà chua");
+    }
+
+    @Test
+    void editingThroughTheFormKeepsTheModelPrefix() {
+        Plant stored = plant("Cà chua", "Tomato");
+        Plant fromForm = new Plant(); // the form never sends modelPrefix
+        fromForm.setId(stored.getId());
+        fromForm.setName("Cà chua bi");
+        service.save(fromForm);
+        assertThat(repo.findById(stored.getId()).orElseThrow().getModelPrefix()).isEqualTo("Tomato");
+    }
+
+    @Test
+    void newPlantFromTheFormCannotSetAModelPrefix() {
+        Plant fromForm = new Plant();
+        fromForm.setName("Cây lạ");
+        fromForm.setModelPrefix("Tomato"); // e.g. a hand-crafted POST
+        assertThat(service.save(fromForm).getModelPrefix()).isNull();
+    }
 }

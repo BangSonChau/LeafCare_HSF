@@ -36,5 +36,6 @@ async def predict(image: UploadFile = File(...)):
     top3 = [{"label": LABELS[i], "confidence": round(float(probs[i]), 4)}
             for i in probs.argsort()[::-1][:3]]
     return {**top3[0], "top3": top3,
+            "probs": {LABELS[i]: round(float(probs[i]), 6) for i in range(len(LABELS))},
             "isLeaf": top3[0]["label"] != "Background_without_leaves",
             "isHealthy": top3[0]["label"].endswith("healthy")}

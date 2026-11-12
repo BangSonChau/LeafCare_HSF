@@ -31,6 +31,22 @@
         </div>
 
         <div>
+            <label for="plantId" class="text-sm font-semibold">Loại cây</label>
+            <select id="plantId" name="plantId" class="select mt-1 h-12 w-full text-base" aria-describedby="plant-help">
+                <option value="">Để máy tự nhận</option>
+                <option th:each="p : ${plants}" th:value="${p.id}" th:text="${p.name}"
+                        th:selected="${plantId != null and plantId == p.id}">Cà chua</option>
+            </select>
+            <p id="plant-help" class="mt-1 text-sm text-base-content/70">
+                <span th:if="${plants != null and !#lists.isEmpty(plants)}">
+                    LeafCare nhận diện <span th:text="${#lists.size(plants)}">14</span> loại cây:
+                    <span th:text="${#strings.listJoin(plants.![name], ', ')}">Cà chua, Ngô</span>.
+                </span>
+                Chọn đúng loại cây thì kết quả chính xác hơn. Chụp một lá, đặt trên nền trơn, đủ sáng.
+            </p>
+        </div>
+
+        <div>
             <label for="note" class="text-sm font-semibold">Ghi chú</label>
             <textarea id="note" name="note" rows="4" maxlength="1000" th:text="${note}"
                       class="textarea mt-1 w-full text-base"></textarea>

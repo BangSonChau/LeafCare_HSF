@@ -36,20 +36,24 @@ public class ScanController {
     @GetMapping("/scans/new")
     public String newForm(Authentication auth, Model model) {
         model.addAttribute("remaining", service.remainingToday(users.current(auth)));
+        model.addAttribute("plants", service.scannablePlants());
         return "scans/form";
     }
 
     @PostMapping("/scans")
     public String create(@RequestParam(required = false) MultipartFile file,
                          @RequestParam(defaultValue = "") String note,
+                         @RequestParam(required = false) Long plantId,
                          Authentication auth, Model model, RedirectAttributes ra) {
         AppUser me = users.current(auth);
         model.addAttribute("remaining", service.remainingToday(me));
+        model.addAttribute("plants", service.scannablePlants());
+        model.addAttribute("plantId", plantId);
         if (note.length() > NOTE_MAX) {
             return formError("Ghi chú tối đa 1000 ký tự", note, model);
         }
         try {
-            ScanHistory s = service.create(file, note, me);
+            ScanHistory s = service.create(file, note, plantId, me);
             ra.addFlashAttribute("success", "Đã lưu ảnh lá");
             return "redirect:/scans/" + s.getId();
         } catch (InvalidImageException e) {
@@ -63,7 +67,9 @@ public class ScanController {
 
     @GetMapping("/scans/{id}")
     public String detail(@PathVariable Long id, Authentication auth, Model model) {
-        model.addAttribute("scan", service.get(id, users.current(auth)));
+        ScanHistory scan = service.get(id, users.current(auth));
+        model.addAttribute("scan", scan);
+        model.addAttribute("guesses", service.guesses(scan));
         return "scans/detail";
     }
 
@@ -89,6 +95,7 @@ public class ScanController {
     public String tooLarge(Model model) {
         // @ModelAttribute advice does not run for exception handlers; the layout needs currentPath.
         model.addAttribute("currentPath", "/scans/new");
+        model.addAttribute("plants", service.scannablePlants());
         return formError("Ảnh tối đa 5 MB", "", model);
     }
 

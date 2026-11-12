@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 3 – quét lá bằng model: #32 (package theo feature) và #33 (nút Phân tích) đã merge, Shin thử trên máy chạy đúng (đốm vòng cà chua 97%). PR `feat/scan-service-render` đưa service ONNX vào `scan-service/` chờ merge.
-- Việc tiếp theo: deploy `scan-service` thành Web Service Free thứ hai trên Render, đặt `SCAN_SERVICE_URL` cho LeafCare; sửa giờ hiển thị trên Render (đang là UTC); hiện top 3, hướng xử lý từ RAG. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Giai đoạn 3 – quét lá bằng model: chạy thật trên Render (service `leafcare-scan` Render Free + `SCAN_SERVICE_URL`, #34 đã merge). PR `feat/scan-choose-plant` (chọn cây, top 3, đủ 14 cây, giờ Việt Nam) chờ merge.
+- Việc tiếp theo: hướng xử lý từ RAG dưới kết quả quét; Shin xoá các lượt quét thử bị lệch giờ (lẫn giờ UTC và giờ VN, không tự sửa được). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Chọn loại cây khi quét, top 3, đủ 14 cây, giờ Việt Nam (ngoài plan)
+- Lý do: Shin thấy kết quả online lệch giờ (Render chạy UTC) và muốn biết app hỗ trợ cây nào, chọn cây trước khi quét, xem top 3. Shin chọn ô chọn cây **không bắt buộc** (mặc định "Để máy tự nhận").
+- Đã làm: `V8__scan_choose_plant.sql` (`plant.model_prefix` unique, `scan_history.chosen_plant_id`, `looks_like_plant_id`, `top3`); seed `V8_1` (thêm 10 cây, gắn prefix cho 14 cây, 11 bệnh còn lại); service trả `probs` đủ 39 nhãn; `analyze` chỉ xét nhãn của cây đã chọn (chuẩn hoá lại), ảnh không lá vẫn thắng, ảnh rõ là cây khác (≥50%) thì `looksLikePlant`; cây kết quả lấy từ nhãn kể cả lá khoẻ; trang Quét lá liệt kê cây hỗ trợ + ô chọn; trang kết quả hiện cây đã chọn, top 3 tiếng Việt, cảnh báo < 80%. `PlantService.save` giữ `model_prefix` khi sửa qua form. Dockerfile `-Duser.timezone=Asia/Ho_Chi_Minh`.
+- Test: +17 (`ScanHistoryServiceTest`, `ScanControllerTest`, `ScanClientTest`, `PlantServiceDbTest`); 263 test xanh. Migration + seed chạy thử trên PostgreSQL 16 (seed chạy 2 lần không trùng: 14 cây có prefix, 26 bệnh có nhãn). Chưa kiểm giao diện bằng trình duyệt.
+- Không sửa giờ các lượt quét cũ (DB Neon có cả dòng ghi giờ UTC từ Render lẫn giờ VN từ máy Shin). Nhánh: `feat/scan-choose-plant`.
 
 ### 2026-11-13 – Service quét lá bản ONNX cho Render Free (ngoài plan)
 - Lý do: Hugging Face giờ thu phí Space Docker và Gradio; service PyTorch cần ~930 MB RAM, vượt 512 MB của Render Free.

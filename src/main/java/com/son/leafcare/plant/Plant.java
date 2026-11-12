@@ -32,4 +32,8 @@ public class Plant {
     @Size(max = 2000, message = "Mô tả tối đa 2000 ký tự")
     @Column(length = 2000)
     private String description;
+
+    /** Label prefix the scan model uses for this plant (e.g. "Tomato"); null = the model does not know it. */
+    @Column(length = 50, unique = true)
+    private String modelPrefix;
 }

@@ -47,8 +47,23 @@ public class ScanHistory {
     @Column(length = 100)
     private String modelLabel;
 
+    /** The model's 3 best guesses as "label=confidence" joined by ';' (within the chosen plant, if any). */
+    @Column(length = 600)
+    private String top3;
+
+    /** Plant of the result (from the disease, or from the model label for healthy leaves). */
     @ManyToOne(fetch = FetchType.LAZY)
     private Plant plant;
+
+    /** Plant the user picked before scanning; null = let the model decide among all plants. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chosen_plant_id")
+    private Plant chosenPlant;
+
+    /** Set when the photo clearly looks like another plant than the chosen one. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "looks_like_plant_id")
+    private Plant looksLikePlant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Disease disease;

@@ -133,7 +133,7 @@ class ScanControllerTest {
     @Test
     void sixthScanShowsLimitMessageAndUpgradeLink() throws Exception {
         when(service.remainingToday(any())).thenReturn(0);
-        when(service.create(any(), any(), any())).thenThrow(new ScanLimitException());
+        when(service.create(any(), any(), any(), any())).thenThrow(new ScanLimitException());
         mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "keep me"))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attribute("note", "keep me"))
@@ -145,14 +145,14 @@ class ScanControllerTest {
 
     @Test
     void createRedirectsToDetail() throws Exception {
-        when(service.create(any(), eq("hi"), any())).thenReturn(scan(7));
+        when(service.create(any(), eq("hi"), any(), any())).thenReturn(scan(7));
         mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "hi"))
                 .andExpect(redirectedUrl("/scans/7")).andExpect(flash().attributeExists("success"));
     }
 
     @Test
     void invalidImageReShowsForm() throws Exception {
-        when(service.create(any(), any(), any())).thenThrow(new InvalidImageException("Ảnh không hợp lệ"));
+        when(service.create(any(), any(), any(), any())).thenThrow(new InvalidImageException("Ảnh không hợp lệ"));
         mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "keep me"))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attribute("error", "Ảnh không hợp lệ"))
@@ -168,7 +168,7 @@ class ScanControllerTest {
 
     @Test
     void maxUploadSizeShowsForm() throws Exception {
-        when(service.create(any(), any(), any())).thenThrow(new MaxUploadSizeExceededException(5));
+        when(service.create(any(), any(), any(), any())).thenThrow(new MaxUploadSizeExceededException(5));
         mvc.perform(multipart("/scans").with(csrf()).file(file))
                 .andExpect(status().isOk()).andExpect(view().name("scans/form"))
                 .andExpect(model().attribute("error", "Ảnh tối đa 5 MB"));
@@ -300,5 +300,75 @@ class ScanControllerTest {
     @Test
     void analyzeWithoutCsrfIsForbidden() throws Exception {
         mvc.perform(post("/scans/1/analyze")).andExpect(status().isForbidden());
+    }
+
+    static Plant named(long id, String name) {
+        Plant p = new Plant();
+        p.setId(id);
+        p.setName(name);
+        return p;
+    }
+
+    @Test
+    void newFormListsTheScannablePlantsAndLetsTheModelDecideByDefault() throws Exception {
+        when(service.scannablePlants()).thenReturn(List.of(named(3, "Cà chua"), named(4, "Táo")));
+        mvc.perform(get("/scans/new"))
+                .andExpect(content().string(containsString("LeafCare nhận diện <span>2</span> loại cây")))
+                .andExpect(content().string(containsString("Cà chua, Táo")))
+                .andExpect(content().string(containsString("<option value=\"\">Để máy tự nhận</option>")))
+                .andExpect(content().string(containsString("<option value=\"3\">Cà chua</option>")));
+    }
+
+    @Test
+    void createPassesTheChosenPlantAndKeepsItWhenTheFormIsShownAgain() throws Exception {
+        when(service.create(any(), eq("hi"), eq(3L), any())).thenReturn(scan(7));
+        mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "hi").param("plantId", "3"))
+                .andExpect(redirectedUrl("/scans/7"));
+        verify(service).create(any(), eq("hi"), eq(3L), any());
+
+        when(service.scannablePlants()).thenReturn(List.of(named(3, "Cà chua")));
+        when(service.create(any(), eq("bad"), any(), any())).thenThrow(new InvalidImageException("Ảnh không hợp lệ"));
+        mvc.perform(multipart("/scans").with(csrf()).file(file).param("note", "bad").param("plantId", "3"))
+                .andExpect(content().string(containsString("<option value=\"3\" selected=\"selected\">Cà chua</option>")));
+    }
+
+    @Test
+    void confidenceUnder80PercentShowsWarning() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.64, septoria()));
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString("chưa chắc chắn")));
+    }
+
+    @Test
+    void doneDetailShowsChosenPlantLooksLikeWarningAndTop3() throws Exception {
+        ScanHistory s = analysed("Tomato___Septoria_leaf_spot", 0.9, septoria());
+        s.setChosenPlant(named(3, "Cà chua"));
+        s.setLooksLikePlant(named(5, "Nho"));
+        when(service.get(eq(1L), any())).thenReturn(s);
+        when(service.guesses(s)).thenReturn(List.of(
+                new ScanHistoryService.Guess("Bệnh đốm lá Septoria", "Cà chua", 0.9),
+                new ScanHistoryService.Guess("Lá khoẻ", "Cà chua", 0.07)));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("Loại cây đã chọn")))
+                .andExpect(content().string(containsString("trông giống lá <strong>Nho</strong> hơn")))
+                .andExpect(content().string(containsString("Các khả năng máy đã xét")))
+                .andExpect(content().string(containsString("2. Lá khoẻ")))
+                .andExpect(content().string(containsString("7%")));
+    }
+
+    @Test
+    void pendingDetailSaysTheModelDecidesWhenNoPlantWasChosen() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(scan(1));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("Để máy tự nhận")))
+                .andExpect(content().string(not(containsString("Các khả năng máy đã xét"))));
+    }
+
+    @Test
+    void healthyLeafShowsItsPlant() throws Exception {
+        ScanHistory s = analysed("Grape___healthy", 0.95, null);
+        s.setPlant(named(5, "Nho"));
+        when(service.get(eq(1L), any())).thenReturn(s);
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString("Lá khoẻ")))
+                .andExpect(content().string(containsString("Nho")));
     }
 }
