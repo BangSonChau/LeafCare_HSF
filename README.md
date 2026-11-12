@@ -93,7 +93,7 @@ Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sa
 - Chạy trên máy: trong `scan-service/`, `python -m venv .venv`, bật venv, `pip install -r requirements.txt`, tải `model.onnx` từ link trên vào thư mục, rồi `uvicorn main:app --port 7860`.
 - Deploy (Render, Web Service thứ hai, Free): Language **Python 3**, Root Directory `scan-service`, Build Command `pip install -r requirements.txt && curl -fL -o model.onnx https://huggingface.co/shin0110/leafcare-scan/resolve/main/model.onnx`, Start Command `uvicorn main:app --host 0.0.0.0 --port $PORT`, Health Check Path `/health`. Sau đó đặt env `SCAN_SERVICE_URL` của LeafCare = địa chỉ service này.
 - LeafCare đọc địa chỉ service từ env `SCAN_SERVICE_URL` (mặc định `http://localhost:7860`). Service Free ngủ sau 15 phút không dùng; lần đầu gọi lại mất khoảng 1 phút.
-- Kiểm tra trên Render: mỗi lần phân tích xong, Logs của LeafCare có dòng `Scan 12 analysed in 1.4s: Tomato___Late_blight 65% (chosen plant: Tomato)` (lỗi thì `Scan 12 analysis failed: ...`); Logs của `leafcare-scan` có `POST /predict ... 200 OK`.
+- Kiểm tra trên Render: Logs của `leafcare-scan` có `POST /predict ... 200 OK` mỗi lần phân tích; lỗi thì Logs của LeafCare có `Scan 12 analysis failed: ...`.
 - Service tắt hoặc chậm quá 60 giây: lượt quét thành "Chưa phân tích được", người dùng bấm "Phân tích lại".
 
 ### Deploy lên Render (Docker + Neon PostgreSQL)

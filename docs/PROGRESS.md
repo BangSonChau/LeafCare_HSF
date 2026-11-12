@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 3 – quét lá chạy thật trên Render (#34, #35 đã merge). PR `feat/scan-ask-rag` (nút "Hỏi cẩm nang về bệnh này" dưới kết quả quét + log INFO khi phân tích xong) chờ merge.
+- Đang ở: Giai đoạn 3 – quét lá chạy thật trên Render; #36 (nút "Hỏi cẩm nang về bệnh này") đã merge. PR `fix/remove-scan-log` (bỏ dòng log INFO khi phân tích xong, theo ý Shin) chờ merge. Deploy #36 trên Render bị huỷ vì app khởi động quá 15 phút (log dừng sau `QueryEnhancerFactories`), đang chờ Shin deploy lại.
 - Việc tiếp theo: Shin chọn; gợi ý cập nhật slide/tài liệu Assignment với tính năng quét lá + RAG. Shin xoá các lượt quét thử bị lệch giờ. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -27,6 +27,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Bỏ log INFO khi phân tích xong (ngoài plan)
+- Lý do: Shin muốn bỏ việc số 2 của #36 sau khi deploy #36 trên Render bị huỷ (app không mở cổng sau 15 phút; dòng log không phải nguyên nhân, mới chỉ là phỏng đoán do Render Free thiếu CPU).
+- Đã làm: xoá `log.info` + đo thời gian trong `ScanHistoryService.analyze`, xoá test `OutputCaptureExtension`, README chỉ còn cách xem log `/predict` và log lỗi. Log lỗi `Scan {} analysis failed` giữ nguyên.
+- Test: 265 test xanh. Nhánh: `fix/remove-scan-log`.
 
 ### 2026-11-13 – Hỏi cẩm nang từ kết quả quét + log phân tích (ngoài plan)
 - Lý do: Shin muốn từ bệnh vừa nhận diện hỏi luôn cẩm nang đã nạp (RAG), và muốn biết trên production lượt phân tích có chạy thành công không.
@@ -125,14 +130,8 @@
 - Test: thêm 3 test `PaymentServiceTest` (chỉ đơn của mình, phân trang/clamp, rỗng), 3 test `PaymentControllerTest`, 1 assert `PlanControllerTest`; 156 test xanh. Kiểm tay 390/1280 (10 dòng, số tiền 499.000.000 ₫, trống): không tràn ngang.
 - Quyết định: nhãn PENDING đổi "Đang xử lý" -> "Chờ thanh toán" (với QR chuyển khoản, đơn chưa trả tiền nằm ở trạng thái này). Nhánh: `feat/task-9-payment-history`.
 
-### 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan)
-- Lý do: thẻ ATM test của MoMo sandbox bị "nhà phát hành từ chối"; Shin chọn thay MoMo bằng SePay (QR thật, tài khoản cá nhân).
-- Đã làm: `POST /payments/premium` tạo đơn PENDING rồi mở `/payments/{orderId}` (VietQR `vietqr.app/img`, thông tin tài khoản, tự tải lại 5s); `POST /payments/sepay/webhook` (công khai, bỏ CSRF, header `Authorization: Apikey`, trả `{"success":true}`); `PaymentService.handleWebhook` lấy mã đơn từ `code` hoặc `LC`+17 số trong nội dung, chỉ tiền vào, thiếu tiền giữ PENDING, thừa vẫn nhận; `V4__payment_sepay.sql` đổi `momo_trans_id` -> `trans_id`. Bỏ endpoint MoMo; README hướng dẫn SePay.
-- Test: `PaymentServiceTest` (12), `PaymentControllerTest` (9); 150 test xanh.
-- 08/11: Shin thử thật thành công (MBBank cá nhân, webhook API Key qua `cloudflared tunnel`, 2.000đ -> Premium đến 08/12/2026). Vietcombank cá nhân SePay chưa hỗ trợ.
-- Env mới: `SEPAY_BANK`, `SEPAY_ACCOUNT`, `SEPAY_ACCOUNT_NAME`, `SEPAY_API_KEY`, `LEAFCARE_PREMIUM_PRICE`. Nhánh: `feat/sepay-qr`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan) (`feat/sepay-qr`)
 - 2026-11-08 – Task 8: MoMo sandbox (`feat/task-8-momo`)
 - 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan) (`fix/momo-atm-test-card`)
 - 2026-11-08 – Task 7: Subscription, Payment + trang chọn gói (`feat/task-7-plans`)

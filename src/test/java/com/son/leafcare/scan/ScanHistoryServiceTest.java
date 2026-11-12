@@ -22,9 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
@@ -33,7 +30,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.ResourceAccessException;
 
 @DataJpaTest
-@ExtendWith(OutputCaptureExtension.class)
 @Import({ScanHistoryService.class, FileStorageService.class, SubscriptionService.class})
 class ScanHistoryServiceTest {
 
@@ -249,17 +245,6 @@ class ScanHistoryServiceTest {
         assertThat(done.getConfidence()).isEqualTo(0.97);
         assertThat(done.getModelLabel()).isEqualTo("Tomato___Early_blight");
         verify(model).predict(new byte[] {1, 2}, s.getImageFileName());
-    }
-
-    @Test
-    void analyzeLogsTheResultSoProductionShowsItWorked(CapturedOutput out) {
-        ScanHistory s = service.create(img(), null, null, user);
-        when(model.predict(any(), any())).thenReturn(new ScanClient.Prediction("Tomato___Late_blight", 0.6512));
-
-        service.analyze(s.getId(), user);
-
-        assertThat(out.getOut()).containsPattern("Scan " + s.getId()
-                + " analysed in \\d+\\.\\ds: Tomato___Late_blight 65% \\(chosen plant: auto\\)");
     }
 
     @Test
