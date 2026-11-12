@@ -1,6 +1,8 @@
 package com.son.leafcare.service;
 
 import jakarta.annotation.PreDestroy;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -41,6 +43,8 @@ public class RagIngestJobs {
         private volatile int total;
         private volatile int done;
         private volatile String message = "";
+        private final Instant startedAt = Instant.now();
+        private volatile Instant finishedAt;
 
         public Job(String fileName) {
             this.fileName = fileName;
@@ -52,6 +56,17 @@ public class RagIngestJobs {
         public int getDone() { return done; }
         public String getMessage() { return message; }
         public boolean isRunning() { return status == Status.READING || status == Status.STORING; }
+
+        /** Thời gian đã chạy (dừng đếm khi xong hoặc lỗi), để admin biết nên chờ tiếp hay đi xem log. */
+        public long getElapsedSeconds() {
+            Instant end = finishedAt != null ? finishedAt : Instant.now();
+            return Duration.between(startedAt, end).toSeconds();
+        }
+
+        private void finish(Status s) {
+            finishedAt = Instant.now();
+            status = s;
+        }
     }
 
     private static final Logger log = LoggerFactory.getLogger(RagIngestJobs.class);
@@ -100,19 +115,21 @@ public class RagIngestJobs {
             var chunks = documents.split(file, job.fileName);
             if (chunks.isEmpty()) {
                 job.message = "Không đọc được chữ trong file. PDF scan hoặc ảnh thì chưa nạp được.";
-                job.status = Status.FAILED;
+                job.finish(Status.FAILED);
                 return;
             }
             job.total = chunks.size();
             job.status = Status.STORING;
             documents.store(chunks, n -> job.done = n);
-            job.status = Status.DONE;
-        } catch (Exception e) { // Tika không đọc được định dạng, Gemini hết quota, DB lỗi...
+            job.finish(Status.DONE);
+        } catch (Throwable e) { // cả OutOfMemoryError: nếu không bắt, luồng nền chết im lặng và job kẹt ở "Đang đọc file" mãi
             log.warn("RAG ingest failed for {}", job.fileName, e);
-            job.message = job.done > 0
+            job.message = e instanceof OutOfMemoryError
+                    ? "Hết bộ nhớ khi đọc file (server gói Free chỉ có 512 MB). Thử tách file nhỏ hơn rồi nạp từng phần."
+                    : job.done > 0
                     ? "Dừng giữa chừng: đã lưu " + job.done + "/" + job.total + " đoạn. Thử lại sau sẽ lưu trùng các đoạn này."
                     : "Không nạp được. Kiểm tra định dạng file hoặc thử lại sau.";
-            job.status = Status.FAILED;
+            job.finish(Status.FAILED);
         }
     }
 

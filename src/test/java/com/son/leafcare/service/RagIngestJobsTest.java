@@ -72,6 +72,28 @@ class RagIngestJobsTest {
     }
 
     @Test
+    void outOfMemoryDuringReadFailsInsteadOfLeavingTheJobStuck() throws Exception {
+        doThrow(new OutOfMemoryError("heap")).when(documents).split(any(), any());
+
+        var job = jobs.start(file, "big.pdf");
+
+        assertThat(job.getStatus()).isEqualTo(RagIngestJobs.Status.FAILED);
+        assertThat(job.isRunning()).isFalse();
+        assertThat(job.getMessage()).contains("Hết bộ nhớ");
+    }
+
+    @Test
+    void elapsedTimeStopsCountingOnceFinished() throws Exception {
+        when(documents.split(any(), any())).thenReturn(List.of());
+
+        var job = jobs.start(file, "a.pdf");
+
+        assertThat(job.getElapsedSeconds()).isZero();
+        Thread.sleep(1100);
+        assertThat(job.getElapsedSeconds()).isZero(); // đã dừng đếm từ lúc lỗi
+    }
+
+    @Test
     void recentIsNewestFirstAndKeepsOnlyTheLastTen() throws Exception {
         when(documents.split(any(), any())).thenReturn(List.of());
 

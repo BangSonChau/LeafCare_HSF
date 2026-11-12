@@ -26,6 +26,12 @@
 
 ## Nhật ký (mới nhất ở trên)
 
+### 2026-11-11 – Job nạp tài liệu không còn kẹt ở "Đang đọc file"
+- Lý do: Shin upload cẩm nang PDF 210 trang sau #30, trạng thái đứng ở "Đang đọc file". `RagIngestJobs` chỉ bắt `Exception`, nên `OutOfMemoryError` (Render Free 512 MB, Tika đọc PDF lớn) làm luồng nền chết im lặng và job kẹt mãi.
+- Đã làm: bắt `Throwable`, báo "Hết bộ nhớ..." rõ ràng khi OOM; mỗi job có thời gian đã chạy (dừng đếm khi xong hoặc lỗi), hiện trên `/admin/documents`.
+- Test: +2 (`RagIngestJobsTest`: OOM -> FAILED, thời gian dừng đếm), assert "Đã chạy" ở controller test; 225 test xanh. Chưa thử PDF thật trên Render; nếu server bị Render kill vì vượt RAM thì danh sách job mất hẳn (xem Logs Render).
+- Cách tránh: nạp bản `.txt` đã trích chữ thay vì PDF (Tika đọc txt tức thì, ít RAM). Nhánh: `fix/rag-ingest-failure-state`.
+
 ### 2026-11-11 – Nạp tài liệu lớn (20 MB, theo lô, ở nền)
 - Lý do: Shin upload cẩm nang bệnh cây (PDF 210 trang, bản text ~390 KB, tách thử ra 398 đoạn) lên Render thì lỗi hết; giới hạn 5 MB chắc chắn chặn PDF lớn, và nạp một lần cả trăm đoạn dễ chạm timeout request/quota embedding của Gemini. Chưa có log lỗi thật từ Render.
 - Đã làm: `multipart.max-file-size=20MB` (ảnh quét vẫn 5 MB vì `FileStorageService` tự kiểm); `RagDocumentService.split/store` (lô 20 đoạn, lỗi thì chờ 20s×lần rồi thử lại tối đa 5 lần, lô đã lưu được giữ); `RagIngestJobs` (nạp ở nền bằng 1 luồng, theo dõi tiến độ trong RAM, giữ 10 lần gần nhất); `/admin/documents` hiện thanh tiến độ, tự tải lại 5 giây khi đang chạy, báo lỗi file >20 MB bằng flash.

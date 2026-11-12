@@ -69,7 +69,8 @@ class AdminDocumentControllerTest {
         mvc.perform(get("/admin/documents")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("http-equiv=\"refresh\"")))
                 .andExpect(content().string(containsString("cam-nang.pdf")))
-                .andExpect(content().string(containsString("Đang đọc file")));
+                .andExpect(content().string(containsString("Đang đọc file")))
+                .andExpect(content().string(containsString("Đã chạy 0 phút")));
     }
 
     @Test
