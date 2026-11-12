@@ -15,15 +15,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.son.leafcare.controller.HomeController;
-import com.son.leafcare.controller.LoginController;
-import com.son.leafcare.controller.PlantController;
-import com.son.leafcare.entity.AppUser;
-import com.son.leafcare.entity.Role;
-import com.son.leafcare.service.AppUserService;
-import com.son.leafcare.service.DashboardService;
-import com.son.leafcare.service.DashboardStats;
-import com.son.leafcare.service.PlantService;
+import com.son.leafcare.home.DashboardService;
+import com.son.leafcare.home.DashboardStats;
+import com.son.leafcare.home.HomeController;
+import com.son.leafcare.plant.PlantController;
+import com.son.leafcare.plant.PlantService;
+import com.son.leafcare.user.AppUser;
+import com.son.leafcare.user.AppUserService;
+import com.son.leafcare.user.LoginController;
+import com.son.leafcare.user.Role;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

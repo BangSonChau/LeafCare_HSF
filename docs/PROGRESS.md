@@ -18,13 +18,20 @@
 - Thiết kế: hướng "Phòng khám cây" (xanh lâm sàng #0B7A4B trên nền trắng men #F4F8F5, font Be Vietnam Pro, nút "Quét lá" luôn trong tầm ngón cái). Chi tiết ở `DESIGN.md`, `PRODUCT.md`, `.impeccable/surfaces/`.
 - Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
-- Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `service/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
+- Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `payment/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
 - RAG: Spring AI + pgvector, bảng `vector_store` do Spring AI tự tạo (ngoài Flyway); Postgres local/Neon phải có pgvector; test H2 tắt vectorstore + model.
 - DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
+- Code chia package theo feature (`plant`, `disease`, `scan`, `user`, `plan`, `payment`, `rag`, `admin`, `home`, `common`, `config`), không chia theo tầng nữa; test theo cùng package.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-12 – Tái cấu trúc package theo feature (ngoài plan)
+- Lý do: Shin muốn folder chia theo chức năng thay vì theo tầng (controller/service/entity/repository/exception), trước khi ghép model quét lá.
+- Đã làm: chuyển 55 lớp main + 31 lớp test (`git mv`, giữ lịch sử) sang `plant`, `disease`, `scan`, `user`, `plan`, `payment`, `payment.momo`, `rag`, `admin`, `home`, `common`; sửa package/import; JPQL trong `PaymentRepository` đổi tên đầy đủ của `PaymentStatus`; `ScanHistoryService.startOfVietnamDay()` thành `public` vì `AdminService` giờ khác package. Template, SQL, cấu hình không đổi.
+- Test: 223 test xanh, bằng đúng số trước khi chuyển (`./mvnw verify`). Không đổi hành vi.
+- File: 89 file (chủ yếu đổi tên), `CLAUDE.md` (mục Notes mô tả package), `README.md` (đường dẫn MoMo). Nhánh: `refactor/package-by-feature`.
 
 ### 2026-11-11 – Job nạp tài liệu không còn kẹt ở "Đang đọc file"
 - Lý do: Shin upload cẩm nang PDF 210 trang sau #30, trạng thái đứng ở "Đang đọc file". `RagIngestJobs` chỉ bắt `Exception`, nên `OutOfMemoryError` (Render Free 512 MB, Tika đọc PDF lớn) làm luồng nền chết im lặng và job kẹt mãi.

@@ -1,8 +1,8 @@
 package com.son.leafcare.config;
 
-import com.son.leafcare.entity.AppUser;
-import com.son.leafcare.entity.Role;
-import com.son.leafcare.service.AppUserService;
+import com.son.leafcare.user.AppUser;
+import com.son.leafcare.user.AppUserService;
+import com.son.leafcare.user.Role;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
