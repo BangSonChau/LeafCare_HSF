@@ -1,5 +1,6 @@
 package com.son.leafcare.disease;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -9,4 +10,7 @@ public interface DiseaseRepository extends JpaRepository<Disease, Long> {
 
     @EntityGraph(attributePaths = "plant")
     Page<Disease> findByNameContainingIgnoreCase(String q, Pageable p);
+
+    @EntityGraph(attributePaths = "plant")
+    Optional<Disease> findByModelLabel(String modelLabel);
 }

@@ -20,6 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.son.leafcare.common.NotFoundException;
 import com.son.leafcare.config.SecurityConfig;
+import com.son.leafcare.disease.Disease;
+import com.son.leafcare.plant.Plant;
 import com.son.leafcare.user.AppUser;
 import com.son.leafcare.user.AppUserService;
 import java.time.LocalDateTime;
@@ -195,5 +197,108 @@ class ScanControllerTest {
     void deleteUnknownIs404() throws Exception {
         doThrow(new NotFoundException()).when(service).delete(eq(5L), any());
         mvc.perform(post("/scans/5/delete").with(csrf())).andExpect(status().isNotFound());
+    }
+
+    ScanHistory analysed(String label, double confidence, Disease d) {
+        ScanHistory s = scan(1);
+        s.setStatus(ScanStatus.DONE);
+        s.setModelLabel(label);
+        s.setConfidence(confidence);
+        s.setDisease(d);
+        s.setPlant(d == null ? null : d.getPlant());
+        return s;
+    }
+
+    Disease septoria() {
+        Plant p = new Plant();
+        p.setName("Cà chua");
+        Disease d = new Disease();
+        d.setName("Bệnh đốm lá Septoria");
+        d.setSymptoms("Đốm tròn nhỏ tâm xám");
+        d.setTreatment("Ngắt bỏ lá bệnh");
+        d.setPlant(p);
+        return d;
+    }
+
+    @Test
+    void pendingDetailShowsAnalyzeButtonAndNoDiagnosis() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(scan(1));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("/scans/1/analyze")))
+                .andExpect(content().string(containsString(">Phân tích</button>")))
+                .andExpect(content().string(not(containsString("Độ tin cậy"))));
+    }
+
+    @Test
+    void failedDetailOffersRetry() throws Exception {
+        ScanHistory s = scan(1);
+        s.setStatus(ScanStatus.FAILED);
+        when(service.get(eq(1L), any())).thenReturn(s);
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString(">Phân tích lại</button>")));
+    }
+
+    @Test
+    void doneDetailShowsDiseaseConfidenceSymptomsAndTreatmentWithoutAnalyzeButton() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.97, septoria()));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("Bệnh đốm lá Septoria")))
+                .andExpect(content().string(containsString("Cà chua")))
+                .andExpect(content().string(containsString("97%")))
+                .andExpect(content().string(containsString("Đốm tròn nhỏ tâm xám")))
+                .andExpect(content().string(containsString("Ngắt bỏ lá bệnh")))
+                .andExpect(content().string(containsString("chỉ mang tính tham khảo")))
+                .andExpect(content().string(not(containsString("chưa chắc chắn"))))
+                .andExpect(content().string(not(containsString("/scans/1/analyze"))));
+    }
+
+    @Test
+    void lowConfidenceShowsWarning() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.53, septoria()));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("53%")))
+                .andExpect(content().string(containsString("chưa chắc chắn")));
+    }
+
+    @Test
+    void healthyNoLeafAndUnknownLabelsHaveTheirOwnMessage() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___healthy", 1.0, null));
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString("Lá khoẻ")));
+
+        when(service.get(eq(1L), any())).thenReturn(analysed("Background_without_leaves", 1.0, null));
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString("Không thấy lá trong ảnh")))
+                .andExpect(content().string(not(containsString("chưa có trong danh mục"))));
+
+        when(service.get(eq(1L), any())).thenReturn(analysed("Apple___Black_rot", 0.9, null));
+        mvc.perform(get("/scans/1")).andExpect(content().string(containsString("chưa có trong danh mục")))
+                .andExpect(content().string(containsString("Apple___Black_rot")));
+    }
+
+    @Test
+    void analyzeDoneRedirectsWithSuccess() throws Exception {
+        when(service.analyze(eq(1L), any())).thenReturn(analysed("Tomato___healthy", 1.0, null));
+        mvc.perform(post("/scans/1/analyze").with(csrf()))
+                .andExpect(redirectedUrl("/scans/1"))
+                .andExpect(flash().attributeExists("success"));
+    }
+
+    @Test
+    void analyzeFailedRedirectsWithError() throws Exception {
+        ScanHistory s = scan(1);
+        s.setStatus(ScanStatus.FAILED);
+        when(service.analyze(eq(1L), any())).thenReturn(s);
+        mvc.perform(post("/scans/1/analyze").with(csrf()))
+                .andExpect(redirectedUrl("/scans/1"))
+                .andExpect(flash().attributeExists("error"));
+    }
+
+    @Test
+    void analyzeUnknownIs404() throws Exception {
+        when(service.analyze(eq(9L), any())).thenThrow(new NotFoundException());
+        mvc.perform(post("/scans/9/analyze").with(csrf())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void analyzeWithoutCsrfIsForbidden() throws Exception {
+        mvc.perform(post("/scans/1/analyze")).andExpect(status().isForbidden());
     }
 }

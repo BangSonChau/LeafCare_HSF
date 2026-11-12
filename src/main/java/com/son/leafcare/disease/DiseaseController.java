@@ -1,5 +1,6 @@
 package com.son.leafcare.disease;
 
+import com.son.leafcare.common.InUseException;
 import com.son.leafcare.plant.PlantService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -60,8 +61,12 @@ public class DiseaseController {
 
     @PostMapping("/diseases/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
-        service.delete(id);
-        ra.addFlashAttribute("success", "Đã xoá bệnh");
+        try {
+            service.delete(id);
+            ra.addFlashAttribute("success", "Đã xoá bệnh");
+        } catch (InUseException e) {
+            ra.addFlashAttribute("error", "Không thể xoá: bệnh này đang có trong kết quả quét");
+        }
         return "redirect:/diseases";
     }
 

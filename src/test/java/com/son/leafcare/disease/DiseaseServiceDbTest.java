@@ -8,6 +8,8 @@ import com.son.leafcare.common.NotFoundException;
 import com.son.leafcare.plant.Plant;
 import com.son.leafcare.plant.PlantRepository;
 import com.son.leafcare.plant.PlantService;
+import com.son.leafcare.scan.ScanHistory;
+import com.son.leafcare.scan.ScanHistoryRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -34,6 +36,9 @@ class DiseaseServiceDbTest {
 
     @Autowired
     TestEntityManager em;
+
+    @Autowired
+    ScanHistoryRepository scans;
 
     Plant plant(String name) {
         Plant p = new Plant();
@@ -109,6 +114,48 @@ class DiseaseServiceDbTest {
         } finally {
             repo.deleteAll();
             plants.deleteAll();
+        }
+    }
+
+    @Test
+    void editingKeepsTheModelLabel() {
+        Disease d = disease("Đốm vòng", null);
+        d.setModelLabel("Tomato___Early_blight");
+        Long id = repo.saveAndFlush(d).getId();
+        em.clear();
+
+        Disease fromForm = disease("Bệnh đốm vòng", null); // the form has no model label field
+        fromForm.setId(id);
+        service.save(fromForm);
+        em.flush();
+        em.clear();
+
+        Disease reloaded = repo.findById(id).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Bệnh đốm vòng");
+        assertThat(reloaded.getModelLabel()).isEqualTo("Tomato___Early_blight");
+    }
+
+    @Test
+    void newDiseaseCannotSetAModelLabelFromTheForm() {
+        Disease fromForm = disease("Bệnh lạ", null);
+        fromForm.setModelLabel("Tomato___Early_blight");
+        assertThat(service.save(fromForm).getModelLabel()).isNull();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void deletingDiseaseUsedByAScanThrowsInUseAndKeepsRow() {
+        Disease d = service.save(disease("Đốm lá", null));
+        ScanHistory s = new ScanHistory();
+        s.setImageFileName("a.png");
+        s.setDisease(d);
+        scans.saveAndFlush(s);
+        try {
+            assertThatThrownBy(() -> service.delete(d.getId())).isInstanceOf(InUseException.class);
+            assertThat(repo.existsById(d.getId())).isTrue();
+        } finally {
+            scans.deleteAll();
+            repo.deleteAll();
         }
     }
 }

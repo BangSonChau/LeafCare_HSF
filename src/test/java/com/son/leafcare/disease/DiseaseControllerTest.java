@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import com.son.leafcare.common.InUseException;
 import com.son.leafcare.common.NotFoundException;
 import com.son.leafcare.config.SecurityConfig;
 import com.son.leafcare.plant.Plant;
@@ -170,5 +171,13 @@ class DiseaseControllerTest {
     void deleteUnknownIs404() throws Exception {
         doThrow(new NotFoundException()).when(service).delete(5L);
         mvc.perform(post("/diseases/5/delete").with(csrf())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteInUseFlashesError() throws Exception {
+        doThrow(new InUseException()).when(service).delete(3L);
+        mvc.perform(post("/diseases/3/delete").with(csrf()))
+                .andExpect(redirectedUrl("/diseases"))
+                .andExpect(flash().attributeExists("error"));
     }
 }

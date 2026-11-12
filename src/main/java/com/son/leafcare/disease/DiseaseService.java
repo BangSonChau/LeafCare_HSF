@@ -1,7 +1,9 @@
 package com.son.leafcare.disease;
 
+import com.son.leafcare.common.InUseException;
 import com.son.leafcare.common.NotFoundException;
 import com.son.leafcare.plant.PlantRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -41,6 +43,8 @@ public class DiseaseService {
     @Transactional
     public Disease save(Disease d) {
         d.setName(d.getName().trim());
+        // The form has no model label field: keep the stored one so editing a disease does not unlink it from scans.
+        d.setModelLabel(d.getId() == null ? null : repo.findById(d.getId()).map(Disease::getModelLabel).orElse(null));
         // An empty select binds to a Plant with null id; unknown id -> 404 rather than a FK error.
         if (d.getPlant() != null) {
             d.setPlant(d.getPlant().getId() == null ? null
@@ -54,6 +58,11 @@ public class DiseaseService {
         if (!repo.existsById(id)) {
             throw new NotFoundException();
         }
-        repo.deleteById(id);
+        try {
+            repo.deleteById(id);
+            repo.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new InUseException(); // analysed scans point at it
+        }
     }
 }

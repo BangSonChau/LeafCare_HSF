@@ -1,7 +1,9 @@
 package com.son.leafcare.scan;
 
 public enum ScanStatus {
-    PENDING("Chờ phân tích");
+    PENDING("Chờ phân tích"),
+    DONE("Đã phân tích"),
+    FAILED("Chưa phân tích được");
 
     private final String label;
 
