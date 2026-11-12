@@ -87,10 +87,12 @@ Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên gia
 
 ### Phân tích ảnh lá bằng model (nút "Phân tích")
 
-Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sang service Python `leafcare-scan-service` (FastAPI + model CNN PyTorch 39 nhãn, PlantVillage) và lưu bệnh, độ tin cậy vào lượt quét. Danh mục bệnh khớp với model qua cột `disease.model_label` (seed `db/seed/V7_1__seed_model_diseases.sql`: cà chua, khoai tây, ớt chuông, ngô).
+Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sang service Python trong thư mục `scan-service/` (FastAPI + model CNN 39 nhãn PlantVillage, chạy bằng ONNX Runtime) và lưu bệnh, độ tin cậy vào lượt quét. Danh mục bệnh khớp với model qua cột `disease.model_label` (seed `db/seed/V7_1__seed_model_diseases.sql`: cà chua, khoai tây, ớt chuông, ngô).
 
-- Chạy service trên máy: trong thư mục service, `uvicorn main:app --port 7860` (cần file `plant_disease_model_1_latest.pt`, ~200 MB, không có trong repo này).
-- LeafCare đọc địa chỉ service từ env `SCAN_SERVICE_URL` (mặc định `http://localhost:7860`). Service chiếm ~1 GB RAM nên không chạy chung trên Render Free; đặt nó ở Hugging Face Spaces (Docker) rồi trỏ `SCAN_SERVICE_URL` tới đó.
+- File model `model.onnx` (~210 MB, quá giới hạn 100 MB của GitHub) nằm ở Hugging Face: https://huggingface.co/shin0110/leafcare-scan. Model gốc là PyTorch (`plant_disease_model_1_latest.pt`), đã xuất sang ONNX; kết quả giống bản PyTorch, RAM ~330 MB thay vì ~930 MB nên chạy được trên Render Free.
+- Chạy trên máy: trong `scan-service/`, `python -m venv .venv`, bật venv, `pip install -r requirements.txt`, tải `model.onnx` từ link trên vào thư mục, rồi `uvicorn main:app --port 7860`.
+- Deploy (Render, Web Service thứ hai, Free): Language **Python 3**, Root Directory `scan-service`, Build Command `pip install -r requirements.txt && curl -fL -o model.onnx https://huggingface.co/shin0110/leafcare-scan/resolve/main/model.onnx`, Start Command `uvicorn main:app --host 0.0.0.0 --port $PORT`, Health Check Path `/health`. Sau đó đặt env `SCAN_SERVICE_URL` của LeafCare = địa chỉ service này.
+- LeafCare đọc địa chỉ service từ env `SCAN_SERVICE_URL` (mặc định `http://localhost:7860`). Service Free ngủ sau 15 phút không dùng; lần đầu gọi lại mất khoảng 1 phút.
 - Service tắt hoặc chậm quá 60 giây: lượt quét thành "Chưa phân tích được", người dùng bấm "Phân tích lại".
 
 ### Deploy lên Render (Docker + Neon PostgreSQL)
