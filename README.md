@@ -76,7 +76,7 @@ Thanh toán Premium bằng chuyển khoản: trang `/payments/{orderId}` hiện 
 | `SEPAY_API_KEY` | API key đặt ở bước 3 (SePay gửi header `Authorization: Apikey <key>`) |
 | `LEAFCARE_PREMIUM_PRICE` | (tuỳ chọn) Giá Premium, mặc định 49000; đặt `2000` khi thử bằng tiền thật |
 
-Code MoMo sandbox cũ vẫn còn ở `service/momo/` (không còn nút trên giao diện).
+Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên giao diện).
 
 ### Chatbot RAG (hỏi đáp theo tài liệu bệnh lá)
 

@@ -5,8 +5,8 @@ import static org.mockito.Mockito.mock;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /** In tests the real Gemini/pgvector beans are switched off (application.properties); full-context tests get these mocks. */
 @Configuration

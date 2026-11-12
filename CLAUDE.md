@@ -18,7 +18,7 @@ Use the Maven wrapper (Windows: `mvnw.cmd`; bash: `./mvnw`):
 ## Testing (enforced by CI)
 
 GitHub Actions (`.github/workflows/ci.yml`) runs `npm run build` and `./mvnw verify` on every push to `main` and every PR; a failing test fails the build.
-- Every new public method in `service/` and every controller endpoint gets a JUnit 5 test (write it first, TDD). Repository query methods you add get a `@DataJpaTest`.
+- Every new public service method and every controller endpoint gets a JUnit 5 test (write it first, TDD). Repository query methods you add get a `@DataJpaTest`.
 - Controllers: `@WebMvcTest` + `@MockitoBean` for the service. Services: plain JUnit + Mockito, or `@DataJpaTest` + `@Import` when they need the DB.
 - Cover the edge cases in the plan's "Review Focus", not just the happy path.
 - Tests run on H2 (`src/test/resources/application.properties`), never on the real PostgreSQL.
@@ -26,7 +26,8 @@ GitHub Actions (`.github/workflows/ci.yml`) runs `npm run build` and `./mvnw ver
 
 ## Notes
 
-- Base package is `com.son.leafcare` (note: "leafcase", not "leafcare") — put new code under it so component scanning from `LeafCareHsfApplication` finds it.
+- Base package is `com.son.leafcare` — put new code under it so component scanning from `LeafCareHsfApplication` finds it.
+- Code is grouped **by feature**, one package per feature holding its entity, repository, service, controller and exceptions: `plant`, `disease`, `scan`, `user`, `plan` (gói + Subscription), `payment` (+ `payment/momo`), `rag`, `admin`, `home` (dashboard), `common` (shared exceptions, `GlobalModelAdvice`), `config`. A new feature gets its own package; tests mirror the same packages. Templates stay in `templates/<feature>/`.
 - `application.properties` points at local PostgreSQL `leafcare` (password from env `DB_PASSWORD`).
 
 ## Database migrations (Flyway)
