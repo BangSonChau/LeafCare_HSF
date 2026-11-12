@@ -87,7 +87,7 @@ Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên gia
 
 ### Phân tích ảnh lá bằng model (nút "Phân tích")
 
-Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sang service Python trong thư mục `scan-service/` (FastAPI + model CNN 39 nhãn PlantVillage, chạy bằng ONNX Runtime) và lưu bệnh, độ tin cậy vào lượt quét. Danh mục bệnh khớp với model qua cột `disease.model_label` (seed `db/seed/V7_1__seed_model_diseases.sql`: cà chua, khoai tây, ớt chuông, ngô).
+Trang chi tiết lượt quét có nút **Phân tích**: LeafCare gửi ảnh sang service Python trong thư mục `scan-service/` (FastAPI + model CNN 39 nhãn PlantVillage, chạy bằng ONNX Runtime) và lưu bệnh, độ tin cậy vào lượt quét. Danh mục khớp với model qua `plant.model_prefix` (14 cây model biết) và `disease.model_label` (seed `db/seed/V7_1__seed_model_diseases.sql`, `V8_1__seed_all_model_plants.sql`). Người dùng có thể chọn loại cây trước khi quét: khi đó chỉ các nhãn của cây đó được xét (xác suất chuẩn hoá lại), và nếu ảnh rõ ràng là cây khác (≥ 50%) trang kết quả sẽ báo. Trang kết quả hiện top 3 và cảnh báo khi độ tin cậy dưới 80%.
 
 - File model `model.onnx` (~210 MB, quá giới hạn 100 MB của GitHub) nằm ở Hugging Face: https://huggingface.co/shin0110/leafcare-scan. Model gốc là PyTorch (`plant_disease_model_1_latest.pt`), đã xuất sang ONNX; kết quả giống bản PyTorch, RAM ~330 MB thay vì ~930 MB nên chạy được trên Render Free.
 - Chạy trên máy: trong `scan-service/`, `python -m venv .venv`, bật venv, `pip install -r requirements.txt`, tải `model.onnx` từ link trên vào thư mục, rồi `uvicorn main:app --port 7860`.

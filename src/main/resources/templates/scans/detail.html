@@ -29,18 +29,38 @@
                     </dd>
                     <dd class="mt-1 text-xl font-bold leading-tight"
                         th:if="${scan.disease == null and scan.modelLabel == 'Background_without_leaves'}">Không thấy lá trong ảnh</dd>
-                    <dd class="mt-1 text-xl font-bold leading-tight"
-                        th:if="${scan.disease == null and #strings.endsWith(scan.modelLabel, 'healthy')}">Lá khoẻ, không thấy dấu hiệu bệnh</dd>
+                    <dd class="mt-1" th:if="${scan.disease == null and #strings.endsWith(scan.modelLabel, 'healthy')}">
+                        <p class="text-xl font-bold leading-tight">Lá khoẻ, không thấy dấu hiệu bệnh</p>
+                        <p th:if="${scan.plant != null}" class="text-sm text-base-content/70 break-words" th:text="${scan.plant.name}">Cà chua</p>
+                    </dd>
                     <dd class="mt-1" th:if="${scan.disease == null and scan.modelLabel != 'Background_without_leaves' and !#strings.endsWith(scan.modelLabel, 'healthy')}">
                         <p class="font-semibold">Bệnh này chưa có trong danh mục LeafCare</p>
+                        <p th:if="${scan.plant != null}" class="text-sm text-base-content/70 break-words" th:text="${scan.plant.name}">Cà chua</p>
                         <p class="text-sm text-base-content/70 break-words">Mã của máy phân tích: <span th:text="${scan.modelLabel}">Apple___Black_rot</span></p>
                     </dd>
                     <dd th:if="${scan.confidence != null}" class="mt-2 text-sm">
                         Độ tin cậy <strong class="tabular" th:text="${#numbers.formatDecimal(scan.confidence * 100, 1, 0)} + '%'">64%</strong>
                     </dd>
-                    <dd th:if="${scan.confidence != null and scan.confidence < 0.6}" role="note"
+                    <dd th:if="${scan.looksLikePlant != null and scan.chosenPlant != null}" role="note"
                         class="mt-2 rounded-xl border border-warning bg-base-100 p-3 text-sm">
-                        Máy phân tích chưa chắc chắn. Hãy chụp lại gần một chiếc lá, đủ sáng, nền đơn giản rồi quét lại.
+                        Ảnh này trông giống lá <strong th:text="${scan.looksLikePlant.name}">Nho</strong> hơn
+                        <strong th:text="${scan.chosenPlant.name}">Cà chua</strong>. Kiểm tra lại loại cây đã chọn rồi quét lại.
+                    </dd>
+                    <dd th:if="${scan.confidence != null and scan.confidence < 0.8}" role="note"
+                        class="mt-2 rounded-xl border border-warning bg-base-100 p-3 text-sm">
+                        Máy phân tích chưa chắc chắn. Hãy chụp lại gần một chiếc lá, đặt trên nền trơn, đủ sáng, chọn đúng loại cây rồi quét lại.
+                    </dd>
+                    <dd th:if="${guesses != null and #lists.size(guesses) > 1}" class="mt-3">
+                        <p class="text-sm font-semibold text-base-content/70">Các khả năng máy đã xét</p>
+                        <ol class="mt-1 space-y-1 text-sm">
+                            <li th:each="g, st : ${guesses}" class="flex items-baseline justify-between gap-3">
+                                <span class="min-w-0 break-words">
+                                    <span th:text="${st.count} + '. ' + ${g.name}">1. Bệnh mốc sương</span>
+                                    <span th:if="${g.plant != null}" class="text-base-content/70" th:text="'· ' + ${g.plant}">· Cà chua</span>
+                                </span>
+                                <span class="tabular shrink-0" th:text="${#numbers.formatDecimal(g.confidence * 100, 1, 0)} + '%'">65%</span>
+                            </li>
+                        </ol>
                     </dd>
                     <dd class="mt-2 text-sm text-base-content/70">
                         Kết quả do máy tự nhận diện, chỉ mang tính tham khảo. Khi bệnh nặng, hãy hỏi cán bộ khuyến nông.
@@ -53,6 +73,10 @@
                 <div th:if="${scan.status.name() == 'DONE' and scan.disease != null and scan.disease.treatment != null}">
                     <dt class="text-sm font-semibold text-base-content/70">Cách xử lý</dt>
                     <dd class="whitespace-pre-line break-words" th:text="${scan.disease.treatment}">Cách xử lý</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-semibold text-base-content/70">Loại cây đã chọn</dt>
+                    <dd class="break-words" th:text="${scan.chosenPlant != null} ? ${scan.chosenPlant.name} : 'Để máy tự nhận'">Cà chua</dd>
                 </div>
                 <div>
                     <dt class="text-sm font-semibold text-base-content/70">Thời gian</dt>

@@ -38,6 +38,12 @@ public class PlantService {
         return repo.findAll(Sort.by("name"));
     }
 
+    /** Plants the scan model can recognise, by name. */
+    @Transactional(readOnly = true)
+    public java.util.List<Plant> scannable() {
+        return repo.findByModelPrefixIsNotNullOrderByName();
+    }
+
     @Transactional(readOnly = true)
     public Plant get(Long id) {
         return repo.findById(id).orElseThrow(NotFoundException::new);
@@ -46,6 +52,8 @@ public class PlantService {
     @Transactional
     public Plant save(Plant p) {
         p.setName(p.getName().trim());
+        // The form has no model prefix field: keep the stored one so editing a plant does not unlink the scan model.
+        p.setModelPrefix(p.getId() == null ? null : repo.findById(p.getId()).map(Plant::getModelPrefix).orElse(null));
         // Derived "id <> null" never matches, so new plants use the plain exists check.
         boolean taken = p.getId() == null
                 ? repo.existsByNameIgnoreCase(p.getName())

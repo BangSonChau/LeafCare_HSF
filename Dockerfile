@@ -13,6 +13,7 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # Render free tier has 512 MB RAM.
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+# Times (createdAt) are saved in the JVM zone; Render runs in UTC, users are in Vietnam.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Duser.timezone=Asia/Ho_Chi_Minh"
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

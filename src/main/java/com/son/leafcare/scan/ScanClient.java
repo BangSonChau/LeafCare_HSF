@@ -1,6 +1,7 @@
 package com.son.leafcare.scan;
 
 import java.time.Duration;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -14,8 +15,13 @@ import org.springframework.web.client.RestClient;
 @Component
 public class ScanClient {
 
-    /** The service's answer; extra fields (top3, isLeaf, isHealthy) are ignored. */
-    public record Prediction(String label, double confidence) {
+    /** The service's answer: best label, its confidence, and every label's probability (extra fields ignored). */
+    public record Prediction(String label, double confidence, Map<String, Double> probs) {
+
+        /** An answer without per-label probabilities (older service). */
+        public Prediction(String label, double confidence) {
+            this(label, confidence, null);
+        }
     }
 
     private final RestClient client;

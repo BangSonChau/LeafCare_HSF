@@ -38,13 +38,15 @@ class ScanClientTest {
                 .andExpect(content().string(containsString("name=\"image\"; filename=\"leaf.jpg\"")))
                 .andRespond(withSuccess("""
                         {"label":"Tomato___Early_blight","confidence":0.9663,
-                         "top3":[{"label":"Tomato___Early_blight","confidence":0.9663}],"isLeaf":true,"isHealthy":false}""",
+                         "top3":[{"label":"Tomato___Early_blight","confidence":0.9663}],"isLeaf":true,"isHealthy":false,
+                         "probs":{"Tomato___Early_blight":0.9663,"Tomato___Late_blight":0.0259}}""",
                         MediaType.APPLICATION_JSON));
 
         ScanClient.Prediction p = client.predict(new byte[] {1, 2, 3}, "leaf.jpg");
 
         assertThat(p.label()).isEqualTo("Tomato___Early_blight");
         assertThat(p.confidence()).isEqualTo(0.9663);
+        assertThat(p.probs()).containsEntry("Tomato___Late_blight", 0.0259).hasSize(2);
         server.verify();
     }
 
