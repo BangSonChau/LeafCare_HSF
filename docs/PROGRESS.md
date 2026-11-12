@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 3 – quét lá bằng model: chạy thật trên Render (service `leafcare-scan` Render Free + `SCAN_SERVICE_URL`, #34 đã merge). PR `feat/scan-choose-plant` (chọn cây, top 3, đủ 14 cây, giờ Việt Nam) chờ merge.
-- Việc tiếp theo: hướng xử lý từ RAG dưới kết quả quét; Shin xoá các lượt quét thử bị lệch giờ (lẫn giờ UTC và giờ VN, không tự sửa được). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Giai đoạn 3 – quét lá chạy thật trên Render (#34, #35 đã merge). PR `feat/scan-ask-rag` (nút "Hỏi cẩm nang về bệnh này" dưới kết quả quét + log INFO khi phân tích xong) chờ merge.
+- Việc tiếp theo: Shin chọn; gợi ý cập nhật slide/tài liệu Assignment với tính năng quét lá + RAG. Shin xoá các lượt quét thử bị lệch giờ. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Hỏi cẩm nang từ kết quả quét + log phân tích (ngoài plan)
+- Lý do: Shin muốn từ bệnh vừa nhận diện hỏi luôn cẩm nang đã nạp (RAG), và muốn biết trên production lượt phân tích có chạy thành công không.
+- Đã làm: trang chi tiết lượt quét (DONE, có bệnh) có form POST `/chat` với câu hỏi sẵn "Cách nhận biết và xử lý <bệnh> trên <cây>?", trả lời ngay, câu hỏi vẫn sửa được ở trang Hỏi đáp; không đổi `ChatPageController`. `ScanHistoryService.analyze` ghi `INFO Scan {id} analysed in {x.x}s: {nhãn} {%}% (chosen plant: {prefix|auto})`. README mục kiểm tra log trên Render.
+- Test: +3 (`ScanControllerTest` có/không có nút, `ScanHistoryServiceTest` kiểm dòng log bằng `OutputCaptureExtension`); 266 test xanh. Chưa kiểm giao diện bằng trình duyệt.
+- Nhánh: `feat/scan-ask-rag`.
 
 ### 2026-11-13 – Chọn loại cây khi quét, top 3, đủ 14 cây, giờ Việt Nam (ngoài plan)
 - Lý do: Shin thấy kết quả online lệch giờ (Render chạy UTC) và muốn biết app hỗ trợ cây nào, chọn cây trước khi quét, xem top 3. Shin chọn ô chọn cây **không bắt buộc** (mặc định "Để máy tự nhận").
@@ -126,18 +132,9 @@
 - 08/11: Shin thử thật thành công (MBBank cá nhân, webhook API Key qua `cloudflared tunnel`, 2.000đ -> Premium đến 08/12/2026). Vietcombank cá nhân SePay chưa hỗ trợ.
 - Env mới: `SEPAY_BANK`, `SEPAY_ACCOUNT`, `SEPAY_ACCOUNT_NAME`, `SEPAY_API_KEY`, `LEAFCARE_PREMIUM_PRICE`. Nhánh: `feat/sepay-qr`.
 
-### 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan)
-- Lý do: QR sandbox chỉ quét được bằng app MoMo bản test; Shin muốn nhập thẻ ngân hàng giả để demo.
-- Đã làm: `momo.request-type` (env `MOMO_REQUEST_TYPE`, mặc định `payWithATM`; `captureWallet` = QR), dùng trong chữ ký và body `create`; thêm 1 test; README ghi thẻ test `9704 0000 0000 0018`.
-- Sau này Shin muốn ngân hàng/QR thật: cần tài khoản MoMo doanh nghiệp production (đăng ký kinh doanh), chỉ đổi env, không đổi code. Nhánh: `fix/momo-atm-test-card`.
-
-### 2026-11-08 – Task 8: MoMo sandbox
-- Đã làm: `MomoClient` (create/query captureWallet, ký HMAC-SHA256, kiểm chữ ký IPN, RestClient timeout 30s), `PaymentService` (`startPremium`, `handleIpn`, `refresh`; khoá dòng `PESSIMISTIC_WRITE` để IPN và trang kết quả không kích hoạt 2 lần), `PaymentController` (`/payments/checkout`, `POST /payments/momo`, `/payments/momo/return`, `POST /payments/momo/ipn` trả 204/400, `/payments/{orderId}`), 2 template `payments/*`; IPN công khai và bỏ CSRF trong `SecurityConfig`.
-- Test: `MomoClientTest` (9, chữ ký so với giá trị tính bằng Python), `PaymentServiceTest` (13), `PaymentControllerTest` (11).
-- Quyết định: Shin chọn key test công khai của MoMo (env `MOMO_*`); orderId = `LC` + millis + 4 số; resultCode 0 = thành công, 1000/7000/7002 = còn chờ, còn lại = thất bại; sai số tiền thì bỏ qua; trang kết quả chỉ đọc DB (gọi `query` khi PENDING), không tin tham số redirect. Nhánh: `feat/task-8-momo`.
-- Shin hỏi dùng QR tài khoản cá nhân: không tự xác nhận được (không IPN/chữ ký); đề xuất làm task phụ sau Task 10 nếu Shin muốn.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Task 8: MoMo sandbox (`feat/task-8-momo`)
+- 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan) (`fix/momo-atm-test-card`)
 - 2026-11-08 – Task 7: Subscription, Payment + trang chọn gói (`feat/task-7-plans`)
 - 2026-11-08 – Task 6: Google login, USER/ADMIN (`feat/task-6-google-login`)
 - 2026-11-08 – Kế hoạch Giai đoạn 2 (ngoài plan) (`docs/phase2-plan`)

@@ -252,6 +252,25 @@ class ScanControllerTest {
     }
 
     @Test
+    void diseaseResultOffersToAskTheHandbook() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.97, septoria()));
+        mvc.perform(get("/scans/1"))
+                .andExpect(content().string(containsString("action=\"/chat\"")))
+                .andExpect(content().string(containsString(
+                        "value=\"Cách nhận biết và xử lý Bệnh đốm lá Septoria trên Cà chua?\"")))
+                .andExpect(content().string(containsString("name=\"_csrf\"")))
+                .andExpect(content().string(containsString("Hỏi cẩm nang về bệnh này")));
+    }
+
+    @Test
+    void healthyOrPendingResultDoesNotOfferTheHandbook() throws Exception {
+        when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___healthy", 1.0, null));
+        mvc.perform(get("/scans/1")).andExpect(content().string(not(containsString("Hỏi cẩm nang"))));
+        when(service.get(eq(1L), any())).thenReturn(scan(1));
+        mvc.perform(get("/scans/1")).andExpect(content().string(not(containsString("Hỏi cẩm nang"))));
+    }
+
+    @Test
     void lowConfidenceShowsWarning() throws Exception {
         when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.53, septoria()));
         mvc.perform(get("/scans/1"))

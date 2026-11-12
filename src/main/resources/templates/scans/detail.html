@@ -74,6 +74,18 @@
                     <dt class="text-sm font-semibold text-base-content/70">Cách xử lý</dt>
                     <dd class="whitespace-pre-line break-words" th:text="${scan.disease.treatment}">Cách xử lý</dd>
                 </div>
+                <div th:if="${scan.status.name() == 'DONE' and scan.disease != null}">
+                    <dt class="text-sm font-semibold text-base-content/70">Hỏi thêm</dt>
+                    <dd>
+                        <!-- POST thẳng tới /chat: trả lời ngay từ cẩm nang đã nạp, câu hỏi vẫn sửa được ở trang Hỏi đáp. -->
+                        <form th:action="@{/chat}" method="post" class="mt-1"
+                              onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang tra cẩm nang…';">
+                            <input type="hidden" name="question"
+                                   th:value="'Cách nhận biết và xử lý ' + ${scan.disease.name} + (${scan.plant != null} ? ' trên ' + ${scan.plant.name} : '') + '?'">
+                            <button type="submit" class="btn btn-outline btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6">Hỏi cẩm nang về bệnh này</button>
+                        </form>
+                    </dd>
+                </div>
                 <div>
                     <dt class="text-sm font-semibold text-base-content/70">Loại cây đã chọn</dt>
                     <dd class="break-words" th:text="${scan.chosenPlant != null} ? ${scan.chosenPlant.name} : 'Để máy tự nhận'">Cà chua</dd>
