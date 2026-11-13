@@ -22,15 +22,19 @@
         </div>
     </form>
 
-    <!-- error from the controller (validation or Gemini failure) -->
-    <div th:if="${error}" role="alert"
-         class="mt-4 rounded-xl border border-error bg-base-100 px-4 py-3 text-error" th:text="${error}">Có lỗi</div>
+    <!-- lỗi (${error}) đã hiện ở đầu trang bởi layout/base -->
 
     <div th:if="${result}" class="mt-4">
-        <article class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
+        <article th:if="${answerHtml != null}" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
             <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
-            <p class="mt-2 whitespace-pre-line break-words" th:text="${result.answer}">Câu trả lời</p>
+            <!-- answerHtml đã escape HTML, chỉ thêm <strong> (RagChatService.toHtml) -->
+            <p class="mt-2 whitespace-pre-line break-words" th:utext="${answerHtml}">Câu trả lời</p>
         </article>
+        <div th:if="${answerHtml == null}" role="note"
+             class="rounded-xl border border-warning bg-base-100 p-4 md:p-5">
+            Máy trả lời đang quá tải nên chưa viết được câu trả lời. Dưới đây là các đoạn cẩm nang liên quan nhất,
+            bạn có thể đọc trước hoặc hỏi lại sau ít phút.
+        </div>
 
         <div th:unless="${result.sources.empty}" class="mt-4">
             <h2 class="text-sm font-semibold text-base-content/70">Nguồn</h2>

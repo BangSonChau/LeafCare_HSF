@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
 /** Scans belong to their owner; ADMIN sees all. Free accounts get FREE_PER_DAY scans per Vietnam day. */
@@ -160,7 +161,9 @@ public class ScanHistoryService {
             s.setPlant(d != null ? d.getPlant() : plants.findByModelPrefix(prefix(label)).orElse(null));
             s.setStatus(ScanStatus.DONE);
         } catch (RuntimeException e) {
-            log.warn("Scan {} analysis failed: {}", id, e.toString());
+            // lỗi HTTP chỉ ghi mã (thân lỗi 502 của Render là cả trang HTML dài)
+            log.warn("Scan {} analysis failed: {}", id, e instanceof RestClientResponseException r
+                    ? e.getClass().getSimpleName() + " " + r.getStatusCode() : e.toString());
             s.setStatus(ScanStatus.FAILED);
         }
         return repo.save(s);

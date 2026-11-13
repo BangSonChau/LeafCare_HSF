@@ -52,6 +52,25 @@ class ChatPageControllerTest {
     }
 
     @Test
+    void boldMarkdownIsRenderedButOtherHtmlStaysEscaped() throws Exception {
+        when(chat.ask("q")).thenReturn(new RagAnswer("**1. Cách nhận biết:** <i>x</i>", List.of()));
+
+        mvc.perform(post("/chat").with(csrf()).param("question", "q"))
+                .andExpect(content().string(containsString("<strong>1. Cách nhận biết:</strong> &lt;i&gt;x&lt;/i&gt;")));
+    }
+
+    @Test
+    void busyModelStillShowsHandbookExcerpts() throws Exception {
+        when(chat.ask("q")).thenReturn(new RagAnswer(null,
+                List.of(new RagAnswer.Source(1, "ca-chua.txt", "Bệnh đốm vòng...", 0.8))));
+
+        mvc.perform(post("/chat").with(csrf()).param("question", "q"))
+                .andExpect(content().string(containsString("Máy trả lời đang quá tải")))
+                .andExpect(content().string(containsString("Bệnh đốm vòng...")))
+                .andExpect(content().string(not(containsString(">Trả lời<"))));
+    }
+
+    @Test
     void emptyAnswerListHidesSourcesBlock() throws Exception {
         when(chat.ask("q")).thenReturn(new RagAnswer("Tài liệu hiện có chưa đề cập vấn đề này.", List.of()));
 
@@ -77,6 +96,8 @@ class ChatPageControllerTest {
         mvc.perform(post("/chat").with(csrf()).param("question", "Cà chua?"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("thử lại sau")))
+                .andExpect(content().string(org.hamcrest.Matchers.matchesPattern(
+                        "(?s)^(?:(?!thử lại sau).)*thử lại sau(?:(?!thử lại sau).)*$")))
                 .andExpect(content().string(containsString(">Cà chua?</textarea>")))
                 .andExpect(content().string(not(containsString("quota"))));
     }

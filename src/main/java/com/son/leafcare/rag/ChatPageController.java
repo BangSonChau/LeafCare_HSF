@@ -35,8 +35,10 @@ public class ChatPageController {
             return "chat/index";
         }
         try {
-            model.addAttribute("result", chat.ask(q));
-        } catch (RuntimeException e) { // Gemini hết quota, sai key, mất mạng...
+            RagAnswer result = chat.ask(q);
+            model.addAttribute("result", result);
+            model.addAttribute("answerHtml", RagChatService.toHtml(result.answer()));
+        } catch (RuntimeException e) { // tìm trong cẩm nang lỗi: embedding Gemini hết quota, sai key, mất DB...
             log.warn("RAG chat failed", e);
             model.addAttribute("error", "Chưa trả lời được lúc này, bạn thử lại sau ít phút.");
         }
