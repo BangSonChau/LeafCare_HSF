@@ -209,4 +209,44 @@ class RagChatServiceTest {
         assertThat(p.prompt()).isNull();
         assertThat(p.sources()).isEmpty();
     }
+
+    // --- semantic cache ---
+
+    @Test
+    void cachedAnswerSkipsSearchAndGemini() {
+        VectorStore store = mock(VectorStore.class);
+        ChatClient client = mock(ChatClient.class);
+        AnswerCache cache = mock(AnswerCache.class);
+        when(cache.find("q")).thenReturn(java.util.Optional.of(new RagAnswer("đã lưu", List.of())));
+
+        RagAnswer a = new RagChatService(store, builderOf(client), Duration.ofSeconds(5), "", cache).ask("q");
+
+        assertThat(a.answer()).isEqualTo("đã lưu");
+        verifyNoInteractions(store, client);
+    }
+
+    @Test
+    void freshAnswerIsRemembered() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).call().content()).thenReturn("Cắt lá [1]");
+        AnswerCache cache = mock(AnswerCache.class);
+        when(cache.find(any())).thenReturn(java.util.Optional.empty());
+
+        new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofSeconds(5), "", cache).ask("q");
+
+        verify(cache).put(org.mockito.ArgumentMatchers.eq("q"), org.mockito.ArgumentMatchers.eq("Cắt lá [1]"), any());
+    }
+
+    @Test
+    void busyAnswerIsNotRemembered() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).call().content())
+                .thenThrow(new RuntimeException("503"));
+        AnswerCache cache = mock(AnswerCache.class);
+        when(cache.find(any())).thenReturn(java.util.Optional.empty());
+
+        new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofSeconds(5), "", cache).ask("q");
+
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).put(any(), any(), any());
+    }
 }

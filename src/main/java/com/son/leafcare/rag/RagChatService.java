@@ -6,6 +6,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.timelimiter.TimeLimiter;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,7 @@ public class RagChatService {
             Trả lời bằng tiếng Việt, ngắn gọn.""".formatted(NO_INFO);
 
     private final VectorStore vectorStore;
+    private final AnswerCache cache;
     private final ChatClient chatClient;
     private final TimeLimiter timeLimiter;
     private final Duration timeout;
@@ -55,10 +57,18 @@ public class RagChatService {
         return t;
     });
 
+    RagChatService(VectorStore vectorStore, ChatClient.Builder chatClientBuilder, Duration timeout,
+                   String fallbackModel) {
+        this(vectorStore, chatClientBuilder, timeout, fallbackModel, new AnswerCache(null, null, 1));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
     public RagChatService(VectorStore vectorStore, ChatClient.Builder chatClientBuilder,
                           @Value("${leafcare.rag.timeout:25s}") Duration timeout,
-                          @Value("${leafcare.rag.fallback-model:}") String fallbackModel) {
+                          @Value("${leafcare.rag.fallback-model:}") String fallbackModel,
+                          AnswerCache cache) {
         this.vectorStore = vectorStore;
+        this.cache = cache;
         this.chatClient = chatClientBuilder.defaultSystem(SYSTEM_PROMPT).build();
         this.timeLimiter = TimeLimiter.of(timeout);
         this.timeout = timeout;
@@ -71,6 +81,10 @@ public class RagChatService {
     }
 
     public RagAnswer ask(String question) {
+        Optional<RagAnswer> hit = cached(question);
+        if (hit.isPresent()) {
+            return hit.get();
+        }
         Prepared p = prepare(question);
         if (p.prompt() == null) {
             return new RagAnswer(NO_INFO, List.of());
@@ -78,18 +92,29 @@ public class RagChatService {
         String prompt = p.prompt();
         List<RagAnswer.Source> sources = p.sources();
         try {
-            return new RagAnswer(breaker.executeCallable(() -> generate(null, prompt)), sources);
+            return remember(question, new RagAnswer(breaker.executeCallable(() -> generate(null, prompt)), sources));
         } catch (Exception e) {
             log.warn("RAG chat: main model failed: {}", shortReason(e));
         }
         if (fallbackModel != null) {
             try {
-                return new RagAnswer(generate(fallbackModel, prompt), sources);
+                return remember(question, new RagAnswer(generate(fallbackModel, prompt), sources));
             } catch (Exception e) {
                 log.warn("RAG chat: fallback model {} failed: {}", fallbackModel, shortReason(e));
             }
         }
         return new RagAnswer(null, sources);
+    }
+
+    /** Câu trả lời đã lưu cho câu hỏi giống nghĩa (semantic cache), nếu có. */
+    public Optional<RagAnswer> cached(String question) {
+        return cache.find(question);
+    }
+
+    /** Lưu câu trả lời Gemini viết xong để lần sau hỏi giống nghĩa thì trả ngay. */
+    public RagAnswer remember(String question, RagAnswer answer) {
+        cache.put(question, answer.answer(), answer.sources());
+        return answer;
     }
 
     /** Câu hỏi đã tìm trong cẩm nang: prompt null khi không có đoạn nào liên quan. */

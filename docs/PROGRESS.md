@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: chống chậm/treo cho Hỏi đáp RAG (Gemini free hay báo 503 quá tải). PR 1 `fix/rag-chat-timeout` (Resilience4j) và PR 2 `feat/rag-chat-stream` (tách từ PR 1: streaming + nút "Hỏi cẩm nang" mở ngay trang Hỏi đáp) chờ merge.
-- Việc tiếp theo: PR 3 semantic cache (pgvector). **Nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: chống chậm/treo cho Hỏi đáp RAG xong phần code, 3 PR nối nhau chờ merge theo thứ tự: `fix/rag-chat-timeout` (#38) -> `feat/rag-chat-stream` (#39) -> `feat/rag-semantic-cache`.
+- Việc tiếp theo: **nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc); thử thật trên Render sau khi merge. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -20,13 +20,19 @@
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
 - Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `payment/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
-- RAG: Spring AI + pgvector, bảng `vector_store` do Spring AI tự tạo (ngoài Flyway); Postgres local/Neon phải có pgvector; test H2 tắt vectorstore + model.
+- RAG: Spring AI + pgvector, bảng `vector_store` và `rag_answer_cache` (semantic cache) do Spring AI tự tạo (ngoài Flyway); gọi Gemini qua Resilience4j (timeout, cầu dao, model dự phòng), trả lời streaming SSE; Postgres local/Neon phải có pgvector; test H2 tắt vectorstore + model.
 - DB: Flyway quản lý schema (`db/migration`), Hibernate `ddl-auto=validate`; file đã merge không sửa, thêm V mới. Dữ liệu mẫu ở `db/seed/V1_1__seed_data.sql` (chỉ app chạy, test không). `baseline-on-migrate=true` để DB cũ tạo bằng `update` nhận là V1.
 - Model quét lá chạy bằng ONNX Runtime trong `scan-service/` (Render Free, ~330 MB RAM), không dùng PyTorch; `model.onnx` để ở Hugging Face model repo `shin0110/leafcare-scan` vì Space Docker/Gradio của Hugging Face giờ phải trả phí và GitHub chặn file >100 MB.
 - Code chia package theo feature (`plant`, `disease`, `scan`, `user`, `plan`, `payment`, `rag`, `admin`, `home`, `common`, `config`), không chia theo tầng nữa; test theo cùng package.
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Semantic cache cho Hỏi đáp RAG (ngoài plan)
+- Lý do: Gemini free chậm/quá tải; câu hỏi giống nghĩa (nhất là nút "Hỏi cẩm nang", câu hỏi cố định theo bệnh) nên trả ngay. Shin chọn ngưỡng **0.92** (cosine).
+- Đã làm: `AnswerCache` (PgVectorStore thứ hai, bảng `rag_answer_cache` do Spring AI tự tạo như `vector_store`, ngoài Flyway; câu hỏi = text, câu trả lời + nguồn trong metadata; tắt khi không có embedding/pgvector như test H2). `RagChatService.ask` + `/chat/stream` tra cache trước, lưu sau khi Gemini viết xong (không lưu câu "chưa đề cập" hay lúc quá tải); `RagDocumentService.store` xoá cache sau mỗi lần nạp (kể cả nạp dở). Env `RAG_CACHE_THRESHOLD`.
+- Test: `AnswerCacheTest` (7), `RagChatServiceTest` +3, `ChatPageControllerTest` +2, `RagDocumentServiceTest` +1; 299 test xanh. Chạy thử `AnswerCache` trên PostgreSQL 16 + pgvector thật (embedding giả): lưu/tìm/xoá đúng, metadata danh sách nguồn đọc lại được. Chưa đo ngưỡng với embedding Gemini thật.
+- Ghi chú: mỗi câu hỏi tốn thêm 1 lần gọi embedding để tra cache. Nhánh: `feat/rag-semantic-cache` (tách từ `feat/rag-chat-stream` chưa merge).
 
 ### 2026-11-13 – Hỏi đáp: chữ trả lời chạy dần + nút "Hỏi cẩm nang" mở trang ngay (ngoài plan)
 - Lý do: Shin thấy bấm "Hỏi cẩm nang" phải đợi lâu mới chuyển trang; muốn chuyển ngay sang Hỏi đáp có sẵn câu hỏi.
@@ -125,13 +131,8 @@
 - 08/11: Shin deploy xong: https://leafcare-4nh6.onrender.com (Render Free, Singapore, auto-deploy từ `main`), DB Neon Singapore; đăng nhập Google và thanh toán SePay chạy thật. Webhook SePay trỏ về Render.
 - Quyết định: DB dùng Neon (Singapore) thay PostgreSQL free của Render (hết hạn); ảnh upload mất khi deploy lại (chấp nhận cho demo). Shin tự làm phần tạo tài khoản theo hướng dẫn. Nhánh: `feat/task-11-render`.
 
-### 2026-11-08 – ADMIN thấy người quét (ngoài plan)
-- Lý do: Shin thấy ADMIN xem được mọi lượt quét nhưng không biết của tài khoản nào.
-- Đã làm: danh sách và trang chi tiết lượt quét hiện "Người quét: tên · email" chỉ cho ADMIN (`sec:authorize`); lượt cũ không có chủ hiện "Chưa rõ"; fragment `scans/list :: owner`; `ScanHistoryRepository.findAll(Pageable)` thêm `@EntityGraph("owner")` để không N+1.
-- Test: `ScanControllerTest` +4 (ADMIN thấy tên/email/"Chưa rõ", USER không thấy, ở cả list và detail).
-- Lọc theo người dùng, thống kê theo tài khoản để cho Task 12 (dashboard admin). Nhánh: `fix/admin-sees-scan-owner`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – ADMIN thấy người quét (ngoài plan) (`fix/admin-sees-scan-owner`)
 - 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free (`feat/task-10-free-limit`)
 - 2026-11-08 – Task 9: Lịch sử giao dịch (`feat/task-9-payment-history`)
 - 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan) (`feat/sepay-qr`)

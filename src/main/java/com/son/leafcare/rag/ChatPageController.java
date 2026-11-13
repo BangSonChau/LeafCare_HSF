@@ -73,6 +73,14 @@ public class ChatPageController {
             emitter.complete();
             return emitter;
         }
+        java.util.Optional<RagAnswer> hit = chat.cached(q);
+        if (hit.isPresent()) { // đã có câu trả lời cho câu hỏi giống nghĩa: trả ngay
+            send(emitter, "sources", hit.get().sources());
+            send(emitter, "token", Map.of("t", hit.get().answer()));
+            send(emitter, "done", Map.of("cached", true));
+            emitter.complete();
+            return emitter;
+        }
         // shortcut: tìm cẩm nang (chặn luồng) chạy trên common pool, đủ cho vài người dùng; nhiều hơn thì dùng executor riêng
         CompletableFuture.runAsync(() -> {
             RagChatService.Prepared p;
@@ -91,14 +99,19 @@ public class ChatPageController {
                 emitter.complete();
                 return;
             }
+            StringBuilder full = new StringBuilder();
             reactor.core.Disposable sub = chat.stream(p.prompt()).subscribe(
-                    t -> send(emitter, "token", Map.of("t", t)),
+                    t -> {
+                        full.append(t);
+                        send(emitter, "token", Map.of("t", t));
+                    },
                     e -> {
                         send(emitter, "busy", Map.of());
                         emitter.complete();
                     },
                     () -> {
                         send(emitter, "done", Map.of());
+                        chat.remember(q, new RagAnswer(full.toString(), p.sources()));
                         emitter.complete();
                     });
             // người dùng đóng trang hoặc quá 2 phút: dừng gọi Gemini
