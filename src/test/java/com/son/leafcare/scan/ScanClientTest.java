@@ -28,6 +28,33 @@ class ScanClientTest {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
         client = new ScanClient(builder, "http://scan.test");
+        client.wakeDelay = java.time.Duration.ZERO;
+    }
+
+    @Test
+    void retriesWhileTheSleepingServiceWakesUp() {
+        server.expect(requestTo("http://scan.test/predict"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+                        .withStatus(org.springframework.http.HttpStatus.BAD_GATEWAY));
+        server.expect(requestTo("http://scan.test/predict"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+                        .withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+        server.expect(requestTo("http://scan.test/predict"))
+                .andRespond(withSuccess("{\"label\":\"Tomato___healthy\",\"confidence\":0.99}", MediaType.APPLICATION_JSON));
+
+        assertThat(client.predict(new byte[] {1}, "a.png").label()).isEqualTo("Tomato___healthy");
+        server.verify();
+    }
+
+    @Test
+    void givesUpAfterFourBadGateways() {
+        for (int i = 0; i < 4; i++) {
+            server.expect(requestTo("http://scan.test/predict"))
+                    .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+                            .withStatus(org.springframework.http.HttpStatus.BAD_GATEWAY));
+        }
+        assertThatThrownBy(() -> client.predict(new byte[] {1}, "a.png")).isInstanceOf(RestClientException.class);
+        server.verify();
     }
 
     @Test

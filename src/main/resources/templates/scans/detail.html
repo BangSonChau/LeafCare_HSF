@@ -102,7 +102,7 @@
             </dl>
 
             <form th:unless="${scan.status.name() == 'DONE'}" th:action="@{/scans/{id}/analyze(id=${scan.id})}" method="post"
-                  class="mt-6" onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang phân tích, có thể mất tới 1 phút…';">
+                  class="mt-6" onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang phân tích, có thể mất 1–2 phút nếu máy phân tích đang khởi động…';">
                 <button type="submit" class="btn btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6"
                         th:text="${scan.status.name() == 'FAILED'} ? 'Phân tích lại' : 'Phân tích'">Phân tích</button>
             </form>

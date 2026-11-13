@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#43 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. Semantic cache khớp được câu khác chữ cùng ý (đã thử thật, cả tài khoản khác).
-- Việc tiếp theo (chờ Shin chọn): đổi model mặc định trong code sang `gemini-3.5-flash-lite`; hiện dòng `* ` trong câu trả lời thành gạch đầu dòng. **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11) và đặt key mới trên Render. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#44 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. PR `feat/answer-format-scan-wake` (timeline, format câu trả lời, quét lá tự thử lại khi service ngủ) chờ merge.
+- Việc tiếp theo: trang Admin nhập API key + chọn nhà cung cấp (Shin đồng ý làm, hỏi thiết kế trước). Shin tự đổi model mặc định trong `application.properties` (đã hướng dẫn). **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Timeline, format câu trả lời AI, quét lá chờ service thức dậy (ngoài plan)
+- Lý do: Shin chọn bỏ vision API (dùng model ONNX), cập nhật timeline, format câu trả lời (hiện `*` thô), quét lá lỗi 502 khi service Render đang ngủ.
+- Đã làm: `TIMELINE.md` (vision API bỏ; model, RAG, nối chat với quét: xong 13/11; còn trang Admin API key). `RagChatService.toHtml` + JS trong `chat/index.html` cùng định dạng: tiêu đề `#`, gạch đầu dòng `*`/`-`, danh sách số (`<ol start>`), in đậm, nghiêng; CSS `.answer` trong `input.css`; prompt yêu cầu tiêu đề in đậm + gạch đầu dòng. `ScanClient.predict` thử lại 502/503/504 tối đa 4 lần, cách 15s; nút Phân tích báo "1–2 phút".
+- Test: `RagChatServiceTest` +1 (định dạng), `ScanClientTest` +2 (thức dậy, bỏ cuộc sau 4 lần); 304 test xanh. JS cho kết quả giống hệt Java (chạy bằng node), Playwright 390px với server SSE giả: danh sách hiện đúng, không tràn ngang. Chưa thử với Gemini/Render thật.
+- Nhánh: `feat/answer-format-scan-wake`.
 
 ### 2026-11-13 – Tìm ra Gemini treo do model `gemini-3.8-flash` qua API (ngoài plan)
 - Lý do: sau #41–#43 trang vẫn báo quá tải; log `TimeoutException ... 60000ms`, đổi key và temperature không đỡ. Shin chạy curl `generateContent` từ máy: `gemini-3.8-flash` đứng rất lâu (trong AI Studio vẫn nhanh), `gemini-3.5-flash-lite` trả lời 1,7s mã 200.
@@ -119,12 +125,8 @@
 - Test: `AdminDocumentControllerTest` (7: form, upload ok, file không có chữ, file rỗng không gọi service, lỗi ingest, USER bị 403, thiếu CSRF), `AdminControllerTest` thêm assert sidebar; 214 test xanh. Kiểm bằng Playwright 1280/390 (không tràn ngang, drawer mở được); chưa kiểm trên app chạy thật.
 - Quyết định: Shin muốn giao diện admin kiểu ảnh mẫu nhưng cùng màu xanh LeafCare, áp dụng cả khu `/admin`. Skill `.claude/skills` (impeccable...) không có trong repo (chỉ có trên máy Shin), nên theo `DESIGN.md`/`PRODUCT.md` bằng tay. File upload tối đa 5 MB (giới hạn chung của app). Chưa làm: danh sách và xoá tài liệu đã nạp. Nhánh: `feat/admin-shell`.
 
-### 2026-11-11 – Trang Hỏi đáp `/chat`
-- Đã làm: `ChatPageController` (`GET/POST /chat`, form thường nên không cần JS/CSRF thủ công, mọi người đã đăng nhập dùng được), `chat/index.html` (ô hỏi, câu trả lời, danh sách nguồn); link "Hỏi đáp" ở thanh trên desktop và thẻ link ở trang chủ cho điện thoại (thanh dưới đã đủ 5 mục).
-- Test: `ChatPageControllerTest` (6: hiện form, trả lời + nguồn được escape, không nguồn thì ẩn khối nguồn, câu hỏi rỗng/>500 không gọi LLM, lỗi Gemini hiện thông báo thân thiện và giữ câu hỏi, thiếu CSRF bị 403); 206 test xanh. Chưa kiểm tay trên trình duyệt (máy Claude không có Gemini key/pgvector).
-- Quyết định: lỗi gọi Gemini không lộ chi tiết cho người dùng, chỉ ghi log. Nhánh: `feat/rag-chat-page`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-11 – Trang Hỏi đáp `/chat` (`feat/rag-chat-page`)
 - 2026-11-11 – Ghép RAG chatbot: Spring AI 2.0.2, Gemini, pgvector, `/api/rag/*` (`feat/rag`)
 - 2026-11-08 – Tài liệu + slide Assignment `docs/assignment/` (ngoài plan) (`docs/assignment-guide-slides`)
 - 2026-11-08 – Lưu ảnh quét vào database `image_file` (ngoài plan) (`fix/store-images-in-db`)

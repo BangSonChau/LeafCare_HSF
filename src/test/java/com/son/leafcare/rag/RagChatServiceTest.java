@@ -171,8 +171,30 @@ class RagChatServiceTest {
     @Test
     void toHtmlEscapesThenBoldsMarkdown() {
         assertThat(RagChatService.toHtml("**Chú ý:** <script>x</script> a**b"))
-                .isEqualTo("<strong>Chú ý:</strong> &lt;script&gt;x&lt;/script&gt; a**b");
+                .isEqualTo("<p><strong>Chú ý:</strong> &lt;script&gt;x&lt;/script&gt; a**b</p>");
         assertThat(RagChatService.toHtml(null)).isNull();
+    }
+
+    @Test
+    void toHtmlFormatsHeadingsListsAndItalics() {
+        String md = """
+                ## Bệnh héo Fusarium
+                Dựa trên tài liệu, có các dấu hiệu sau:
+                * Lá **vàng** trước [1].
+
+                * Cây chết trong vài ngày [2].
+                1. Nhận biết: do nấm *Fusarium*
+                - Hóa nâu mạch dẫn
+                2. Xử lý
+                ---
+                """;
+        assertThat(RagChatService.toHtml(md)).isEqualTo(
+                "<h3>Bệnh héo Fusarium</h3>"
+                + "<p>Dựa trên tài liệu, có các dấu hiệu sau:</p>"
+                + "<ul><li>Lá <strong>vàng</strong> trước [1].</li><li>Cây chết trong vài ngày [2].</li></ul>"
+                + "<ol start=\"1\"><li>Nhận biết: do nấm <em>Fusarium</em></li></ol>"
+                + "<ul><li>Hóa nâu mạch dẫn</li></ul>"
+                + "<ol start=\"2\"><li>Xử lý</li></ol>");
     }
 
     @Test

@@ -28,8 +28,8 @@
     <div th:if="${result}" class="mt-4" data-server-result>
         <article th:if="${answerHtml != null}" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
             <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
-            <!-- answerHtml đã escape HTML, chỉ thêm <strong> (RagChatService.toHtml) -->
-            <p class="mt-2 whitespace-pre-line break-words" th:utext="${answerHtml}">Câu trả lời</p>
+            <!-- answerHtml đã escape HTML, chỉ thêm thẻ định dạng (RagChatService.toHtml) -->
+            <div class="answer mt-2 break-words" th:utext="${answerHtml}">Câu trả lời</div>
         </article>
         <div th:if="${answerHtml == null}" role="note"
              class="rounded-xl border border-warning bg-base-100 p-4 md:p-5">
@@ -63,7 +63,7 @@
         <article id="live-answer-box" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
             <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
             <p id="live-wait" class="mt-2 text-base-content/70">Đang tra cẩm nang…</p>
-            <p id="live-answer" class="mt-2 whitespace-pre-line break-words" aria-live="polite"></p>
+            <div id="live-answer" class="answer mt-2 break-words" aria-live="polite"></div>
         </article>
         <div id="live-sources-box" hidden class="mt-4">
             <h2 class="text-sm font-semibold text-base-content/70">Nguồn</h2>
@@ -77,7 +77,28 @@
         if (!form || !window.fetch || !window.TextDecoder || !window.ReadableStream) return;
         const $ = id => document.getElementById(id);
         const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const bold = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // giống RagChatService.toHtml: escape trước, rồi tiêu đề, gạch đầu dòng, danh sách số, in đậm, nghiêng
+        const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[^\w*])\*(?![\s*])([^*]+?)(?<!\s)\*(?![\w*])/g, '$1<em>$2</em>');
+        function bold(text) {
+            let out = '', list = null;
+            for (const raw of esc(text).split(/\r?\n/)) {
+                const line = raw.trim();
+                if (!line) continue;
+                const b = line.match(/^[*\-•]\s+(.+)$/), n = line.match(/^(\d{1,3})[.)]\s+(.+)$/);
+                const tag = b ? 'ul' : n ? 'ol' : null;
+                if (list && (list !== tag || tag === 'ol')) { out += '</' + list + '>'; list = null; }
+                if (!tag) {
+                    const h = line.match(/^#{1,6}\s+(.+)$/);
+                    if (h) out += '<h3>' + inline(h[1]) + '</h3>';
+                    else if (!/^[-*_]{3,}$/.test(line)) out += '<p>' + inline(line) + '</p>';
+                    continue;
+                }
+                if (!list) { out += tag === 'ul' ? '<ul>' : '<ol start="' + n[1] + '">'; list = tag; }
+                out += '<li>' + inline(b ? b[1] : n[2]) + '</li>';
+            }
+            return list ? out + '</' + list + '>' : out;
+        }
         const btn = form.querySelector('button[type=submit]');
         let text = '';
         // quá tải: tự hỏi lại sau 30 giây, tối đa 2 lần (lúc đó có thể server đã viết xong ở nền và lưu cache)
