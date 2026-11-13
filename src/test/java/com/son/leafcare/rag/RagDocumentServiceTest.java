@@ -87,4 +87,17 @@ class RagDocumentServiceTest {
         verify(store, times(1 + RagDocumentService.MAX_ATTEMPTS)).add(anyList());
         assertThat(progress).containsExactly(20);
     }
+
+    @Test
+    void storingClearsTheAnswerCacheEvenWhenItFails() {
+        AnswerCache cache = mock(AnswerCache.class);
+        RagDocumentService withCache = new RagDocumentService(store, 0, cache);
+
+        withCache.store(docs(3), n -> { });
+        verify(cache).clear();
+
+        doThrow(new RuntimeException("quota")).when(store).add(anyList());
+        assertThatThrownBy(() -> withCache.store(docs(3), n -> { })).hasMessage("quota");
+        verify(cache, times(2)).clear();
+    }
 }

@@ -185,6 +185,29 @@ class ChatPageControllerTest {
         verifyNoInteractions(chat);
     }
 
+    @Test
+    void streamUsesCachedAnswerWithoutCallingGemini() throws Exception {
+        when(chat.cached("q")).thenReturn(java.util.Optional.of(new RagAnswer("Đã lưu [1]",
+                List.of(new RagAnswer.Source(1, "ca-chua.txt", "Đốm vòng", null)))));
+
+        String body = mvc.perform(post("/chat/stream").with(csrf()).param("question", "q"))
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+        assertOrder(body, "event:sources", "ca-chua.txt", "event:token", "Đã lưu [1]", "event:done");
+        org.mockito.Mockito.verify(chat, org.mockito.Mockito.never()).prepare(any());
+    }
+
+    @Test
+    void streamedAnswerIsRememberedWhenDone() throws Exception {
+        var sources = List.of(new RagAnswer.Source(1, "ca-chua.txt", "Đốm vòng", 0.8));
+        when(chat.prepare("q")).thenReturn(new RagChatService.Prepared("prompt", sources));
+        when(chat.stream("prompt")).thenReturn(reactor.core.publisher.Flux.just("Cắt ", "lá [1]"));
+
+        streamed("q");
+
+        org.mockito.Mockito.verify(chat).remember("q", new RagAnswer("Cắt lá [1]", sources));
+    }
+
     static void assertOrder(String body, String... parts) {
         int at = 0;
         for (String p : parts) {

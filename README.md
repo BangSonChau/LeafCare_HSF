@@ -84,6 +84,7 @@ Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên gia
 - Lấy key ở https://aistudio.google.com/apikey, đặt biến môi trường `GEMINI_API_KEY` (không ghi vào file). Đổi model chat bằng `GEMINI_CHAT_MODEL` (mặc định `gemini-3.8-flash`).
 - Khi Gemini quá tải (503): mỗi model chờ tối đa `GEMINI_TIMEOUT` (mặc định `25s`), thử lại 1 lần; 3/5 lần gần nhất lỗi thì tạm ngừng gọi model chính 60 giây. Đặt `GEMINI_FALLBACK_MODEL` (tên một model flash khác) để tự hỏi sang model đó. Hỏng hết thì trang Hỏi đáp vẫn hiện các đoạn cẩm nang liên quan. Log: tìm `RAG chat:`.
 - Trang `/chat` hiện chữ trả lời dần (SSE `POST /chat/stream`); `/chat?q=...` điền sẵn câu hỏi và tự hỏi (nút "Hỏi cẩm nang" ở kết quả quét).
+- Semantic cache: câu hỏi giống nghĩa với câu đã trả lời (cosine ≥ `RAG_CACHE_THRESHOLD`, mặc định `0.92`) dùng lại câu trả lời, không gọi Gemini. Lưu ở bảng `rag_answer_cache` (Spring AI tự tạo); nạp tài liệu mới thì cache bị xoá.
 - ADMIN upload tài liệu (PDF/DOCX/TXT/MD, không nhận PDF scan): `POST /api/rag/documents`, form-data `file`. Mọi người đã đăng nhập hỏi: `POST /api/rag/chat`, JSON `{"question":"..."}` → `{answer, sources}`. Hai API này cần phiên đăng nhập và CSRF token như các form khác.
 - Lần chạy đầu Spring AI tự tạo extension `vector` và bảng `vector_store`. Upload cùng một file hai lần sẽ lưu hai lần.
 
