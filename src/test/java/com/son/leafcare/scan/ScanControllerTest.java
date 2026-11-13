@@ -255,10 +255,7 @@ class ScanControllerTest {
     void diseaseResultOffersToAskTheHandbook() throws Exception {
         when(service.get(eq(1L), any())).thenReturn(analysed("Tomato___Septoria_leaf_spot", 0.97, septoria()));
         mvc.perform(get("/scans/1"))
-                .andExpect(content().string(containsString("action=\"/chat\"")))
-                .andExpect(content().string(containsString(
-                        "value=\"Cách nhận biết và xử lý Bệnh đốm lá Septoria trên Cà chua?\"")))
-                .andExpect(content().string(containsString("name=\"_csrf\"")))
+                .andExpect(content().string(containsString("href=\"/chat?q=C%C3%A1ch%20nh%E1%BA%ADn")))
                 .andExpect(content().string(containsString("Hỏi cẩm nang về bệnh này")));
     }
 

@@ -174,4 +174,39 @@ class RagChatServiceTest {
                 .isEqualTo("<strong>Chú ý:</strong> &lt;script&gt;x&lt;/script&gt; a**b");
         assertThat(RagChatService.toHtml(null)).isNull();
     }
+
+    @Test
+    void streamFallsBackWhenTheMainModelFailsBeforeAnyText() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).stream().content())
+                .thenReturn(reactor.core.publisher.Flux.error(new RuntimeException("503")));
+        when(client.prompt().options(any()).user(org.mockito.ArgumentMatchers.anyString()).stream().content())
+                .thenReturn(reactor.core.publisher.Flux.just("Dự ", "phòng"));
+        RagChatService service = new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofSeconds(5), "lite");
+
+        assertThat(service.stream("p").collectList().block()).containsExactly("Dự ", "phòng");
+    }
+
+    @Test
+    void streamTimesOutWhenTheModelStalls() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).stream().content())
+                .thenReturn(reactor.core.publisher.Flux.never());
+        RagChatService service = new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofMillis(200), "");
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.stream("p").blockLast(Duration.ofSeconds(3)))
+                .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+    }
+
+    @Test
+    void prepareWithoutChunksHasNoPrompt() {
+        VectorStore store = mock(VectorStore.class);
+        when(store.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        ChatClient client = mock(ChatClient.class);
+
+        RagChatService.Prepared p = new RagChatService(store, builderOf(client), Duration.ofSeconds(5), "").prepare("q");
+
+        assertThat(p.prompt()).isNull();
+        assertThat(p.sources()).isEmpty();
+    }
 }
