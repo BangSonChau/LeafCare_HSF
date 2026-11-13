@@ -29,12 +29,12 @@
                 <img th:src="@{/uploads/{f}(f=${s.imageFileName})}" alt="Ảnh lá" loading="lazy"
                      class="size-16 shrink-0 rounded-lg bg-base-200 object-cover md:size-20">
                 <div class="min-w-0 flex-1">
-                    <p th:if="${s.note != null}" class="line-clamp-2 break-words font-semibold" th:text="${s.note}">Ghi chú</p>
-                    <p th:unless="${s.note != null}" class="font-semibold text-base-content/70">Không có ghi chú</p>
+                    <p class="line-clamp-1 break-words font-semibold" th:insert="~{scans/list :: scanTitle(${s})}">Bệnh mốc sương</p>
+                    <p th:if="${s.note != null}" class="line-clamp-1 break-words text-sm text-base-content/80" th:text="${s.note}">Ghi chú</p>
                     <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span class="whitespace-nowrap text-sm text-base-content/70 tabular"
                               th:text="${#temporals.format(s.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</span>
-                        <span class="badge badge-outline whitespace-nowrap" th:text="${s.status.label}">Chờ phân tích</span>
+                        <span class="badge badge-sm badge-outline whitespace-nowrap" th:text="${s.status.label}">Chờ phân tích</span>
                     </div>
                     <p sec:authorize="hasRole('ADMIN')" class="mt-1 flex gap-1 text-sm text-base-content/70">
                         <span class="shrink-0">Người quét:</span>
@@ -47,6 +47,14 @@
 
     <div th:replace="~{fragments/pagination :: pager(${page}, '/scans', '')}"></div>
 </section>
+
+<!-- Row title (list + home): what the scan found, or that it is not analysed yet. -->
+<th:block th:fragment="scanTitle(s)"><th:block th:if="${s.status.name() == 'DONE'}"><th:block
+        th:if="${s.disease != null}" th:text="${s.disease.name + (s.plant != null ? ' · ' + s.plant.name : '')}">Bệnh mốc sương · Cà chua</th:block><th:block
+        th:if="${s.disease == null and s.modelLabel == 'Background_without_leaves'}">Không thấy lá trong ảnh</th:block><th:block
+        th:if="${s.disease == null and s.modelLabel != null and #strings.endsWith(s.modelLabel, 'healthy')}" th:text="${'Lá khoẻ' + (s.plant != null ? ' · ' + s.plant.name : '')}">Lá khoẻ</th:block><th:block
+        th:if="${s.disease == null and s.modelLabel != null and s.modelLabel != 'Background_without_leaves' and !#strings.endsWith(s.modelLabel, 'healthy')}">Bệnh chưa có trong danh mục</th:block></th:block><th:block
+        th:unless="${s.status.name() == 'DONE'}">Lượt quét chưa có kết quả</th:block></th:block>
 
 <!-- Owner label for ADMIN views (list and detail). -->
 <span th:fragment="owner(o)" class="min-w-0 break-all"

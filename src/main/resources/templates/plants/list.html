@@ -57,22 +57,22 @@
             </thead>
             <tbody class="block md:table-row-group">
             <tr th:each="p : ${page.content}"
-                class="block border-b border-base-300 last:border-b-0 md:table-row"
-                th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? '' : 'pb-4 md:pb-0'">
-                <td class="block break-words px-4 pt-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle"
+                class="grid grid-cols-[minmax(0,1fr)_auto] items-center border-b border-base-300 py-3 last:border-b-0 md:table-row md:py-0"
+               >
+                <td class="col-start-1 break-words px-4 text-base font-semibold md:table-cell md:max-w-xs md:py-3 md:align-middle"
                     th:text="${p.name}">Lan hồ điệp</td>
-                <td class="block break-words px-4 pt-1 italic text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle"
+                <td class="col-start-1 break-words px-4 pt-0.5 italic text-base-content/70 md:table-cell md:max-w-xs md:py-3 md:align-middle"
                     th:text="${p.scientificName}">Phalaenopsis</td>
-                <td sec:authorize="hasRole('ADMIN')" class="block px-4 py-3 md:table-cell md:text-right md:align-middle">
-                    <div class="flex gap-2 md:justify-end">
+                <td sec:authorize="hasRole('ADMIN')" class="col-start-2 row-span-2 row-start-1 pr-3 md:table-cell md:px-4 md:py-3 md:text-right md:align-middle">
+                    <div class="flex gap-1 md:justify-end md:gap-2">
                         <a th:href="@{/plants/{id}/edit(id=${p.id})}"
-                           class="btn h-12 min-w-12 flex-1 rounded-full md:flex-none"
+                           class="btn btn-ghost h-12 min-w-12 rounded-full px-4 md:btn-outline md:border-base-300"
                            th:attr="aria-label='Sửa ' + ${p.name}">Sửa</a>
                         <form th:action="@{/plants/{id}/delete(id=${p.id})}" method="post"
-                              class="flex flex-1 md:flex-none"
+                              class="flex"
                               onsubmit="return confirm('Xoá cây này? Hành động không thể hoàn tác.');">
                             <button type="submit"
-                                    class="btn h-12 min-w-12 flex-1 rounded-full border-error text-error hover:bg-error hover:text-error-content"
+                                    class="btn h-12 min-w-12 rounded-full border-error px-4 text-error hover:bg-error hover:text-error-content"
                                     th:attr="aria-label='Xoá ' + ${p.name}">Xoá</button>
                         </form>
                     </div>

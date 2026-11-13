@@ -8,39 +8,59 @@
 </head>
 <body>
 <section layout:fragment="content">
-    <div class="min-w-0">
-        <h1 class="text-2xl font-bold leading-tight text-balance">Chăm sóc cây trồng của bạn</h1>
-        <p class="mt-1 max-w-prose text-pretty text-base-content/80">Chụp ảnh lá, lưu lại lịch sử và tra cứu cây, bệnh.</p>
+    <h1 class="text-2xl font-bold leading-tight text-balance">Chăm sóc cây trồng của bạn</h1>
+    <p class="mt-1 max-w-prose text-pretty text-base-content/80">Chụp ảnh lá để biết cây bị bệnh gì, rồi hỏi cẩm nang cách xử lý.</p>
+
+    <!-- Two main jobs side by side from sm; scan first (it is also the raised button on phones). -->
+    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+        <a th:href="@{/scans/new}"
+           class="group flex min-h-24 items-center gap-4 rounded-xl bg-primary p-4 text-primary-content transition-colors duration-150 hover:bg-secondary md:p-5">
+            <span class="grid size-12 shrink-0 place-items-center rounded-full bg-white text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                </svg>
+            </span>
+            <span class="min-w-0">
+                <span class="block text-lg font-bold">Quét lá</span>
+                <span class="block text-sm text-primary-content/85">Chụp một lá, máy nhận diện bệnh</span>
+            </span>
+        </a>
+        <a th:href="@{/chat}"
+           class="flex min-h-24 items-center gap-4 rounded-xl border border-base-300 bg-base-100 p-4 transition-colors duration-150 hover:bg-base-200 md:p-5">
+            <span class="grid size-12 shrink-0 place-items-center rounded-full bg-base-200 text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M8.5 10.5h7M8.5 14h4"/>
+                </svg>
+            </span>
+            <span class="min-w-0">
+                <span class="block text-lg font-bold">Hỏi đáp bệnh lá</span>
+                <span class="block text-sm text-base-content/70">Trả lời từ cẩm nang, có ghi nguồn</span>
+            </span>
+        </a>
     </div>
 
-    <!-- Phones have no room for "Quản trị" in the bottom bar, so ADMIN gets the link here. -->
-    <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}"
-       class="mt-4 flex min-h-12 items-center justify-between rounded-xl border border-primary bg-base-100 px-4 font-semibold text-primary md:hidden">
-        Trang quản trị <span aria-hidden="true">&rarr;</span>
-    </a>
-
-    <!-- The phone bottom bar is full, so "Hỏi đáp" gets its link here. -->
-    <a th:href="@{/chat}"
-       class="mt-4 flex min-h-12 items-center justify-between rounded-xl border border-base-300 bg-base-100 px-4 font-semibold text-primary md:hidden">
-        Hỏi đáp về bệnh lá <span aria-hidden="true">&rarr;</span>
-    </a>
-
-    <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-        <a th:href="@{/plants}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 sm:p-4 transition-colors duration-150 hover:bg-base-200">
+    <div class="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+        <a th:href="@{/plants}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 transition-colors duration-150 hover:bg-base-200 sm:p-4">
             <p class="text-sm text-base-content/70">Cây trồng</p>
             <p class="mt-1 text-2xl font-bold tabular sm:text-3xl" th:text="${#numbers.formatInteger(stats.plants, 1, 'POINT')}">3</p>
         </a>
-        <a th:href="@{/diseases}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 sm:p-4 transition-colors duration-150 hover:bg-base-200">
+        <a th:href="@{/diseases}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 transition-colors duration-150 hover:bg-base-200 sm:p-4">
             <p class="text-sm text-base-content/70">Bệnh</p>
             <p class="mt-1 text-2xl font-bold tabular sm:text-3xl" th:text="${#numbers.formatInteger(stats.diseases, 1, 'POINT')}">2</p>
         </a>
-        <a th:href="@{/scans}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 sm:p-4 transition-colors duration-150 hover:bg-base-200">
+        <a th:href="@{/scans}" class="block min-w-0 rounded-xl border border-base-300 bg-base-100 p-3 transition-colors duration-150 hover:bg-base-200 sm:p-4">
             <p class="text-sm text-base-content/70">Lượt quét</p>
             <p class="mt-1 text-2xl font-bold tabular sm:text-3xl" th:text="${#numbers.formatInteger(stats.scans, 1, 'POINT')}">7</p>
         </a>
     </div>
 
-    <h2 class="mt-8 text-lg font-bold">Quét gần đây</h2>
+    <div class="mt-8 flex items-baseline justify-between gap-3">
+        <h2 class="text-lg font-bold">Quét gần đây</h2>
+        <a th:unless="${stats.recent.empty}" th:href="@{/scans}" class="text-sm font-semibold text-primary underline-offset-2 hover:underline">Xem tất cả</a>
+    </div>
 
     <div th:if="${stats.recent.empty}" class="mt-3 rounded-xl border border-base-300 bg-base-100 px-6 py-10 text-center">
         <p class="text-lg font-bold">Chưa có lượt quét nào</p>
@@ -55,16 +75,16 @@
                 <img th:src="@{/uploads/{f}(f=${s.imageFileName})}" alt="" loading="lazy"
                      class="size-12 shrink-0 rounded-lg bg-base-200 object-cover">
                 <div class="min-w-0 flex-1">
-                    <p th:if="${s.note != null}" class="line-clamp-1 break-words font-semibold" th:text="${s.note}">Ghi chú</p>
-                    <p th:unless="${s.note != null}" class="font-semibold text-base-content/70">Không có ghi chú</p>
-                    <span class="whitespace-nowrap text-sm text-base-content/70 tabular"
-                          th:text="${#temporals.format(s.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</span>
+                    <p class="line-clamp-1 break-words font-semibold" th:insert="~{scans/list :: scanTitle(${s})}">Bệnh mốc sương</p>
+                    <p class="text-sm text-base-content/70">
+                        <span class="whitespace-nowrap tabular" th:text="${#temporals.format(s.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</span>
+                        <span th:if="${s.note != null}" class="break-words" th:text="'· ' + ${s.note}">· Ghi chú</span>
+                    </p>
                 </div>
-                <span class="badge badge-outline hidden whitespace-nowrap sm:inline-flex" th:text="${s.status.label}">Chờ phân tích</span>
+                <span class="badge badge-sm badge-outline hidden whitespace-nowrap sm:inline-flex" th:text="${s.status.label}">Chờ phân tích</span>
             </a>
         </li>
     </ul>
-    <a th:unless="${stats.recent.empty}" th:href="@{/scans}" class="link mt-3 inline-block">Xem tất cả lịch sử</a>
 </section>
 </body>
 </html>

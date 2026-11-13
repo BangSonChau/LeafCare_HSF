@@ -69,3 +69,8 @@
 .answer ol { list-style: decimal; padding-left: 1.25rem; }
 .answer li + li { margin-top: 0.25rem; }
 .answer strong { font-weight: 700; }
+
+/* Mục điều hướng trên cùng (layout/base): không xuống dòng */
+.nav-top {
+  @apply whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors duration-150 hover:bg-secondary xl:px-4;
+}
