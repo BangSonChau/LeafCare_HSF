@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: #38–#41 (Resilience4j, streaming, semantic cache, sửa stream treo) đã merge; PR trả lời ở nền `feat/rag-answer-later` chờ merge.
+- Đang ở: #38–#42 (RAG chịu lỗi, streaming, cache, trả lời ở nền) đã merge; PR temperature Gemini `fix/gemini-temperature` chờ merge. Render đã đặt `GEMINI_TIMEOUT=60s`, đổi key mới.
 - Việc tiếp theo: **nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc); thử thật trên Render sau khi merge. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -27,6 +27,11 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Temperature Gemini về 1.0 (ngoài plan)
+- Lý do: trên Render Gemini không ra chữ nào sau 60s (cả stream lẫn gọi ở nền), dù key mới và embedding vẫn chạy; trong AI Studio cùng model, cùng câu hỏi trả lời ngay. Khác biệt: app đặt `temperature=0.2`, AI Studio dùng 1.0 (Gemini 3 ẩn ô temperature, Google khuyên giữ 1.0).
+- Đã làm: `spring.ai.google.genai.chat.temperature=${GEMINI_TEMPERATURE:1.0}` (đổi lại được qua env, không cần deploy code). Chưa kiểm chứng được nguyên nhân (máy Claude không gọi được Gemini).
+- Nhánh: `fix/gemini-temperature`.
 
 ### 2026-11-13 – Gemini quá tải: server viết tiếp ở nền + trang tự hỏi lại (ngoài plan)
 - Lý do: Shin hỏi sau khi báo "quá tải" có chạy ngầm để lưu câu trả lời không (trước đây không). Shin chọn **cả hai** cách.
@@ -120,12 +125,8 @@
 - Test: 3 lớp mới (service x2, controller), test H2 tắt vectorstore/model bằng property + `RagTestBeans` (mock `VectorStore`, `ChatClient.Builder`) cho test full context; 200 test xanh. Chưa thử với Gemini key thật và Postgres pgvector thật.
 - Quyết định: key chỉ đọc từ env `GEMINI_API_KEY`; model chat `gemini-3.8-flash` (2.5-flash hết hiệu lực với tài khoản mới); file rỗng trả 0 đoạn (Tika ném lỗi với file 0 byte). Chưa làm: trang chat giao diện, Admin nhập key, nối với kết quả quét lá. Nhánh: `feat/rag`.
 
-### 2026-11-08 – Tài liệu + slide Assignment (ngoài plan)
-- Đã làm: `docs/assignment/USER_GUIDE.md` (setup code, Tailwind v4 + DaisyUI v5 trong Thymeleaf, setup Claude Code, quy trình dùng AI làm back-end/UI, kịch bản demo), `LeafCare_Assignment.pptx` (8 slide, có ghi chú người nói), 9 ảnh chụp app trong `docs/assignment/images/`.
-- Quyết định: Shin muốn slide ít, tập trung setup code, setup AI, dùng AI làm back-end + demo; bỏ Bootstrap trong đề, lấy stack thật. Ảnh chụp từ app chạy local với dữ liệu demo (QR VietQR không tải được nên không dùng ảnh QR).
-- Còn lại: ảnh chụp prompt thật (timeline yêu cầu), tên thành viên. Nhánh: `docs/assignment-guide-slides`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Tài liệu + slide Assignment `docs/assignment/` (ngoài plan) (`docs/assignment-guide-slides`)
 - 2026-11-08 – Lưu ảnh quét vào database `image_file` (ngoài plan) (`fix/store-images-in-db`)
 - 2026-11-08 – Task 12: Dashboard quản trị `/admin`, `/admin/users` (`feat/task-12-admin-dashboard`)
 - 2026-11-08 – Task 11: Deploy Render (Docker, Neon) – https://leafcare-4nh6.onrender.com (`feat/task-11-render`)
