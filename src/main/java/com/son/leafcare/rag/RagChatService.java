@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Tìm đoạn liên quan -> đưa cho LLM -> trả lời kèm nguồn.
@@ -159,7 +160,8 @@ public class RagChatService {
         if (model != null) {
             spec = spec.options(ChatOptions.builder().model(model));
         }
-        return spec.user(prompt).stream().content().timeout(timeout);
+        // thư viện Gemini gọi HTTP ngay lúc subscribe (chặn luồng), nên chạy ở luồng khác để timeout đếm được
+        return spec.user(prompt).stream().content().subscribeOn(Schedulers.boundedElastic()).timeout(timeout);
     }
 
     /** model null = model mặc định trong cấu hình. Quá thời gian thì huỷ và ném TimeoutException. */

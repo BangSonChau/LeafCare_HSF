@@ -199,6 +199,27 @@ class RagChatServiceTest {
     }
 
     @Test
+    void streamTimesOutWhenOpeningTheStreamBlocks() {
+        // thư viện Gemini mở stream (gọi HTTP) ngay lúc subscribe, chặn luồng tới khi Google trả lời
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).stream().content())
+                .thenReturn(reactor.core.publisher.Flux.defer(() -> {
+                    try {
+                        Thread.sleep(10_000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return reactor.core.publisher.Flux.just("quá muộn");
+                }));
+        RagChatService service = new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofMillis(300), "");
+
+        long start = System.nanoTime();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.stream("p").blockLast(Duration.ofSeconds(5)))
+                .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(3));
+    }
+
+    @Test
     void prepareWithoutChunksHasNoPrompt() {
         VectorStore store = mock(VectorStore.class);
         when(store.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
