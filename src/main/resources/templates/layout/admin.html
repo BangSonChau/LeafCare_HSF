@@ -27,7 +27,9 @@
                     </svg>
                 </label>
 
-                <form th:action="@{/admin/users}" method="get" role="search" class="min-w-0 flex-1 md:max-w-md">
+                <span class="font-bold md:hidden">Quản trị</span>
+                <!-- Search sits in the header from md; on phones /admin/users has its own search box. -->
+                <form th:action="@{/admin/users}" method="get" role="search" class="hidden min-w-0 flex-1 md:block md:max-w-md">
                     <label for="admin-search" class="sr-only">Tìm người dùng theo email hoặc tên</label>
                     <div class="relative">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"

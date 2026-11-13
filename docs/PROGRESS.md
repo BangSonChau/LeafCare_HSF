@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#44 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. Chờ merge theo thứ tự: `feat/answer-format-scan-wake` (#45) -> `chore/gemini-lite-default`.
+- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#44 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. #45, #46 đã merge. Chờ merge: `fix/ui-layout-polish` (sửa giao diện).
 - Việc tiếp theo: trang Admin nhập API key + chọn nhà cung cấp (Shin đồng ý làm, hỏi thiết kế trước). **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -16,7 +16,7 @@
 - CI (GitHub Actions) chạy `npm run build` + `./mvnw verify` mỗi push/PR; test fail là build fail.
 - Đăng nhập: Spring Security + Google OIDC; `authentication.getName()` là email (tra `AppUser` theo email); ADMIN = email trong `LEAFCARE_ADMIN_EMAILS`. Test controller cần `@Import(SecurityConfig.class)` + `@MockitoBean AppUserService`.
 - Thiết kế: hướng "Phòng khám cây" (xanh lâm sàng #0B7A4B trên nền trắng men #F4F8F5, font Be Vietnam Pro, nút "Quét lá" luôn trong tầm ngón cái). Chi tiết ở `DESIGN.md`, `PRODUCT.md`, `.impeccable/surfaces/`.
-- Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
+- Điều hướng: từ `lg` (1024px) menu trên; dưới `lg` thanh dưới (Trang chủ, Hỏi đáp, Quét lá, Lịch sử, Bệnh) + menu ảnh đại diện. Thanh điều hướng đánh dấu mục đang mở bằng model attribute `currentPath` (`GlobalModelAdvice`), vì Thymeleaf 3.1 không còn `#request`.
 - Test pager dùng `SpringTemplateEngine` + `WebContext` (link `@{/...}` cần web context).
 - Thanh toán dùng SePay (QR VietQR chuyển khoản vào tài khoản cá nhân, webhook xác thực bằng API key), thay MoMo sandbox vì thẻ ATM test của MoMo bị từ chối. Code MoMo giữ ở `payment/momo/` nhưng không dùng. Trạng thái đơn chỉ đổi qua webhook.
 - UI dùng skill trong `.claude/skills/`: impeccable, emil-design-eng, animate, animation-performance, break-ui, review-animations.
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Sửa giao diện và bố cục (ngoài plan)
+- Lý do: Shin thấy giao diện còn lỗi, bố cục chưa tốt. Chụp 12 trang ở 1280/900/390px: menu trên xuống 2 dòng ở mọi cỡ và tràn ngang ở 768–1000px; điện thoại không có Hỏi đáp ở thanh dưới; tên bệnh chìm trong trang kết quả; lịch sử hiện ghi chú thay vì kết quả; admin điện thoại ô tìm kiếm bị bóp, mỗi người dùng 4 dòng; Cây/Bệnh nút Sửa/Xoá to hết dòng.
+- Đã làm: `layout/base` thanh trên sticky, menu 1 dòng từ `lg` (`.nav-top`), menu tài khoản `<details>` (Cây, Gói, Giao dịch, Trang quản trị, Đăng xuất; đóng khi bấm ngoài/Esc); thanh dưới (<lg) Trang chủ, Hỏi đáp, Quét lá, Lịch sử, Bệnh (Shin chọn). Trang chủ: 2 ô Quét lá/Hỏi đáp. Kết quả quét: tên bệnh làm tiêu đề, thanh độ tin cậy, nút Hỏi cẩm nang chính, ảnh sticky. Lịch sử + trang chủ: dòng hiện kết quả (fragment `scans/list :: scanTitle`). Quét lá: ô chọn ảnh lớn có xem trước. Admin: ẩn ô tìm trên đầu ở điện thoại, người dùng 2 dòng. Cây/Bệnh: nút Sửa/Xoá bên phải. Chat, quét lá căn giữa.
+- Test: 304 test xanh (không đổi test). Playwright với app chạy H2 + đăng nhập giả: không tràn ngang ở 390/900/1280 trên 12 trang; Hỏi đáp chữ chạy dần + định dạng vẫn đúng; menu đóng khi bấm ngoài. Không đổi backend.
+- Nhánh: `fix/ui-layout-polish`.
 
 ### 2026-11-13 – Model Gemini mặc định là bản lite (ngoài plan)
 - Đã làm: `application.properties` mặc định `gemini-3.5-flash-lite`, dự phòng `gemini-flash-lite-latest` (env Render vẫn ưu tiên); README sửa theo. 304 test xanh. Nhánh: `chore/gemini-lite-default` (tách từ `feat/answer-format-scan-wake` chưa merge).

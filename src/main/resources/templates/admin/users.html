@@ -42,25 +42,25 @@
             </tr>
             </thead>
             <tbody class="block md:table-row-group">
-            <tr th:each="r : ${page.content}" class="block border-b border-base-300 py-3 last:border-b-0 md:table-row md:py-0">
-                <td class="block px-4 md:table-cell md:max-w-xs md:py-3 md:align-middle">
+            <tr th:each="r : ${page.content}" class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-base-300 px-4 py-3 last:border-b-0 md:table-row md:p-0">
+                <td class="w-full md:table-cell md:max-w-xs md:px-4 md:py-3 md:align-middle">
                     <p class="flex flex-wrap items-center gap-2">
                         <span th:if="${r.user.name != null}" class="break-words font-semibold" th:text="${r.user.name}">Bình</span>
                         <span th:if="${r.user.role.name() == 'ADMIN'}" class="badge badge-outline">ADMIN</span>
                     </p>
                     <p class="break-all text-sm text-base-content/70" th:text="${r.user.email}">b@x.com</p>
                 </td>
-                <td class="block px-4 pt-2 md:table-cell md:py-3 md:align-middle">
+                <td class="md:table-cell md:px-4 md:py-3 md:align-middle">
                     <span th:if="${r.premiumUntil != null}" class="badge badge-primary whitespace-nowrap"
                           th:text="'Premium đến ' + ${#temporals.format(r.premiumUntil, 'dd/MM/yyyy')}">Premium đến 08/12/2026</span>
                     <span th:unless="${r.premiumUntil != null}" class="badge badge-outline">Free</span>
                 </td>
-                <td class="flex justify-between px-4 pt-2 text-sm md:table-cell md:py-3 md:text-right md:align-middle md:text-base">
-                    <span class="text-base-content/70 md:hidden">Lượt quét</span>
+                <td class="text-sm md:table-cell md:px-4 md:py-3 md:text-right md:align-middle md:text-base">
                     <span class="font-semibold tabular" th:text="${#numbers.formatInteger(r.scans, 1, 'POINT')}">7</span>
+                    <span class="text-base-content/70 md:hidden">lượt quét</span>
                 </td>
-                <td class="flex justify-between px-4 pt-1 text-sm md:table-cell md:py-3 md:text-right md:align-middle md:text-base">
-                    <span class="text-base-content/70 md:hidden">Tham gia</span>
+                <td class="text-sm text-base-content/70 md:table-cell md:px-4 md:py-3 md:text-right md:align-middle md:text-base md:text-base-content">
+                    <span class="md:hidden">· Tham gia</span>
                     <span class="whitespace-nowrap tabular" th:text="${#temporals.format(r.user.createdAt, 'dd/MM/yyyy')}">01/11/2026</span>
                 </td>
             </tr>

@@ -103,7 +103,7 @@ A green shell on a green-tinted white ground; red is rationed to errors and dest
 
 ## Layout
 
-Single-column working area, max width 72rem, 16px gutters on phones, 24px from `md`. Spacing rhythm 8/16/24; more space above a heading than below. Desktop (≥768px): top bar with nav links and the scan button. Phone (<768px): slim top bar with logo only; fixed bottom bar with Trang chủ, Cây, Bệnh, Lịch sử tabs and a raised "Quét lá" button in the center; page content gets bottom padding so nothing hides behind it. Tap targets ≥48px.
+Single-column working area, max width 72rem, 16px gutters on phones, 24px from `md`. Spacing rhythm 8/16/24; more space above a heading than below. Desktop (≥1024px, `lg`): sticky top bar with one-line nav links (Trang chủ, Hỏi đáp, Lịch sử, Cây, Bệnh, Gói), the scan button and the account menu. Phone and tablet (<1024px): slim top bar with logo and account menu; fixed bottom bar with Trang chủ, Hỏi đáp, Lịch sử, Bệnh tabs and a raised "Quét lá" button in the center; the account menu (avatar, `<details>` dropdown) holds Cây, Gói, Lịch sử giao dịch, Trang quản trị, Đăng xuất; page content gets bottom padding so nothing hides behind it. Tap targets ≥48px.
 
 ## Elevation & Depth
 

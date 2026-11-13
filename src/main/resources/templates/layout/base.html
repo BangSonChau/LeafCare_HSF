@@ -14,76 +14,83 @@
 </head>
 <body class="min-h-screen flex flex-col bg-base-200 text-base-content font-sans antialiased">
 
-<!-- Top bar: committed clinic-green shell. Nav links and scan button show from md up. -->
-<header class="bg-primary text-primary-content">
-    <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 md:px-6">
-        <a th:href="@{/}" class="flex items-center gap-3 rounded-lg font-bold text-xl" aria-label="LeafCare, về trang chủ">
+<!-- Top bar: committed clinic-green shell. Nav links + scan button from lg up; below lg the bottom bar takes over. -->
+<header class="sticky top-0 z-30 bg-primary text-primary-content">
+    <div class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 md:px-6">
+        <a th:href="@{/}" class="flex shrink-0 items-center gap-3 rounded-lg text-xl font-bold" aria-label="LeafCare, về trang chủ">
             <span class="grid size-10 place-items-center rounded-xl bg-white text-primary">
                 <svg th:replace="~{fragments/brand :: leafMark}"></svg>
             </span>
             LeafCare
         </a>
 
-        <nav th:if="${me}" class="hidden md:flex items-center gap-1 ml-4" aria-label="Điều hướng chính">
-            <a th:href="@{/}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
-               th:classappend="${currentPath == '/'} ? 'bg-secondary'"
+        <nav th:if="${me}" class="ml-2 hidden items-center gap-1 lg:flex" aria-label="Điều hướng chính">
+            <a th:href="@{/}" class="nav-top" th:classappend="${currentPath == '/'} ? 'bg-secondary'"
                th:attr="aria-current=${currentPath == '/'} ? 'page'">Trang chủ</a>
-            <a th:href="@{/plants}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
-               th:classappend="${#strings.startsWith(currentPath, '/plants')} ? 'bg-secondary'"
-               th:attr="aria-current=${#strings.startsWith(currentPath, '/plants')} ? 'page'">Cây</a>
-            <a th:href="@{/diseases}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
-               th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'bg-secondary'"
-               th:attr="aria-current=${#strings.startsWith(currentPath, '/diseases')} ? 'page'">Bệnh</a>
-            <a th:href="@{/chat}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
-               th:classappend="${#strings.startsWith(currentPath, '/chat')} ? 'bg-secondary'"
+            <a th:href="@{/chat}" class="nav-top" th:classappend="${#strings.startsWith(currentPath, '/chat')} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/chat')} ? 'page'">Hỏi đáp</a>
-            <a th:href="@{/scans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+            <a th:href="@{/scans}" class="nav-top"
                th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">Lịch sử</a>
-            <a th:href="@{/plans}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
+            <a th:href="@{/plants}" class="nav-top" th:classappend="${#strings.startsWith(currentPath, '/plants')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/plants')} ? 'page'">Cây</a>
+            <a th:href="@{/diseases}" class="nav-top" th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'bg-secondary'"
+               th:attr="aria-current=${#strings.startsWith(currentPath, '/diseases')} ? 'page'">Bệnh</a>
+            <a th:href="@{/plans}" class="nav-top"
                th:classappend="${#strings.startsWith(currentPath, '/plans') or #strings.startsWith(currentPath, '/payments')} ? 'bg-secondary'"
                th:attr="aria-current=${#strings.startsWith(currentPath, '/plans')} ? 'page'">Gói</a>
-            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" class="rounded-full px-4 py-2 text-sm font-semibold hover:bg-secondary"
-               th:classappend="${#strings.startsWith(currentPath, '/admin')} ? 'bg-secondary'"
-               th:attr="aria-current=${#strings.startsWith(currentPath, '/admin')} ? 'page'">Quản trị</a>
         </nav>
 
         <div class="ml-auto flex min-w-0 items-center gap-3">
-        <a th:if="${me}" th:href="@{/scans/new}"
-           class="btn hidden h-12 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 md:inline-flex">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
-                <circle cx="12" cy="13" r="3"/>
-            </svg>
-            Quét lá
-        </a>
-
-        <!-- Logged-in user: avatar (initial when Google gives no photo), name from lg up, logout. -->
-        <div th:if="${me}" class="flex min-w-0 items-center gap-2">
-            <a th:href="@{/plans}" class="flex min-w-0 items-center gap-2 rounded-full" aria-label="Gói của bạn">
-            <img th:if="${me.avatarUrl}" th:src="${me.avatarUrl}" alt="" referrerpolicy="no-referrer"
-                 class="size-10 shrink-0 rounded-full bg-secondary object-cover">
-            <span th:unless="${me.avatarUrl}" aria-hidden="true"
-                  class="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-bold"
-                  th:text="${#strings.toUpperCase(#strings.substring(me.name, 0, 1))}">S</span>
-            <span class="hidden max-w-40 truncate text-sm font-semibold lg:block"
-                  th:text="${me.name}" th:title="${me.name}">Shin</span>
+            <a th:if="${me}" th:href="@{/scans/new}"
+               class="btn hidden h-11 min-h-11 shrink-0 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200 lg:inline-flex"
+               th:classappend="${currentPath == '/scans/new'} ? 'ring-2 ring-white/60 ring-offset-2 ring-offset-primary'">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                </svg>
+                Quét lá
             </a>
-            <form th:action="@{/logout}" method="post">
-                <button type="submit"
-                        class="btn btn-ghost h-10 min-h-10 rounded-full px-3 text-primary-content hover:bg-secondary">
-                    Đăng xuất
-                </button>
-            </form>
-        </div>
-        <a th:unless="${me != null or currentPath == '/login'}" th:href="@{/login}"
-           class="btn h-10 min-h-10 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200">Đăng nhập</a>
+
+            <!-- Account menu (no JS needed: <details>). Holds the links the phone bottom bar has no room for. -->
+            <details th:if="${me}" class="dropdown dropdown-end" data-close-outside>
+                <summary class="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-full pr-1 [&::-webkit-details-marker]:hidden"
+                         aria-label="Tài khoản và menu">
+                    <img th:if="${me.avatarUrl}" th:src="${me.avatarUrl}" alt="" referrerpolicy="no-referrer"
+                         class="size-10 shrink-0 rounded-full bg-secondary object-cover">
+                    <span th:unless="${me.avatarUrl}" aria-hidden="true"
+                          class="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-bold"
+                          th:text="${#strings.toUpperCase(#strings.substring(me.name, 0, 1))}">S</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </summary>
+                <div class="dropdown-content z-40 mt-2 w-64 overflow-hidden rounded-xl border border-base-300 bg-base-100 text-base-content shadow-[0_8px_24px_rgba(20,38,28,0.16)]">
+                    <p class="truncate border-b border-base-300 px-4 py-3 font-semibold" th:text="${me.name}" th:title="${me.name}">Shin</p>
+                    <ul class="py-1 text-sm font-semibold">
+                        <li class="lg:hidden"><a th:href="@{/plants}" class="flex min-h-11 items-center px-4 hover:bg-base-200">Cây</a></li>
+                        <li><a th:href="@{/plans}" class="flex min-h-11 items-center px-4 hover:bg-base-200">Gói của bạn</a></li>
+                        <li><a th:href="@{/payments}" class="flex min-h-11 items-center px-4 hover:bg-base-200">Lịch sử giao dịch</a></li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <a th:href="@{/admin}" class="flex min-h-11 items-center px-4 hover:bg-base-200">Trang quản trị</a>
+                        </li>
+                    </ul>
+                    <form th:action="@{/logout}" method="post" class="border-t border-base-300 py-1">
+                        <button type="submit" class="flex min-h-11 w-full items-center px-4 text-left text-sm font-semibold hover:bg-base-200">
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
+            </details>
+            <a th:unless="${me != null or currentPath == '/login'}" th:href="@{/login}"
+               class="btn h-10 min-h-10 rounded-full border-0 bg-white px-5 text-secondary hover:bg-base-200">Đăng nhập</a>
         </div>
     </div>
 </header>
 
-<main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-32 md:px-6 md:py-8 md:pb-8">
+<main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-32 md:px-6 md:py-8 lg:pb-10">
     <div th:if="${success}" role="status"
          class="mb-4 flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 px-4 py-3">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -104,15 +111,15 @@
     <section layout:fragment="content">Nội dung trang</section>
 </main>
 
-<footer class="hidden border-t border-base-300 bg-base-100 md:block">
+<footer class="hidden border-t border-base-300 bg-base-100 lg:block">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-sm text-base-content/70">
         <span>LeafCare · Chăm sóc cây qua ảnh lá</span>
         <span>Đồ án FPT</span>
     </div>
 </footer>
 
-<!-- Phone bottom bar: four tabs and a raised "Quét lá" button inside the thumb zone. -->
-<nav th:if="${me}" class="fixed inset-x-0 bottom-0 z-30 border-t border-base-300 bg-base-100 shadow-[0_-2px_12px_rgba(20,38,28,0.12)] md:hidden"
+<!-- Phone/tablet bottom bar (< lg): four tabs and a raised "Quét lá" button in the thumb zone. Cây, Gói, Quản trị live in the account menu. -->
+<nav th:if="${me}" class="fixed inset-x-0 bottom-0 z-30 border-t border-base-300 bg-base-100 shadow-[0_-2px_12px_rgba(20,38,28,0.12)] lg:hidden"
      aria-label="Điều hướng chính (điện thoại)">
     <div class="mx-auto grid max-w-md grid-cols-5 items-end px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         <a th:href="@{/}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
@@ -124,20 +131,19 @@
             </svg>
             Trang chủ
         </a>
-        <a th:href="@{/plants}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
-           th:classappend="${#strings.startsWith(currentPath, '/plants')} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
-           th:attr="aria-current=${#strings.startsWith(currentPath, '/plants')} ? 'page'">
+        <a th:href="@{/chat}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${#strings.startsWith(currentPath, '/chat')} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${#strings.startsWith(currentPath, '/chat')} ? 'page'">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/>
-                <path d="M2 21c0-3 1.9-5.5 6-7"/>
+                <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M8.5 10.5h7M8.5 14h4"/>
             </svg>
-            Cây
+            Hỏi đáp
         </a>
         <a th:href="@{/scans/new}"
            class="-mt-7 flex flex-col items-center justify-center gap-0.5 text-xs font-bold text-primary"
-           aria-label="Quét lá">
-            <span class="grid size-16 place-items-center rounded-full border-4 border-base-100 bg-primary text-primary-content shadow-[0_4px_12px_rgba(20,38,28,0.25)]">
+           th:attr="aria-current=${currentPath == '/scans/new'} ? 'page'">
+            <span class="grid size-16 place-items-center rounded-full border-4 border-base-100 bg-primary text-primary-content shadow-[0_4px_12px_rgba(20,38,28,0.25)] transition-transform duration-150 active:scale-95">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-7" aria-hidden="true">
                     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
@@ -145,6 +151,15 @@
                 </svg>
             </span>
             Quét lá
+        </a>
+        <a th:href="@{/scans}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+           th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
+           th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            Lịch sử
         </a>
         <a th:href="@{/diseases}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
            th:classappend="${#strings.startsWith(currentPath, '/diseases')} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
@@ -156,17 +171,16 @@
             </svg>
             Bệnh
         </a>
-        <a th:href="@{/scans}" class="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
-           th:classappend="${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'font-bold text-primary' : 'font-semibold text-base-content/70'"
-           th:attr="aria-current=${#strings.startsWith(currentPath, '/scans') and currentPath != '/scans/new'} ? 'page'">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-            </svg>
-            Lịch sử
-        </a>
     </div>
 </nav>
+
+<script>
+// Đóng menu tài khoản khi bấm ra ngoài hoặc nhấn Esc (<details> không tự làm).
+document.addEventListener('click', e => document.querySelectorAll('details[data-close-outside][open]')
+    .forEach(d => { if (!d.contains(e.target)) d.open = false; }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('details[data-close-outside][open]')
+    .forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
+</script>
 
 </body>
 </html>

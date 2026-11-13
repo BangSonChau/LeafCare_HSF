@@ -6,27 +6,45 @@
     <title>Quét lá</title>
 </head>
 <body>
-<section layout:fragment="content">
+<section layout:fragment="content" class="mx-auto max-w-2xl">
     <h1 class="text-2xl font-bold leading-tight">Quét lá</h1>
-    <p class="mt-1 text-base-content/70">Chọn ảnh lá JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+    <p class="mt-1 text-base-content/70">Chụp rõ một chiếc lá, đặt trên nền trơn, đủ sáng.</p>
     <p th:if="${remaining != null and remaining > 0}" class="mt-2 text-sm text-base-content/80">
         Còn <strong class="tabular" th:text="${remaining} + '/5'">5/5</strong> lượt hôm nay (gói Free).
         <a th:href="@{/plans}" class="font-semibold text-primary underline-offset-2 hover:underline">Nâng cấp Premium</a>
     </p>
     <div th:if="${remaining == 0}" role="alert"
-         class="mt-4 flex max-w-2xl flex-col gap-3 rounded-xl border border-warning bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+         class="mt-4 flex flex-col gap-3 rounded-xl border border-warning bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
         <p class="font-semibold">Tài khoản Free được quét 5 lượt/ngày. Nâng cấp Premium để quét không giới hạn.</p>
         <a th:href="@{/plans}" class="btn btn-primary h-12 shrink-0 rounded-full px-6">Nâng cấp Premium</a>
     </div>
 
     <form th:action="@{/scans}" method="post" enctype="multipart/form-data"
-          class="mt-6 max-w-2xl space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+          class="mt-6 space-y-5 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
 
         <div>
-            <label for="file" class="text-sm font-semibold">Ảnh lá <span class="text-base-content/70">(bắt buộc)</span></label>
-            <input id="file" name="file" type="file" required accept="image/jpeg,image/png,image/webp"
-                   class="file-input mt-1 h-12 w-full text-base"
-                   th:attr="aria-invalid=${error != null}, aria-describedby=${error != null} ? 'file-error'">
+            <p class="text-sm font-semibold">Ảnh lá <span class="text-base-content/70">(bắt buộc)</span></p>
+            <!-- Whole box is the file picker; a preview replaces the hint once a photo is chosen. -->
+            <label for="file"
+                   class="mt-1 flex min-h-44 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-base-300 bg-base-200 p-4 text-center transition-colors duration-150 hover:border-primary focus-within:border-primary"
+                   th:classappend="${error != null} ? 'border-error'">
+                <img id="file-preview" alt="Ảnh lá vừa chọn" hidden class="max-h-56 rounded-lg object-contain">
+                <span id="file-hint" class="flex flex-col items-center gap-2">
+                    <span class="grid size-12 place-items-center rounded-full bg-primary text-primary-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6" aria-hidden="true">
+                            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                            <circle cx="12" cy="13" r="3"/>
+                        </svg>
+                    </span>
+                    <span class="font-semibold text-primary">Chụp hoặc chọn ảnh lá</span>
+                    <span class="text-sm text-base-content/70">JPG, PNG, WebP · tối đa 5 MB</span>
+                </span>
+                <span id="file-name" hidden class="max-w-full truncate text-sm font-semibold"></span>
+                <input id="file" name="file" type="file" required accept="image/jpeg,image/png,image/webp"
+                       class="sr-only"
+                       th:attr="aria-invalid=${error != null}, aria-describedby=${error != null} ? 'file-error'">
+            </label>
             <p id="file-error" th:if="${error}" th:text="${error}" class="mt-1 text-sm font-semibold text-error">Lỗi</p>
         </div>
 
@@ -42,13 +60,13 @@
                     LeafCare nhận diện <span th:text="${#lists.size(plants)}">14</span> loại cây:
                     <span th:text="${#strings.listJoin(plants.![name], ', ')}">Cà chua, Ngô</span>.
                 </span>
-                Chọn đúng loại cây thì kết quả chính xác hơn. Chụp một lá, đặt trên nền trơn, đủ sáng.
+                Chọn đúng loại cây thì kết quả chính xác hơn.
             </p>
         </div>
 
         <div>
             <label for="note" class="text-sm font-semibold">Ghi chú</label>
-            <textarea id="note" name="note" rows="4" maxlength="1000" th:text="${note}"
+            <textarea id="note" name="note" rows="3" maxlength="1000" placeholder="Ví dụ: luống sau nhà, đốm nâu xuất hiện từ hôm qua" th:text="${note}"
                       class="textarea mt-1 w-full text-base"></textarea>
         </div>
 
@@ -57,6 +75,15 @@
             <button type="submit" class="btn btn-primary h-12 rounded-full px-6" th:disabled="${remaining == 0}">Lưu ảnh</button>
         </div>
     </form>
+    <script>
+    document.getElementById('file').addEventListener('change', e => {
+        const f = e.target.files[0], img = document.getElementById('file-preview'), name = document.getElementById('file-name');
+        if (img.src) URL.revokeObjectURL(img.src);
+        img.hidden = name.hidden = !f;
+        document.getElementById('file-hint').hidden = !!f;
+        if (f) { img.src = URL.createObjectURL(f); name.textContent = f.name; }
+    });
+    </script>
 </section>
 </body>
 </html>

@@ -7,50 +7,78 @@
     <title>Chi tiết lượt quét</title>
 </head>
 <body>
-<section layout:fragment="content">
-    <a th:href="@{/scans}" class="inline-flex min-h-12 items-center text-sm font-semibold text-primary">&larr; Lịch sử quét</a>
+<section layout:fragment="content" th:with="done=${scan.status.name() == 'DONE'}">
+    <a th:href="@{/scans}" class="inline-flex min-h-12 items-center gap-1 text-sm font-semibold text-primary">
+        <span aria-hidden="true">&larr;</span> Lịch sử quét
+    </a>
 
-    <div class="mt-2 grid gap-6 md:grid-cols-2">
-        <img th:src="@{/uploads/{f}(f=${scan.imageFileName})}" alt="Ảnh lá đã tải lên"
-             class="max-h-[32rem] w-full rounded-xl border border-base-300 bg-base-200 object-contain">
+    <div class="mt-2 grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-6">
+        <!-- Photo: short on phones so the result shows without scrolling; sticky beside the result from md. -->
+        <div class="md:sticky md:top-24">
+            <img th:src="@{/uploads/{f}(f=${scan.imageFileName})}" alt="Ảnh lá đã tải lên"
+                 class="max-h-64 w-full rounded-xl border border-base-300 bg-base-100 object-contain md:max-h-[32rem]">
+            <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/70">
+                <span class="badge badge-sm badge-outline" th:text="${scan.status.label}">Chờ phân tích</span>
+                <span class="tabular" th:text="${#temporals.format(scan.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</span>
+            </p>
+        </div>
 
-        <div class="min-w-0 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
-            <h1 class="text-2xl font-bold leading-tight">Lượt quét</h1>
-            <dl class="mt-4 space-y-4">
-                <div>
-                    <dt class="text-sm font-semibold text-base-content/70">Trạng thái</dt>
-                    <dd class="mt-1"><span class="badge badge-outline" th:text="${scan.status.label}">Chờ phân tích</span></dd>
-                </div>
-                <div th:if="${scan.status.name() == 'DONE'}">
-                    <dt class="text-sm font-semibold text-base-content/70">Kết quả</dt>
-                    <dd class="mt-1" th:if="${scan.disease != null}">
-                        <p class="text-xl font-bold leading-tight break-words" th:text="${scan.disease.name}">Bệnh đốm lá Septoria</p>
-                        <p th:if="${scan.plant != null}" class="text-sm text-base-content/70 break-words" th:text="${scan.plant.name}">Cà chua</p>
-                    </dd>
-                    <dd class="mt-1 text-xl font-bold leading-tight"
-                        th:if="${scan.disease == null and scan.modelLabel == 'Background_without_leaves'}">Không thấy lá trong ảnh</dd>
-                    <dd class="mt-1" th:if="${scan.disease == null and #strings.endsWith(scan.modelLabel, 'healthy')}">
-                        <p class="text-xl font-bold leading-tight">Lá khoẻ, không thấy dấu hiệu bệnh</p>
-                        <p th:if="${scan.plant != null}" class="text-sm text-base-content/70 break-words" th:text="${scan.plant.name}">Cà chua</p>
-                    </dd>
-                    <dd class="mt-1" th:if="${scan.disease == null and scan.modelLabel != 'Background_without_leaves' and !#strings.endsWith(scan.modelLabel, 'healthy')}">
-                        <p class="font-semibold">Bệnh này chưa có trong danh mục LeafCare</p>
-                        <p th:if="${scan.plant != null}" class="text-sm text-base-content/70 break-words" th:text="${scan.plant.name}">Cà chua</p>
-                        <p class="text-sm text-base-content/70 break-words">Mã của máy phân tích: <span th:text="${scan.modelLabel}">Apple___Black_rot</span></p>
-                    </dd>
-                    <dd th:if="${scan.confidence != null}" class="mt-2 text-sm">
-                        Độ tin cậy <strong class="tabular" th:text="${#numbers.formatDecimal(scan.confidence * 100, 1, 0)} + '%'">64%</strong>
-                    </dd>
-                    <dd th:if="${scan.looksLikePlant != null and scan.chosenPlant != null}" role="note"
-                        class="mt-2 rounded-xl border border-warning bg-base-100 p-3 text-sm">
+        <div class="min-w-0 space-y-4">
+            <!-- Result -->
+            <section class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-6" aria-labelledby="result-title">
+                <p class="text-sm font-semibold text-base-content/70">Kết quả</p>
+
+                <th:block th:unless="${done}">
+                    <h1 id="result-title" class="mt-1 text-2xl font-bold leading-tight"
+                        th:text="${scan.status.name() == 'FAILED'} ? 'Chưa phân tích được' : 'Chưa phân tích'">Chưa phân tích</h1>
+                    <p class="mt-1 text-base-content/80"
+                       th:text="${scan.status.name() == 'FAILED'} ? 'Lần trước máy phân tích gặp lỗi. Bạn thử lại nhé.' : 'Bấm Phân tích để máy nhận diện bệnh trên lá.'">
+                        Bấm Phân tích để máy nhận diện bệnh trên lá.</p>
+                    <form th:action="@{/scans/{id}/analyze(id=${scan.id})}" method="post" class="mt-4"
+                          onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang phân tích, có thể mất 1–2 phút nếu máy phân tích đang khởi động…';">
+                        <button type="submit" class="btn btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6"
+                                th:text="${scan.status.name() == 'FAILED'} ? 'Phân tích lại' : 'Phân tích'">Phân tích</button>
+                    </form>
+                </th:block>
+
+                <th:block th:if="${done}">
+                    <th:block th:if="${scan.disease != null}">
+                        <h1 id="result-title" class="mt-1 break-words text-2xl font-bold leading-tight" th:text="${scan.disease.name}">Bệnh đốm lá Septoria</h1>
+                        <p th:if="${scan.plant != null}" class="mt-0.5 break-words text-base-content/70" th:text="${scan.plant.name}">Cà chua</p>
+                    </th:block>
+                    <h1 id="result-title" th:if="${scan.disease == null and scan.modelLabel == 'Background_without_leaves'}"
+                        class="mt-1 text-2xl font-bold leading-tight">Không thấy lá trong ảnh</h1>
+                    <th:block th:if="${scan.disease == null and #strings.endsWith(scan.modelLabel, 'healthy')}">
+                        <h1 id="result-title" class="mt-1 text-2xl font-bold leading-tight">Lá khoẻ, không thấy dấu hiệu bệnh</h1>
+                        <p th:if="${scan.plant != null}" class="mt-0.5 break-words text-base-content/70" th:text="${scan.plant.name}">Cà chua</p>
+                    </th:block>
+                    <th:block th:if="${scan.disease == null and scan.modelLabel != 'Background_without_leaves' and !#strings.endsWith(scan.modelLabel, 'healthy')}">
+                        <h1 id="result-title" class="mt-1 text-xl font-bold leading-tight">Bệnh này chưa có trong danh mục LeafCare</h1>
+                        <p th:if="${scan.plant != null}" class="mt-0.5 break-words text-base-content/70" th:text="${scan.plant.name}">Cà chua</p>
+                        <p class="mt-1 break-words text-sm text-base-content/70">Mã của máy phân tích: <span th:text="${scan.modelLabel}">Apple___Black_rot</span></p>
+                    </th:block>
+
+                    <div th:if="${scan.confidence != null}" class="mt-4">
+                        <p class="flex items-baseline justify-between text-sm">
+                            <span class="font-semibold">Độ tin cậy</span>
+                            <strong class="tabular" th:text="${#numbers.formatDecimal(scan.confidence * 100, 1, 0)} + '%'">64%</strong>
+                        </p>
+                        <progress class="progress mt-1 h-2 w-full" aria-hidden="true"
+                                  th:classappend="${scan.confidence < 0.8} ? 'progress-warning' : 'progress-primary'"
+                                  th:value="${#numbers.formatDecimal(scan.confidence * 100, 1, 0)}" max="100" value="64"></progress>
+                    </div>
+
+                    <p th:if="${scan.looksLikePlant != null and scan.chosenPlant != null}" role="note"
+                       class="mt-3 rounded-xl border border-warning bg-base-100 p-3 text-sm">
                         Ảnh này trông giống lá <strong th:text="${scan.looksLikePlant.name}">Nho</strong> hơn
                         <strong th:text="${scan.chosenPlant.name}">Cà chua</strong>. Kiểm tra lại loại cây đã chọn rồi quét lại.
-                    </dd>
-                    <dd th:if="${scan.confidence != null and scan.confidence < 0.8}" role="note"
-                        class="mt-2 rounded-xl border border-warning bg-base-100 p-3 text-sm">
+                    </p>
+                    <p th:if="${scan.confidence != null and scan.confidence < 0.8}" role="note"
+                       class="mt-3 rounded-xl border border-warning bg-base-100 p-3 text-sm">
                         Máy phân tích chưa chắc chắn. Hãy chụp lại gần một chiếc lá, đặt trên nền trơn, đủ sáng, chọn đúng loại cây rồi quét lại.
-                    </dd>
-                    <dd th:if="${guesses != null and #lists.size(guesses) > 1}" class="mt-3">
+                    </p>
+
+                    <div th:if="${guesses != null and #lists.size(guesses) > 1}" class="mt-4 border-t border-base-300 pt-3">
                         <p class="text-sm font-semibold text-base-content/70">Các khả năng máy đã xét</p>
                         <ol class="mt-1 space-y-1 text-sm">
                             <li th:each="g, st : ${guesses}" class="flex items-baseline justify-between gap-3">
@@ -61,57 +89,56 @@
                                 <span class="tabular shrink-0" th:text="${#numbers.formatDecimal(g.confidence * 100, 1, 0)} + '%'">65%</span>
                             </li>
                         </ol>
-                    </dd>
-                    <dd class="mt-2 text-sm text-base-content/70">
+                    </div>
+
+                    <!-- mở ngay trang Hỏi đáp có sẵn câu hỏi; trang đó tự hỏi và hiện chữ trả lời dần -->
+                    <a th:if="${scan.disease != null}"
+                       th:href="@{/chat(q=${'Cách nhận biết và xử lý ' + scan.disease.name + (scan.plant != null ? ' trên ' + scan.plant.name : '') + '?'})}"
+                       class="btn btn-primary mt-5 h-12 w-full rounded-full sm:w-auto sm:px-6">Hỏi cẩm nang về bệnh này</a>
+
+                    <p class="mt-4 text-sm text-base-content/70">
                         Kết quả do máy tự nhận diện, chỉ mang tính tham khảo. Khi bệnh nặng, hãy hỏi cán bộ khuyến nông.
-                    </dd>
-                </div>
-                <div th:if="${scan.status.name() == 'DONE' and scan.disease != null and scan.disease.symptoms != null}">
-                    <dt class="text-sm font-semibold text-base-content/70">Triệu chứng</dt>
-                    <dd class="whitespace-pre-line break-words" th:text="${scan.disease.symptoms}">Triệu chứng</dd>
-                </div>
-                <div th:if="${scan.status.name() == 'DONE' and scan.disease != null and scan.disease.treatment != null}">
-                    <dt class="text-sm font-semibold text-base-content/70">Cách xử lý</dt>
-                    <dd class="whitespace-pre-line break-words" th:text="${scan.disease.treatment}">Cách xử lý</dd>
-                </div>
-                <div th:if="${scan.status.name() == 'DONE' and scan.disease != null}">
-                    <dt class="text-sm font-semibold text-base-content/70">Hỏi thêm</dt>
-                    <dd>
-                        <!-- mở ngay trang Hỏi đáp có sẵn câu hỏi; trang đó tự hỏi và hiện chữ trả lời dần -->
-                        <a th:href="@{/chat(q=${'Cách nhận biết và xử lý ' + scan.disease.name + (scan.plant != null ? ' trên ' + scan.plant.name : '') + '?'})}"
-                           class="btn btn-outline btn-primary mt-1 h-12 w-full rounded-full sm:w-auto sm:px-6">Hỏi cẩm nang về bệnh này</a>
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-semibold text-base-content/70">Loại cây đã chọn</dt>
-                    <dd class="break-words" th:text="${scan.chosenPlant != null} ? ${scan.chosenPlant.name} : 'Để máy tự nhận'">Cà chua</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-semibold text-base-content/70">Thời gian</dt>
-                    <dd class="tabular" th:text="${#temporals.format(scan.createdAt, 'dd/MM/yyyy HH:mm')}">07/11/2026 09:30</dd>
-                </div>
-                <div sec:authorize="hasRole('ADMIN')">
-                    <dt class="text-sm font-semibold text-base-content/70">Người quét</dt>
-                    <dd><span th:replace="~{scans/list :: owner(${scan.owner})}"></span></dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-semibold text-base-content/70">Ghi chú</dt>
-                    <dd th:if="${scan.note != null}" class="whitespace-pre-line break-words" th:text="${scan.note}">Ghi chú</dd>
-                    <dd th:unless="${scan.note != null}" class="text-base-content/70">Không có ghi chú</dd>
-                </div>
-            </dl>
+                    </p>
+                </th:block>
+            </section>
 
-            <form th:unless="${scan.status.name() == 'DONE'}" th:action="@{/scans/{id}/analyze(id=${scan.id})}" method="post"
-                  class="mt-6" onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang phân tích, có thể mất 1–2 phút nếu máy phân tích đang khởi động…';">
-                <button type="submit" class="btn btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6"
-                        th:text="${scan.status.name() == 'FAILED'} ? 'Phân tích lại' : 'Phân tích'">Phân tích</button>
-            </form>
+            <!-- What to do -->
+            <section th:if="${done and scan.disease != null and (scan.disease.symptoms != null or scan.disease.treatment != null)}"
+                     class="space-y-4 rounded-xl border border-base-300 bg-base-100 p-4 md:p-6">
+                <div th:if="${scan.disease.symptoms != null}">
+                    <h2 class="font-bold">Triệu chứng</h2>
+                    <p class="mt-1 whitespace-pre-line break-words" th:text="${scan.disease.symptoms}">Triệu chứng</p>
+                </div>
+                <div th:if="${scan.disease.treatment != null}">
+                    <h2 class="font-bold">Cách xử lý</h2>
+                    <p class="mt-1 whitespace-pre-line break-words" th:text="${scan.disease.treatment}">Cách xử lý</p>
+                </div>
+            </section>
 
-            <form th:action="@{/scans/{id}/delete(id=${scan.id})}" method="post" class="mt-6"
-                  onsubmit="return confirm('Xoá lượt quét này? Ảnh cũng bị xoá và không thể hoàn tác.');">
-                <button type="submit"
-                        class="btn h-12 w-full rounded-full border-error text-error hover:bg-error hover:text-error-content sm:w-auto sm:px-6">Xoá lượt quét</button>
-            </form>
+            <!-- Scan info -->
+            <section class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-6" aria-label="Thông tin lượt quét">
+                <dl class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-semibold text-base-content/70">Loại cây đã chọn</dt>
+                        <dd class="break-words" th:text="${scan.chosenPlant != null} ? ${scan.chosenPlant.name} : 'Để máy tự nhận'">Cà chua</dd>
+                    </div>
+                    <div sec:authorize="hasRole('ADMIN')" class="sm:col-span-2">
+                        <dt class="text-sm font-semibold text-base-content/70">Người quét</dt>
+                        <dd><span th:replace="~{scans/list :: owner(${scan.owner})}"></span></dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-semibold text-base-content/70">Ghi chú</dt>
+                        <dd th:if="${scan.note != null}" class="whitespace-pre-line break-words" th:text="${scan.note}">Ghi chú</dd>
+                        <dd th:unless="${scan.note != null}" class="text-base-content/70">Không có ghi chú</dd>
+                    </div>
+                </dl>
+
+                <form th:action="@{/scans/{id}/delete(id=${scan.id})}" method="post" class="mt-6 border-t border-base-300 pt-4"
+                      onsubmit="return confirm('Xoá lượt quét này? Ảnh cũng bị xoá và không thể hoàn tác.');">
+                    <button type="submit"
+                            class="btn h-12 w-full rounded-full border-error bg-base-100 text-error hover:bg-error hover:text-error-content sm:w-auto sm:px-6">Xoá lượt quét</button>
+                </form>
+            </section>
         </div>
     </div>
 </section>
