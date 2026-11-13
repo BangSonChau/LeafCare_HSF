@@ -33,8 +33,8 @@
         </article>
         <div th:if="${answerHtml == null}" role="note"
              class="rounded-xl border border-warning bg-base-100 p-4 md:p-5">
-            Máy trả lời đang quá tải nên chưa viết được câu trả lời. Dưới đây là các đoạn cẩm nang liên quan nhất,
-            bạn có thể đọc trước hoặc hỏi lại sau ít phút.
+            Máy trả lời đang quá tải nên chưa viết được câu trả lời. LeafCare vẫn tiếp tục viết ở nền, bạn bấm
+            Hỏi lại sau 1–2 phút là có. Dưới đây là các đoạn cẩm nang liên quan nhất, bạn có thể đọc trước.
         </div>
 
         <div th:unless="${result.sources.empty}" class="mt-4">
@@ -56,8 +56,9 @@
          class="mt-4 rounded-xl border border-error bg-base-100 px-4 py-3 text-error"></div>
     <div id="live" hidden class="mt-4">
         <div id="live-busy" hidden role="note" class="mb-4 rounded-xl border border-warning bg-base-100 p-4 md:p-5">
-            Máy trả lời đang quá tải nên chưa viết được câu trả lời. Dưới đây là các đoạn cẩm nang liên quan nhất,
-            bạn có thể đọc trước hoặc hỏi lại sau ít phút.
+            Máy trả lời đang quá tải nên chưa viết được câu trả lời. LeafCare vẫn tiếp tục viết ở nền, bạn bấm
+            Hỏi lại sau 1–2 phút là có. Dưới đây là các đoạn cẩm nang liên quan nhất, bạn có thể đọc trước.
+            <p id="live-retry" hidden class="mt-2 font-semibold tabular"></p>
         </div>
         <article id="live-answer-box" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
             <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
@@ -79,6 +80,25 @@
         const bold = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         const btn = form.querySelector('button[type=submit]');
         let text = '';
+        // quá tải: tự hỏi lại sau 30 giây, tối đa 2 lần (lúc đó có thể server đã viết xong ở nền và lưu cache)
+        let retries = 0, timer = null, auto = false;
+
+        function countdown(n) {
+            const el = $('live-retry');
+            el.hidden = false;
+            const tick = () => {
+                if (n === 0) {
+                    retries++;
+                    auto = true;
+                    form.requestSubmit();
+                    return;
+                }
+                el.textContent = 'Tự hỏi lại sau ' + n + ' giây…';
+                n--;
+                timer = setTimeout(tick, 1000);
+            };
+            tick();
+        }
 
         function source(s) {
             const li = document.createElement('li');
@@ -110,6 +130,7 @@
             } else if (name === 'busy') {
                 $('live-busy').hidden = false;
                 $('live-answer-box').hidden = text === '';
+                if (retries < 2) countdown(30);
             } else if (name === 'error') {
                 $('live').hidden = true;
                 $('live-error').textContent = d.message;
@@ -119,6 +140,10 @@
 
         form.addEventListener('submit', async ev => {
             ev.preventDefault();
+            clearTimeout(timer);
+            $('live-retry').hidden = true;
+            if (!auto) retries = 0;
+            auto = false;
             document.querySelectorAll('[data-server-result]').forEach(e => e.remove());
             text = '';
             $('live-answer').textContent = '';

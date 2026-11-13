@@ -53,6 +53,9 @@ public class ChatPageController {
             RagAnswer result = chat.ask(q);
             model.addAttribute("result", result);
             model.addAttribute("answerHtml", RagChatService.toHtml(result.answer()));
+            if (result.answer() == null) {
+                chat.answerLater(q);
+            }
         } catch (RuntimeException e) { // tìm trong cẩm nang lỗi: embedding Gemini hết quota, sai key, mất DB...
             log.warn("RAG chat failed", e);
             model.addAttribute("error", FAILED);
@@ -106,6 +109,7 @@ public class ChatPageController {
                         send(emitter, "token", Map.of("t", t));
                     },
                     e -> {
+                        chat.answerLater(q);
                         send(emitter, "busy", Map.of());
                         emitter.complete();
                     },
