@@ -4,7 +4,7 @@
 
 Bắt đầu thứ Hai 09/11/2026, kéo dài 10 tuần đến 17/01/2027. Chưa có deadline chính thức nên lịch chia theo tuần; nếu hạn nộp khác, dời các mốc tương ứng.
 
-> File này thay cho `LeafCare_Timeline.pdf` (bản cũ, còn ghi VNPay). Thay đổi so với bản PDF: thanh toán dùng **SePay (QR chuyển khoản ngân hàng thật)** thay VNPay; MoMo sandbox đã thử nhưng bỏ vì thẻ test bị từ chối. Cập nhật 08/11/2026: Giai đoạn 2 xong sớm, thêm deploy Render và dashboard quản trị.
+> File này thay cho `LeafCare_Timeline.pdf` (bản cũ, còn ghi VNPay). Thay đổi so với bản PDF: thanh toán dùng **SePay (QR chuyển khoản ngân hàng thật)** thay VNPay; MoMo sandbox đã thử nhưng bỏ vì thẻ test bị từ chối. Cập nhật 08/11/2026: Giai đoạn 2 xong sớm, thêm deploy Render và dashboard quản trị. Cập nhật 13/11/2026: nhận diện lá dùng model riêng (ONNX) thay vision API; RAG, chat có trích dẫn và nối với kết quả quét đã xong.
 
 ## Giai đoạn
 
@@ -21,11 +21,12 @@ Bắt đầu thứ Hai 09/11/2026, kéo dài 10 tuần đến 17/01/2027. Chưa 
 | | | Giới hạn tài khoản Free (5 lượt quét / ngày) | Xong |
 | | | ADMIN thấy người quét; dashboard quản trị `/admin` (số liệu, biểu đồ 14 ngày) + danh sách người dùng | Xong |
 | | | Deploy lên Render (Docker) + PostgreSQL Neon: https://leafcare-4nh6.onrender.com | Xong |
-| **3 · AI** | 6–8 | Nhận diện lá qua vision API (Gemini / GPT-4o) | |
-| | | Service FastAPI chạy model PlantVillage (tuỳ chọn) | |
-| | | Chatbot Spring AI + trang Admin nhập API key, chọn nhà cung cấp | |
-| | | RAG: pgvector, upload tài liệu, chat có trích dẫn | |
-| | | Nối chatbot với kết quả quét lá | |
+| **3 · AI** | 6–8 | ~~Nhận diện lá qua vision API~~: bỏ, thay bằng model riêng bên dưới | Bỏ |
+| | | Service FastAPI chạy model PlantVillage bằng ONNX Runtime (Render Free), chọn loại cây, top 3 | Xong |
+| | | Chatbot Spring AI (Gemini) | Xong |
+| | | Trang Admin nhập API key, chọn nhà cung cấp | |
+| | | RAG: pgvector, upload tài liệu (nạp ở nền), chat có trích dẫn, chữ chạy dần, semantic cache, chịu lỗi khi Gemini quá tải | Xong |
+| | | Nối chatbot với kết quả quét lá (nút "Hỏi cẩm nang") | Xong |
 | **4 · Hoàn thiện** | 9–10 | Sửa lỗi, UI responsive, dữ liệu mẫu | |
 | | | Docker Compose (app + Postgres) cho chạy local (Dockerfile đã có từ lúc deploy Render) | |
 | | | User guide cuối kỳ, slide demo, video dự phòng | |
@@ -39,9 +40,9 @@ Bắt đầu thứ Hai 09/11/2026, kéo dài 10 tuần đến 17/01/2027. Chưa 
 | **3** · 23/11 – 29/11/2026 | Tài liệu | Tổng hợp ảnh chụp prompt dùng AI agent để sinh UI và back-end. Viết slide + user guide: cài đặt, cấu hình Tailwind với Thymeleaf, cách dùng AI, demo. | Nộp Assignment |
 | **4** · 30/11 – 06/12/2026 | Đăng nhập | Spring Security + Google OAuth2 login, phân quyền USER / ADMIN. Bắt đầu entity `Subscription`, `Payment`. Trang chọn gói Free / Premium (bảng so sánh quyền lợi, giá). | Đăng nhập Google, phân quyền, trang chọn gói |
 | **5** · 07/12 – 13/12/2026 | Thanh toán | Thanh toán Premium qua **SePay**: tạo đơn, hiện QR VietQR (số tiền + mã đơn), SePay gọi webhook khi tiền về, kiểm API key và số tiền, cập nhật `Payment` + kích hoạt `Subscription`. Giao diện: trang QR thanh toán (tự tải lại), trang kết quả, lịch sử giao dịch. Giới hạn Free (5 lượt quét / ngày). **Đã xong sớm 08/11/2026**, kèm deploy Render và dashboard quản trị. | Mua Premium bằng chuyển khoản thật, xem được lịch sử giao dịch |
-| **6** · 14/12 – 20/12/2026 | Nhận diện lá | Gửi ảnh qua vision API (Gemini / GPT-4o), trả về tên cây, tên bệnh, độ tin cậy. Nếu còn thời gian: service FastAPI chạy model PlantVillage. | Quét lá ra kết quả bệnh |
+| **6** · 14/12 – 20/12/2026 | Nhận diện lá | ~~Vision API~~ → service FastAPI + ONNX chạy model PlantVillage, trả về tên cây, tên bệnh, độ tin cậy, top 3. **Đã xong sớm 13/11/2026.** | Quét lá ra kết quả bệnh |
 | **7** · 21/12 – 27/12/2026 | Chatbot | Giao diện chat dùng Spring AI. Trang Admin nhập API key và chọn nhà cung cấp (OpenAI / Gemini / Claude); key lưu mã hoá trong database. | Chat đổi được nhà cung cấp |
-| **8** · 28/12/2026 – 03/01/2027 | RAG | Bật pgvector, upload tài liệu bệnh cây (PDF/MD), chia nhỏ + tạo embedding. Chat trả lời kèm nguồn trích dẫn. Nối chatbot với kết quả quét lá ("Lá bị bệnh X, cách chữa?"). | Chat có trích dẫn, nối với kết quả quét |
+| **8** · 28/12/2026 – 03/01/2027 | RAG | Bật pgvector, upload tài liệu bệnh cây (PDF/MD), chia nhỏ + tạo embedding. Chat trả lời kèm nguồn trích dẫn. Nối chatbot với kết quả quét lá ("Lá bị bệnh X, cách chữa?"). **Đã xong sớm 13/11/2026**, kèm semantic cache và chịu lỗi khi Gemini quá tải. | Chat có trích dẫn, nối với kết quả quét |
 | **9** · 04/01 – 10/01/2027 | Ổn định | Sửa lỗi, làm UI responsive, viết dữ liệu mẫu, Docker Compose (app + Postgres). | Bản chạy ổn định bằng Docker |
 | **10** · 11/01 – 17/01/2027 | Bàn giao | Viết user guide cuối kỳ và slide demo, quay video dự phòng. | Demo cuối kỳ |
 
@@ -62,7 +63,7 @@ Bắt đầu thứ Hai 09/11/2026, kéo dài 10 tuần đến 17/01/2027. Chưa 
 | **1 · Back-end + CSDL** | Entity, repository, service, CRUD, upload file, cấu hình PostgreSQL, Docker Compose, dữ liệu mẫu. |
 | **2 · Giao diện Tailwind/Thymeleaf** | Tailwind v4 + DaisyUI, layout Thymeleaf, các trang danh sách / form / dashboard, giao diện thanh toán, giao diện chat, responsive. |
 | **3 · Đăng nhập + Thanh toán** | Spring Security, Google OAuth2, phân quyền USER / ADMIN, Subscription / Payment, SePay + webhook, lịch sử giao dịch, giới hạn Free, dashboard quản trị, deploy Render. |
-| **4 · AI (vision, chat, RAG)** | Vision API nhận diện lá, (tuỳ chọn) FastAPI + PlantVillage, Spring AI chatbot, quản lý API key, RAG với pgvector. |
+| **4 · AI (model, chat, RAG)** | FastAPI + ONNX model PlantVillage, Spring AI chatbot, quản lý API key, RAG với pgvector. |
 
 Ai làm phần nào thì tự viết tài liệu cho phần đó. Cả nhóm cùng làm: ghi lại prompt AI agent (tuần 1–3), slide + user guide (tuần 3 và 10), sửa lỗi + dữ liệu mẫu (tuần 9).
 
@@ -70,5 +71,5 @@ Ai làm phần nào thì tự viết tài liệu cho phần đó. Cả nhóm cù
 
 - **Cuối tuần 3 (29/11/2026):** Nộp Assignment (CRUD, upload ảnh, slide, user guide, ảnh chụp prompt AI).
 - **Cuối tuần 5 (13/12/2026):** Đăng nhập Google + thanh toán chạy được, có trang kết quả và lịch sử giao dịch. **Đã đạt sớm 08/11/2026** (SePay, kèm deploy Render và dashboard quản trị).
-- **Cuối tuần 8 (03/01/2027):** Nhận diện lá, chatbot đổi nhà cung cấp, RAG có trích dẫn.
+- **Cuối tuần 8 (03/01/2027):** Nhận diện lá, chatbot đổi nhà cung cấp, RAG có trích dẫn. Nhận diện lá và RAG **đã đạt sớm 13/11/2026**; còn trang Admin nhập API key / chọn nhà cung cấp.
 - **Cuối tuần 10 (17/01/2027):** Demo cuối kỳ, user guide, slide, video dự phòng.

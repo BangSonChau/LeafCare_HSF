@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -40,12 +41,18 @@ public class RagChatService {
     private static final Logger log = LoggerFactory.getLogger(RagChatService.class);
     static final String NO_INFO = "Tài liệu hiện có chưa đề cập vấn đề này.";
     private static final Pattern BOLD = Pattern.compile("\\*\\*(.+?)\\*\\*");
+    private static final Pattern ITALIC = Pattern.compile("(?<![\\w*])\\*(?![\\s*])([^*]+?)(?<!\\s)\\*(?![\\w*])");
+    private static final Pattern BULLET = Pattern.compile("[*\\-•]\\s+(.+)");
+    private static final Pattern NUMBERED = Pattern.compile("(\\d{1,3})[.)]\\s+(.+)");
+    private static final Pattern HEADING = Pattern.compile("#{1,6}\\s+(.+)");
+    private static final Pattern RULE = Pattern.compile("[-*_]{3,}");
 
     static final String SYSTEM_PROMPT = """
             Bạn là trợ lý LeafCare về bệnh lá cây. Chỉ trả lời dựa trên TÀI LIỆU được cung cấp.
             Sau mỗi ý, ghi số nguồn trong ngoặc vuông, ví dụ [1] hoặc [1][3].
             Nếu tài liệu không có thông tin, nói rõ: "%s"
-            Trả lời bằng tiếng Việt, ngắn gọn.""".formatted(NO_INFO);
+            Trả lời bằng tiếng Việt, ngắn gọn. Trình bày: mỗi phần có tiêu đề in đậm (**Cách nhận biết**,
+            **Cách xử lý**...), mỗi ý một dòng bắt đầu bằng "- ". Không dùng bảng.""".formatted(NO_INFO);
 
     private final VectorStore vectorStore;
     private final AnswerCache cache;
@@ -232,7 +239,47 @@ public class RagChatService {
 
     /** Escape HTML rồi đổi **chữ** (Markdown Gemini hay trả) thành chữ đậm. */
     public static String toHtml(String answer) {
-        return answer == null ? null : BOLD.matcher(HtmlUtils.htmlEscape(answer, "UTF-8")).replaceAll("<strong>$1</strong>");
+        if (answer == null) {
+            return null;
+        }
+        StringBuilder out = new StringBuilder();
+        String list = null; // "ul" hoặc "ol" đang mở
+        for (String raw : HtmlUtils.htmlEscape(answer, "UTF-8").split("\\R")) {
+            String line = raw.strip();
+            if (line.isEmpty()) {
+                continue; // dòng trống giữa các ý không cắt danh sách
+            }
+            Matcher bullet = BULLET.matcher(line);
+            Matcher numbered = NUMBERED.matcher(line);
+            String tag = bullet.matches() ? "ul" : numbered.matches() ? "ol" : null;
+            if (list != null && (!list.equals(tag) || "ol".equals(tag))) {
+                out.append("</").append(list).append('>');
+                list = null;
+            }
+            if (tag == null) {
+                Matcher heading = HEADING.matcher(line);
+                if (heading.matches()) {
+                    out.append("<h3>").append(inline(heading.group(1))).append("</h3>");
+                } else if (!RULE.matcher(line).matches()) {
+                    out.append("<p>").append(inline(line)).append("</p>");
+                }
+                continue;
+            }
+            if (list == null) {
+                // mỗi mục số mở <ol start="n"> riêng để giữ đúng số khi xen gạch đầu dòng ở giữa
+                out.append("ul".equals(tag) ? "<ul>" : "<ol start=\"" + numbered.group(1) + "\">");
+                list = tag;
+            }
+            out.append("<li>").append(inline("ul".equals(tag) ? bullet.group(1) : numbered.group(2))).append("</li>");
+        }
+        if (list != null) {
+            out.append("</").append(list).append('>');
+        }
+        return out.toString();
+    }
+
+    private static String inline(String text) {
+        return ITALIC.matcher(BOLD.matcher(text).replaceAll("<strong>$1</strong>")).replaceAll("<em>$1</em>");
     }
 
     static String buildUserPrompt(String question, List<Document> docs) {

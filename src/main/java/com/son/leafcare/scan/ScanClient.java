@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 /** Calls the leaf-disease model service (leafcare-scan-service, FastAPI): POST /predict with the photo. */
@@ -25,6 +26,9 @@ public class ScanClient {
     }
 
     private final RestClient client;
+    // Render Free cho service ngủ sau 15 phút; lúc thức dậy trả 502/503/504 khoảng 30-60s
+    Duration wakeDelay = Duration.ofSeconds(15);
+    static final int TRIES = 4;
 
     @Autowired
     public ScanClient(@Value("${leafcare.scan.url}") String url) {
@@ -42,8 +46,34 @@ public class ScanClient {
         return f;
     }
 
-    /** Throws a RestClientException when the service is down, slow or answers with an error. */
+    /**
+     * Throws a RestClientException when the service is down, slow or answers with an error. A 502/503/504 (the free
+     * host waking up) is retried up to 4 times, 15s apart.
+     */
     public Prediction predict(byte[] image, String fileName) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return predictOnce(image, fileName);
+            } catch (HttpServerErrorException e) {
+                int code = e.getStatusCode().value();
+                if (attempt >= TRIES || (code != 502 && code != 503 && code != 504)) {
+                    throw e;
+                }
+                sleep();
+            }
+        }
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(wakeDelay.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for the scan service", e);
+        }
+    }
+
+    private Prediction predictOnce(byte[] image, String fileName) {
         LinkedMultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("image", new ByteArrayResource(image) {
             @Override
