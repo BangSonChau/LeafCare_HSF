@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: #38–#42 (RAG chịu lỗi, streaming, cache, trả lời ở nền) đã merge; PR temperature Gemini `fix/gemini-temperature` chờ merge. Render đã đặt `GEMINI_TIMEOUT=60s`, đổi key mới.
-- Việc tiếp theo: **nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc); thử thật trên Render sau khi merge. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#43 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. Semantic cache khớp được câu khác chữ cùng ý (đã thử thật, cả tài khoản khác).
+- Việc tiếp theo (chờ Shin chọn): đổi model mặc định trong code sang `gemini-3.5-flash-lite`; hiện dòng `* ` trong câu trả lời thành gạch đầu dòng. **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11) và đặt key mới trên Render. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,10 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Tìm ra Gemini treo do model `gemini-3.8-flash` qua API (ngoài plan)
+- Lý do: sau #41–#43 trang vẫn báo quá tải; log `TimeoutException ... 60000ms`, đổi key và temperature không đỡ. Shin chạy curl `generateContent` từ máy: `gemini-3.8-flash` đứng rất lâu (trong AI Studio vẫn nhanh), `gemini-3.5-flash-lite` trả lời 1,7s mã 200.
+- Đã làm: Shin đặt env Render `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`; app trả lời được, câu hỏi cùng ý lấy từ cache ngay. Không sửa code. Nhánh: `docs/progress-gemini-model`.
 
 ### 2026-11-13 – Temperature Gemini về 1.0 (ngoài plan)
 - Lý do: trên Render Gemini không ra chữ nào sau 60s (cả stream lẫn gọi ở nền), dù key mới và embedding vẫn chạy; trong AI Studio cùng model, cùng câu hỏi trả lời ngay. Khác biệt: app đặt `temperature=0.2`, AI Studio dùng 1.0 (Gemini 3 ẩn ô temperature, Google khuyên giữ 1.0).
@@ -120,12 +124,8 @@
 - Test: `ChatPageControllerTest` (6: hiện form, trả lời + nguồn được escape, không nguồn thì ẩn khối nguồn, câu hỏi rỗng/>500 không gọi LLM, lỗi Gemini hiện thông báo thân thiện và giữ câu hỏi, thiếu CSRF bị 403); 206 test xanh. Chưa kiểm tay trên trình duyệt (máy Claude không có Gemini key/pgvector).
 - Quyết định: lỗi gọi Gemini không lộ chi tiết cho người dùng, chỉ ghi log. Nhánh: `feat/rag-chat-page`.
 
-### 2026-11-11 – Ghép RAG chatbot (Giai đoạn 3, bước 1)
-- Đã làm: thêm Spring AI 2.0.2 (Gemini chat + embedding, pgvector, Tika) vào `pom.xml`; `RagDocumentService` (đọc file -> chia 400 token -> embedding -> lưu), `RagChatService` (top 4 đoạn, ngưỡng 0.3, trả lời tiếng Việt kèm nguồn `[1]`), record `RagAnswer`, `RagController` (`POST /api/rag/chat` cho người đăng nhập, `POST /api/rag/documents` chỉ ADMIN trong `SecurityConfig`); `compose.yaml` dùng `pgvector/pgvector:pg16`; README mục "Chatbot RAG".
-- Test: 3 lớp mới (service x2, controller), test H2 tắt vectorstore/model bằng property + `RagTestBeans` (mock `VectorStore`, `ChatClient.Builder`) cho test full context; 200 test xanh. Chưa thử với Gemini key thật và Postgres pgvector thật.
-- Quyết định: key chỉ đọc từ env `GEMINI_API_KEY`; model chat `gemini-3.8-flash` (2.5-flash hết hiệu lực với tài khoản mới); file rỗng trả 0 đoạn (Tika ném lỗi với file 0 byte). Chưa làm: trang chat giao diện, Admin nhập key, nối với kết quả quét lá. Nhánh: `feat/rag`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-11 – Ghép RAG chatbot: Spring AI 2.0.2, Gemini, pgvector, `/api/rag/*` (`feat/rag`)
 - 2026-11-08 – Tài liệu + slide Assignment `docs/assignment/` (ngoài plan) (`docs/assignment-guide-slides`)
 - 2026-11-08 – Lưu ảnh quét vào database `image_file` (ngoài plan) (`fix/store-images-in-db`)
 - 2026-11-08 – Task 12: Dashboard quản trị `/admin`, `/admin/users` (`feat/task-12-admin-dashboard`)
