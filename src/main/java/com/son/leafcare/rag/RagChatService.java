@@ -7,8 +7,11 @@ import io.github.resilience4j.timelimiter.TimeLimiter;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -58,6 +61,17 @@ public class RagChatService {
         return t;
     });
 
+    // trả lời ở nền khi Gemini quá tải: 1 luồng, thử từng câu một để không dồn thêm lời gọi lúc Gemini đang bận
+    private final ScheduledExecutorService later = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "rag-later");
+        t.setDaemon(true);
+        return t;
+    });
+    private final Set<String> pending = ConcurrentHashMap.newKeySet();
+    Duration laterDelay = Duration.ofSeconds(60); // bằng thời gian cầu dao ngắt; test đặt ngắn hơn
+    static final int LATER_TRIES = 3;
+    static final int MAX_PENDING = 20;
+
     RagChatService(VectorStore vectorStore, ChatClient.Builder chatClientBuilder, Duration timeout,
                    String fallbackModel) {
         this(vectorStore, chatClientBuilder, timeout, fallbackModel, new AnswerCache(null, null, 1));
@@ -105,6 +119,35 @@ public class RagChatService {
             }
         }
         return new RagAnswer(null, sources);
+    }
+
+    /**
+     * Gemini quá tải: thử lại ở nền sau 1, 2, rồi 3 phút; viết được thì ask() lưu vào cache, lần sau hỏi là có ngay.
+     * Mỗi câu hỏi chỉ thử một lượt dù người dùng bấm hỏi lại nhiều lần.
+     */
+    public void answerLater(String question) {
+        // shortcut: hàng chờ chỉ trong RAM (mất khi server khởi động lại), giới hạn 20 câu để không đốt quota Gemini
+        if (pending.size() >= MAX_PENDING || !pending.add(question)) {
+            return;
+        }
+        later.schedule(() -> retry(question, 1), laterDelay.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private void retry(String question, int attempt) {
+        try {
+            if (ask(question).answer() != null) {
+                log.info("RAG chat: answered in background after {} tries", attempt);
+                pending.remove(question);
+                return;
+            }
+        } catch (RuntimeException e) {
+            log.warn("RAG chat: background answer failed: {}", shortReason(e));
+        }
+        if (attempt >= LATER_TRIES) {
+            pending.remove(question);
+            return;
+        }
+        later.schedule(() -> retry(question, attempt + 1), laterDelay.toMillis() * (attempt + 1), TimeUnit.MILLISECONDS);
     }
 
     /** Câu trả lời đã lưu cho câu hỏi giống nghĩa (semantic cache), nếu có. */

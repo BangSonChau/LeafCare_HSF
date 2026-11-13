@@ -270,4 +270,39 @@ class RagChatServiceTest {
 
         org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).put(any(), any(), any());
     }
+
+    // --- trả lời ở nền khi Gemini quá tải ---
+
+    @Test
+    void answerLaterRetriesInBackgroundAndRemembersTheAnswer() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).call().content())
+                .thenThrow(new RuntimeException("503")).thenReturn("Cắt lá [1]");
+        AnswerCache cache = mock(AnswerCache.class);
+        when(cache.find(any())).thenReturn(java.util.Optional.empty());
+        RagChatService service = new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofSeconds(5), "", cache);
+        service.laterDelay = Duration.ofMillis(20);
+
+        service.answerLater("q");
+
+        verify(cache, org.mockito.Mockito.timeout(3000))
+                .put(org.mockito.ArgumentMatchers.eq("q"), org.mockito.ArgumentMatchers.eq("Cắt lá [1]"), any());
+    }
+
+    @Test
+    void answerLaterTriesThreeTimesOncePerQuestion() {
+        ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        when(client.prompt().user(org.mockito.ArgumentMatchers.anyString()).call().content())
+                .thenThrow(new RuntimeException("503"));
+        AnswerCache cache = mock(AnswerCache.class);
+        when(cache.find(any())).thenReturn(java.util.Optional.empty());
+        RagChatService service = new RagChatService(storeWithOneChunk(), builderOf(client), Duration.ofSeconds(5), "", cache);
+        service.laterDelay = Duration.ofMillis(20);
+
+        service.answerLater("q");
+        service.answerLater("q"); // người dùng bấm Hỏi lại khi lần trước còn đang thử
+
+        verify(cache, org.mockito.Mockito.after(1000).times(3)).find("q");
+        org.mockito.Mockito.verify(cache, org.mockito.Mockito.never()).put(any(), any(), any());
+    }
 }

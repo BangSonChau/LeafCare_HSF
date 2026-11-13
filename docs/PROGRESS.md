@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: #38–#40 (Resilience4j, streaming, semantic cache) đã merge; PR sửa stream treo `fix/rag-stream-timeout` chờ merge.
+- Đang ở: #38–#41 (Resilience4j, streaming, semantic cache, sửa stream treo) đã merge; PR trả lời ở nền `feat/rag-answer-later` chờ merge.
 - Việc tiếp theo: **nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc); thử thật trên Render sau khi merge. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Gemini quá tải: server viết tiếp ở nền + trang tự hỏi lại (ngoài plan)
+- Lý do: Shin hỏi sau khi báo "quá tải" có chạy ngầm để lưu câu trả lời không (trước đây không). Shin chọn **cả hai** cách.
+- Đã làm: `RagChatService.answerLater` (1 luồng nền, thử lại sau 1, 2, 3 phút bằng `ask()`, viết được thì lưu cache; mỗi câu hỏi một lượt, tối đa 20 câu chờ, chỉ trong RAM); `/chat` và `/chat/stream` gọi khi quá tải. Trang Hỏi đáp đếm ngược 30 giây rồi tự hỏi lại, tối đa 2 lần (bấm Hỏi tay thì đếm lại từ đầu); câu báo quá tải nói rõ đang viết ở nền.
+- Test: `RagChatServiceTest` +2 (thử lại đến khi lưu cache; đúng 3 lần, bấm 2 lần vẫn 1 lượt), `ChatPageControllerTest` thêm verify; 301 test xanh. Thử JS bằng Playwright 390px + server SSE giả (2 lần busy rồi trả lời): tự hỏi lại 2 lần, lần 3 ra chữ, không tràn ngang. Chưa thử với Gemini thật.
+- Nhánh: `feat/rag-answer-later`.
 
 ### 2026-11-13 – Hỏi đáp không còn đứng mãi ở "Đang tra cẩm nang…" (ngoài plan)
 - Lý do: trên Render trang `/chat` hiện nguồn rồi đứng mãi, log không có dòng `RAG chat ... failed`. Thư viện Gemini gọi HTTP ngay lúc subscribe stream (chặn luồng), nên `.timeout(25s)` chưa bắt đầu đếm.
@@ -119,13 +125,8 @@
 - Quyết định: Shin muốn slide ít, tập trung setup code, setup AI, dùng AI làm back-end + demo; bỏ Bootstrap trong đề, lấy stack thật. Ảnh chụp từ app chạy local với dữ liệu demo (QR VietQR không tải được nên không dùng ảnh QR).
 - Còn lại: ảnh chụp prompt thật (timeline yêu cầu), tên thành viên. Nhánh: `docs/assignment-guide-slides`.
 
-### 2026-11-08 – Lưu ảnh quét vào database (ngoài plan)
-- Lý do: Shin thấy ảnh quét trên Render bị mất (gói Free xoá đĩa mỗi lần deploy/khởi động lại); Shin chọn lưu vào DB Neon thay vì Cloudinary.
-- Đã làm: `V6__image_file.sql` (bảng `image_file`: name PK, content_type, data BYTEA), entity `ImageFile`, `ImageFileRepository`; `FileStorageService` giữ nguyên kiểm tra (đuôi, content-type, <=5 MB, tên UUID) nhưng ghi/xoá trong DB; `ImageController` phục vụ `GET /uploads/{name}` (cache 1 năm, private, 404 khi không có); bỏ `WebConfig` và `leafcare.upload-dir`. Ảnh và dòng quét chung 1 transaction nên lỗi thì cả hai cùng rollback.
-- Test: `FileStorageServiceTest` viết lại bằng `@DataJpaTest` (11), `ImageControllerTest` (3), `ScanHistoryServiceTest` đếm ảnh trong DB; chạy thêm trên PostgreSQL thật (cột `bytea`): qua. 190 test xanh.
-- Còn lại: ảnh đã mất trên Render và ảnh cũ trong thư mục `uploads/` ở máy Shin không được chuyển vào DB (hiện ảnh lỗi). Nhánh: `fix/store-images-in-db`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Lưu ảnh quét vào database `image_file` (ngoài plan) (`fix/store-images-in-db`)
 - 2026-11-08 – Task 12: Dashboard quản trị `/admin`, `/admin/users` (`feat/task-12-admin-dashboard`)
 - 2026-11-08 – Task 11: Deploy Render (Docker, Neon) – https://leafcare-4nh6.onrender.com (`feat/task-11-render`)
 - 2026-11-08 – ADMIN thấy người quét (ngoài plan) (`fix/admin-sees-scan-owner`)
