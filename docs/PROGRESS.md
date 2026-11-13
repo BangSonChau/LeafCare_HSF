@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Giai đoạn 3 – quét lá chạy thật trên Render; #36 (nút "Hỏi cẩm nang về bệnh này") đã merge. PR `fix/remove-scan-log` (bỏ dòng log INFO khi phân tích xong, theo ý Shin) chờ merge. Deploy #36 trên Render bị huỷ vì app khởi động quá 15 phút (log dừng sau `QueryEnhancerFactories`), đang chờ Shin deploy lại.
-- Việc tiếp theo: Shin chọn; gợi ý cập nhật slide/tài liệu Assignment với tính năng quét lá + RAG. Shin xoá các lượt quét thử bị lệch giờ. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: chống chậm/treo cho Hỏi đáp RAG (Gemini free hay báo 503 quá tải; trước đây Spring AI thử lại 10 lần nên treo tới 11 phút). PR 1 `fix/rag-chat-timeout` (Resilience4j) chờ merge.
+- Việc tiếp theo: PR 2 streaming + nút "Hỏi cẩm nang" chuyển trang ngay có sẵn câu hỏi; PR 3 semantic cache (pgvector). Shin cần đặt `GEMINI_FALLBACK_MODEL` trên Render. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Hỏi đáp RAG chịu lỗi khi Gemini quá tải (ngoài plan)
+- Lý do: log Render cho thấy `503 This model is currently experiencing high demand`; Spring AI mặc định thử lại 10 lần, chờ tăng dần nên trang treo ~11 phút. Shin chọn hướng Streaming + Semantic cache + Resilience4j, làm từng PR.
+- Đã làm: `spring.ai.retry.max-attempts=2` (chờ 2s); `RagChatService` dùng Resilience4j lõi 2.4.0 (circuitbreaker + timelimiter, không dùng starter vì app là Boot 4): mỗi model chờ tối đa `GEMINI_TIMEOUT` 25s, cầu dao 3/5 lỗi -> ngắt 60s, model dự phòng `GEMINI_FALLBACK_MODEL`, tối đa 4 lời gọi Gemini cùng lúc; hỏng hết thì `answer = null`, trang vẫn hiện đoạn cẩm nang + thông báo quá tải. `**chữ**` hiện in đậm (escape HTML trước). Báo lỗi chỉ hiện 1 lần (layout). Log lỗi quét lá chỉ ghi mã HTTP.
+- Test: `RagChatServiceTest` +7 (dự phòng, hỏng hết, timeout, cầu dao mở, rút gọn lỗi, in đậm), `ChatPageControllerTest` +2; chưa thử với Gemini thật.
+- Nhánh: `fix/rag-chat-timeout`.
 
 ### 2026-11-13 – Bỏ log INFO khi phân tích xong (ngoài plan)
 - Lý do: Shin muốn bỏ việc số 2 của #36 sau khi deploy #36 trên Render bị huỷ (app không mở cổng sau 15 phút; dòng log không phải nguyên nhân, mới chỉ là phỏng đoán do Render Free thiếu CPU).
@@ -125,12 +131,8 @@
 - Test: `ScanHistoryServiceTest` (+8: chủ sở hữu, 5 lượt rồi chặn không ghi file, đếm lùi, hôm qua không tính, người khác không tính, Premium/ADMIN không giới hạn, chỉ thấy/xoá của mình), `ScanControllerTest` (+2), `DashboardServiceTest` (+1); 167 test xanh.
 - Quyết định: ngày tính theo `Asia/Ho_Chi_Minh` đổi sang giờ máy chủ (vì `createdAt` lưu giờ máy chủ, Render chạy UTC); hai lần upload cùng lúc có thể lọt lượt thứ 6 (ghi `shortcut:` trong code). Lượt quét cũ không có chủ: chỉ ADMIN thấy. Nhánh: `feat/task-10-free-limit`.
 
-### 2026-11-08 – Task 9: Lịch sử giao dịch
-- Đã làm: `PaymentRepository.findByUser(user, Pageable)`, `PaymentService.history(user, page)` (10 dòng/trang, mới nhất trên, trang quá cuối -> trang cuối như Plant), `GET /payments` -> `payments/history.html` (mã đơn, gói, thời gian, số tiền, badge trạng thái, bấm vào mở trang đơn; trống thì nút "Xem các gói"; pager chung), link "Lịch sử giao dịch" ở trang Gói.
-- Test: thêm 3 test `PaymentServiceTest` (chỉ đơn của mình, phân trang/clamp, rỗng), 3 test `PaymentControllerTest`, 1 assert `PlanControllerTest`; 156 test xanh. Kiểm tay 390/1280 (10 dòng, số tiền 499.000.000 ₫, trống): không tràn ngang.
-- Quyết định: nhãn PENDING đổi "Đang xử lý" -> "Chờ thanh toán" (với QR chuyển khoản, đơn chưa trả tiền nằm ở trạng thái này). Nhánh: `feat/task-9-payment-history`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Task 9: Lịch sử giao dịch (`feat/task-9-payment-history`)
 - 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan) (`feat/sepay-qr`)
 - 2026-11-08 – Task 8: MoMo sandbox (`feat/task-8-momo`)
 - 2026-11-08 – MoMo trả bằng thẻ ATM test (ngoài plan) (`fix/momo-atm-test-card`)
