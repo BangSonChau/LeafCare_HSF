@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#44 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. PR `feat/answer-format-scan-wake` (timeline, format câu trả lời, quét lá tự thử lại khi service ngủ) chờ merge.
-- Việc tiếp theo: trang Admin nhập API key + chọn nhà cung cấp (Shin đồng ý làm, hỏi thiết kế trước). Shin tự đổi model mặc định trong `application.properties` (đã hướng dẫn). **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: Hỏi đáp RAG chạy ổn trên Render (#38–#44 đã merge). Env Render: `GEMINI_CHAT_MODEL=gemini-3.5-flash-lite`, `GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest`, `GEMINI_TIMEOUT=60s`, key mới. Chờ merge theo thứ tự: `feat/answer-format-scan-wake` (#45) -> `chore/gemini-lite-default`.
+- Việc tiếp theo: trang Admin nhập API key + chọn nhà cung cấp (Shin đồng ý làm, hỏi thiết kế trước). **Nhắc Shin xoá key Gemini đã lộ trong ảnh chụp** (13/11). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,9 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Model Gemini mặc định là bản lite (ngoài plan)
+- Đã làm: `application.properties` mặc định `gemini-3.5-flash-lite`, dự phòng `gemini-flash-lite-latest` (env Render vẫn ưu tiên); README sửa theo. 304 test xanh. Nhánh: `chore/gemini-lite-default` (tách từ `feat/answer-format-scan-wake` chưa merge).
 
 ### 2026-11-13 – Timeline, format câu trả lời AI, quét lá chờ service thức dậy (ngoài plan)
 - Lý do: Shin chọn bỏ vision API (dùng model ONNX), cập nhật timeline, format câu trả lời (hiện `*` thô), quét lá lỗi 502 khi service Render đang ngủ.
@@ -120,12 +123,8 @@
 - Test: `RagDocumentServiceTest` (lô, retry, bỏ cuộc), `RagIngestJobsTest` (5), `AdminDocumentControllerTest` viết lại; 222 test xanh. Chưa thử với Gemini và Render thật.
 - Quyết định: trạng thái nạp chỉ trong RAM (mất khi server khởi động lại, ghi `shortcut:`); nạp dở rồi lỗi thì upload lại sẽ lưu trùng các đoạn đã có (chưa có xoá theo tên file). Nhánh: `fix/rag-large-upload`.
 
-### 2026-11-11 – Khung admin sidebar + trang Tài liệu RAG
-- Đã làm: `layout/admin.html` (sidebar tối `bg-neutral` #14261C, thanh trên trắng có ô tìm kiếm trỏ tới `/admin/users?q=`, nội dung nền enamel; điện thoại dùng DaisyUI drawer, không JS); Dashboard và Người dùng chuyển sang khung này (đổi `layout:decorate`, bỏ link "← Quản trị" và nút "Người dùng" thừa); trang `/admin/documents` (form upload, flash thành công/lỗi) + `AdminDocumentController`.
-- Test: `AdminDocumentControllerTest` (7: form, upload ok, file không có chữ, file rỗng không gọi service, lỗi ingest, USER bị 403, thiếu CSRF), `AdminControllerTest` thêm assert sidebar; 214 test xanh. Kiểm bằng Playwright 1280/390 (không tràn ngang, drawer mở được); chưa kiểm trên app chạy thật.
-- Quyết định: Shin muốn giao diện admin kiểu ảnh mẫu nhưng cùng màu xanh LeafCare, áp dụng cả khu `/admin`. Skill `.claude/skills` (impeccable...) không có trong repo (chỉ có trên máy Shin), nên theo `DESIGN.md`/`PRODUCT.md` bằng tay. File upload tối đa 5 MB (giới hạn chung của app). Chưa làm: danh sách và xoá tài liệu đã nạp. Nhánh: `feat/admin-shell`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-11 – Khung admin sidebar + trang Tài liệu RAG `/admin/documents` (`feat/admin-shell`)
 - 2026-11-11 – Trang Hỏi đáp `/chat` (`feat/rag-chat-page`)
 - 2026-11-11 – Ghép RAG chatbot: Spring AI 2.0.2, Gemini, pgvector, `/api/rag/*` (`feat/rag`)
 - 2026-11-08 – Tài liệu + slide Assignment `docs/assignment/` (ngoài plan) (`docs/assignment-guide-slides`)

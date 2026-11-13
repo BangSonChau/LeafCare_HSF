@@ -81,7 +81,7 @@ Code MoMo sandbox cũ vẫn còn ở `payment/momo/` (không còn nút trên gia
 ### Chatbot RAG (hỏi đáp theo tài liệu bệnh lá)
 
 - Cần Postgres có extension **pgvector**: chạy `docker compose up -d` (image `pgvector/pgvector:pg16`, cổng 5432) thay cho Postgres cũ. Neon có sẵn pgvector.
-- Lấy key ở https://aistudio.google.com/apikey, đặt biến môi trường `GEMINI_API_KEY` (không ghi vào file). Đổi model chat bằng `GEMINI_CHAT_MODEL` (mặc định `gemini-3.8-flash`).
+- Lấy key ở https://aistudio.google.com/apikey, đặt biến môi trường `GEMINI_API_KEY` (không ghi vào file). Đổi model chat bằng `GEMINI_CHAT_MODEL` (mặc định `gemini-3.5-flash-lite`, dự phòng `GEMINI_FALLBACK_MODEL` mặc định `gemini-flash-lite-latest`).
 - Khi Gemini quá tải (503): mỗi model chờ tối đa `GEMINI_TIMEOUT` (mặc định `25s`), thử lại 1 lần; 3/5 lần gần nhất lỗi thì tạm ngừng gọi model chính 60 giây. Đặt `GEMINI_FALLBACK_MODEL` (tên một model flash khác) để tự hỏi sang model đó. Hỏng hết thì trang Hỏi đáp vẫn hiện các đoạn cẩm nang liên quan. Log: tìm `RAG chat:`.
 - Trang `/chat` hiện chữ trả lời dần (SSE `POST /chat/stream`); `/chat?q=...` điền sẵn câu hỏi và tự hỏi (nút "Hỏi cẩm nang" ở kết quả quét).
 - Semantic cache: câu hỏi giống nghĩa với câu đã trả lời (cosine ≥ `RAG_CACHE_THRESHOLD`, mặc định `0.92`) dùng lại câu trả lời, không gọi Gemini. Lưu ở bảng `rag_answer_cache` (Spring AI tự tạo); nạp tài liệu mới thì cache bị xoá.
