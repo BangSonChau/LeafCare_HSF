@@ -4,7 +4,7 @@
 
 ## Hiện trạng
 
-- Đang ở: chống chậm/treo cho Hỏi đáp RAG xong phần code, 3 PR nối nhau chờ merge theo thứ tự: `fix/rag-chat-timeout` (#38) -> `feat/rag-chat-stream` (#39) -> `feat/rag-semantic-cache`.
+- Đang ở: #38–#40 (Resilience4j, streaming, semantic cache) đã merge; PR sửa stream treo `fix/rag-stream-timeout` chờ merge.
 - Việc tiếp theo: **nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc); thử thật trên Render sau khi merge. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Hỏi đáp không còn đứng mãi ở "Đang tra cẩm nang…" (ngoài plan)
+- Lý do: trên Render trang `/chat` hiện nguồn rồi đứng mãi, log không có dòng `RAG chat ... failed`. Thư viện Gemini gọi HTTP ngay lúc subscribe stream (chặn luồng), nên `.timeout(25s)` chưa bắt đầu đếm.
+- Đã làm: `RagChatService.streamFrom` thêm `subscribeOn(Schedulers.boundedElastic())` trước `.timeout`, Gemini chậm thì sau `GEMINI_TIMEOUT` chuyển model dự phòng hoặc báo quá tải.
+- Test: `RagChatServiceTest.streamTimesOutWhenOpeningTheStreamBlocks` (đỏ trước khi sửa: chờ 11,7s không lỗi); 299 test xanh. Chưa thử với Gemini thật.
+- Ghi chú: lỗi `Scan ... 502 BAD_GATEWAY` là service quét lá Render đang ngủ dậy, không phải lỗi code. Nhánh: `fix/rag-stream-timeout`.
 
 ### 2026-11-13 – Semantic cache cho Hỏi đáp RAG (ngoài plan)
 - Lý do: Gemini free chậm/quá tải; câu hỏi giống nghĩa (nhất là nút "Hỏi cẩm nang", câu hỏi cố định theo bệnh) nên trả ngay. Shin chọn ngưỡng **0.92** (cosine).
@@ -119,19 +125,9 @@
 - Test: `FileStorageServiceTest` viết lại bằng `@DataJpaTest` (11), `ImageControllerTest` (3), `ScanHistoryServiceTest` đếm ảnh trong DB; chạy thêm trên PostgreSQL thật (cột `bytea`): qua. 190 test xanh.
 - Còn lại: ảnh đã mất trên Render và ảnh cũ trong thư mục `uploads/` ở máy Shin không được chuyển vào DB (hiện ảnh lỗi). Nhánh: `fix/store-images-in-db`.
 
-### 2026-11-08 – Task 12: Dashboard quản trị
-- Đã làm: `/admin` (chỉ ADMIN, chặn trong `SecurityConfig`): 4 thẻ (người dùng + mới 7 ngày, Premium còn hạn, doanh thu tổng + tháng này, lượt quét hôm nay + 7 ngày), biểu đồ cột 14 ngày bằng HTML/CSS (có danh sách ẩn cho trình đọc màn hình), 5 giao dịch mới nhất, 5 người quét nhiều nhất; `/admin/users` (tìm theo email/tên, gói + hạn Premium, số lượt quét, ngày tham gia, 20 dòng/trang, pager chung). Menu desktop thêm "Quản trị"; điện thoại: nút "Trang quản trị" trên trang chủ ADMIN.
-- Code: `AdminService` + record `AdminStats`, `DayCount`, `TopScanner`, `UserRow`; `AdminController`; query mới ở 4 repository (đếm/tổng tiền bằng JPQL, top người quét lấy id + count rồi `findAllById` để chạy được cả H2 lẫn PostgreSQL).
-- Test: `AdminServiceTest` (9, chạy thêm trên PostgreSQL thật: qua), `AdminControllerTest` (5), `SecurityConfigTest`/`HomeControllerTest` thêm assert; 191 test xanh. Kiểm tay 390/1280 (số rất lớn, email dài, 20 dòng, trống): không tràn ngang.
-- Quyết định: Shin chọn trang riêng `/admin` (không thay trang chủ), số liệu và trang người dùng theo đề xuất; ngày tính theo giờ Việt Nam như Task 10; doanh thu = tổng đơn SUCCESS. Cập nhật `docs/TIMELINE.md` (SePay, Render, dashboard, Giai đoạn 2 xong). Nhánh: `feat/task-12-admin-dashboard`.
-
-### 2026-11-08 – Task 11: Deploy lên Render (phần code)
-- Đã làm: `Dockerfile` (build Maven JDK 17, chạy JRE 17, `MaxRAMPercentage=75` cho 512 MB), `.dockerignore`; `application.properties` đọc `DB_URL`, `DB_USERNAME`, `PORT`, `SHOW_SQL` (mặc định vẫn như local), `server.forward-headers-strategy=framework` để redirect URI Google là https sau proxy Render; README mục "Deploy lên Render".
-- Kiểm: jar chạy với PostgreSQL tạm + `PORT=9091`: Flyway áp 6 migration, `/login` 200, redirect URI = `https://leafcare.onrender.com/...` khi có `X-Forwarded-*`. Không build được image Docker ở máy Claude (không có Docker daemon), Render sẽ build lần đầu. 175 test xanh.
-- 08/11: Shin deploy xong: https://leafcare-4nh6.onrender.com (Render Free, Singapore, auto-deploy từ `main`), DB Neon Singapore; đăng nhập Google và thanh toán SePay chạy thật. Webhook SePay trỏ về Render.
-- Quyết định: DB dùng Neon (Singapore) thay PostgreSQL free của Render (hết hạn); ảnh upload mất khi deploy lại (chấp nhận cho demo). Shin tự làm phần tạo tài khoản theo hướng dẫn. Nhánh: `feat/task-11-render`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Task 12: Dashboard quản trị `/admin`, `/admin/users` (`feat/task-12-admin-dashboard`)
+- 2026-11-08 – Task 11: Deploy Render (Docker, Neon) – https://leafcare-4nh6.onrender.com (`feat/task-11-render`)
 - 2026-11-08 – ADMIN thấy người quét (ngoài plan) (`fix/admin-sees-scan-owner`)
 - 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free (`feat/task-10-free-limit`)
 - 2026-11-08 – Task 9: Lịch sử giao dịch (`feat/task-9-payment-history`)
