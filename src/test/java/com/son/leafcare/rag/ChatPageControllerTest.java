@@ -69,6 +69,7 @@ class ChatPageControllerTest {
                 .andExpect(content().string(containsString("Máy trả lời đang quá tải")))
                 .andExpect(content().string(containsString("Bệnh đốm vòng...")))
                 .andExpect(content().string(not(containsString("<article class="))));
+        org.mockito.Mockito.verify(chat).answerLater("q");
     }
 
     @Test
@@ -153,6 +154,7 @@ class ChatPageControllerTest {
         when(chat.stream("prompt")).thenReturn(reactor.core.publisher.Flux.error(new RuntimeException("503")));
 
         assertOrder(streamed("q"), "event:sources", "event:busy");
+        org.mockito.Mockito.verify(chat).answerLater("q");
     }
 
     @Test
