@@ -12,7 +12,8 @@
         Hỏi về triệu chứng và cách chăm sóc. Câu trả lời chỉ dựa trên tài liệu của LeafCare và có ghi nguồn.
     </p>
 
-    <form th:action="@{/chat}" method="post" class="mt-6 rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
+    <form id="ask-form" th:action="@{/chat}" method="post" th:data-stream="@{/chat/stream}"
+          th:data-auto-ask="${autoAsk == true}" class="mt-6 rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
         <label for="question" class="text-sm font-semibold">Câu hỏi của bạn</label>
         <textarea id="question" name="question" rows="3" maxlength="500" required
                   placeholder="Ví dụ: Lá cà chua có đốm nâu tròn thì xử lý thế nào?"
@@ -24,7 +25,7 @@
 
     <!-- lỗi (${error}) đã hiện ở đầu trang bởi layout/base -->
 
-    <div th:if="${result}" class="mt-4">
+    <div th:if="${result}" class="mt-4" data-server-result>
         <article th:if="${answerHtml != null}" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
             <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
             <!-- answerHtml đã escape HTML, chỉ thêm <strong> (RagChatService.toHtml) -->
@@ -49,6 +50,115 @@
             </ol>
         </div>
     </div>
+
+    <!-- Có JS: câu trả lời chạy dần (POST /chat/stream). Không JS: form POST /chat ở trên vẫn dùng được. -->
+    <div id="live-error" hidden role="alert"
+         class="mt-4 rounded-xl border border-error bg-base-100 px-4 py-3 text-error"></div>
+    <div id="live" hidden class="mt-4">
+        <div id="live-busy" hidden role="note" class="mb-4 rounded-xl border border-warning bg-base-100 p-4 md:p-5">
+            Máy trả lời đang quá tải nên chưa viết được câu trả lời. Dưới đây là các đoạn cẩm nang liên quan nhất,
+            bạn có thể đọc trước hoặc hỏi lại sau ít phút.
+        </div>
+        <article id="live-answer-box" class="rounded-xl border border-base-300 bg-base-100 p-4 md:p-5">
+            <h2 class="text-sm font-semibold text-base-content/70">Trả lời</h2>
+            <p id="live-wait" class="mt-2 text-base-content/70">Đang tra cẩm nang…</p>
+            <p id="live-answer" class="mt-2 whitespace-pre-line break-words" aria-live="polite"></p>
+        </article>
+        <div id="live-sources-box" hidden class="mt-4">
+            <h2 class="text-sm font-semibold text-base-content/70">Nguồn</h2>
+            <ol id="live-sources" class="mt-2 space-y-2"></ol>
+        </div>
+    </div>
+
+    <script>
+    (() => {
+        const form = document.getElementById('ask-form');
+        if (!form || !window.fetch || !window.TextDecoder || !window.ReadableStream) return;
+        const $ = id => document.getElementById(id);
+        const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const bold = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        const btn = form.querySelector('button[type=submit]');
+        let text = '';
+
+        function source(s) {
+            const li = document.createElement('li');
+            li.className = 'rounded-xl border border-base-300 bg-base-100 p-3';
+            const head = document.createElement('p');
+            head.className = 'break-words text-sm font-semibold';
+            head.textContent = '[' + s.number + '] ' + s.file;
+            const body = document.createElement('p');
+            body.className = 'mt-1 break-words text-sm text-base-content/80';
+            body.textContent = s.excerpt;
+            li.append(head, body);
+            return li;
+        }
+
+        function handle(block) {
+            let name = 'message', data = '';
+            for (const line of block.split('\n')) {
+                if (line.startsWith('event:')) name = line.slice(6).trim();
+                else if (line.startsWith('data:')) data += line.slice(5);
+            }
+            const d = data ? JSON.parse(data) : {};
+            if (name === 'sources') {
+                $('live-sources').replaceChildren(...d.map(source));
+                $('live-sources-box').hidden = d.length === 0;
+            } else if (name === 'token') {
+                text += d.t;
+                $('live-wait').hidden = true;
+                $('live-answer').innerHTML = bold(text);
+            } else if (name === 'busy') {
+                $('live-busy').hidden = false;
+                $('live-answer-box').hidden = text === '';
+            } else if (name === 'error') {
+                $('live').hidden = true;
+                $('live-error').textContent = d.message;
+                $('live-error').hidden = false;
+            }
+        }
+
+        form.addEventListener('submit', async ev => {
+            ev.preventDefault();
+            document.querySelectorAll('[data-server-result]').forEach(e => e.remove());
+            text = '';
+            $('live-answer').textContent = '';
+            $('live-sources').replaceChildren();
+            for (const id of ['live-error', 'live-busy', 'live-sources-box']) $(id).hidden = true;
+            $('live-answer-box').hidden = false;
+            $('live-wait').hidden = false;
+            $('live').hidden = false;
+            btn.disabled = true;
+            try {
+                const res = await fetch(form.dataset.stream, {
+                    method: 'POST', body: new URLSearchParams(new FormData(form)),
+                    headers: {Accept: 'text/event-stream'}
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buf = '';
+                for (;;) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    buf += decoder.decode(value, {stream: true}).replace(/\r\n/g, '\n');
+                    let i;
+                    while ((i = buf.indexOf('\n\n')) >= 0) {
+                        handle(buf.slice(0, i));
+                        buf = buf.slice(i + 2);
+                    }
+                }
+                if (buf.trim()) handle(buf);
+            } catch (e) {
+                handle('event:error\ndata:' + JSON.stringify({message: 'Chưa trả lời được lúc này, bạn thử lại sau ít phút.'}));
+            } finally {
+                $('live-wait').hidden = true;
+                btn.disabled = false;
+            }
+        });
+
+        if (form.dataset.autoAsk === 'true') form.requestSubmit();
+    })();
+    </script>
 </section>
 </body>
 </html>

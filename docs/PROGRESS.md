@@ -4,8 +4,8 @@
 
 ## Hiện trạng
 
-- Đang ở: chống chậm/treo cho Hỏi đáp RAG (Gemini free hay báo 503 quá tải; trước đây Spring AI thử lại 10 lần nên treo tới 11 phút). PR 1 `fix/rag-chat-timeout` (Resilience4j) chờ merge.
-- Việc tiếp theo: PR 2 streaming + nút "Hỏi cẩm nang" chuyển trang ngay có sẵn câu hỏi; PR 3 semantic cache (pgvector). Shin cần đặt `GEMINI_FALLBACK_MODEL` trên Render. Shin muốn được hỏi trước mỗi task và mỗi quyết định.
+- Đang ở: chống chậm/treo cho Hỏi đáp RAG (Gemini free hay báo 503 quá tải). PR 1 `fix/rag-chat-timeout` (Resilience4j) và PR 2 `feat/rag-chat-stream` (tách từ PR 1: streaming + nút "Hỏi cẩm nang" mở ngay trang Hỏi đáp) chờ merge.
+- Việc tiếp theo: PR 3 semantic cache (pgvector). **Nhắc Shin đặt `GEMINI_FALLBACK_MODEL` trên Render** (Shin hẹn thêm sau, nhờ nhắc). Shin muốn được hỏi trước mỗi task và mỗi quyết định.
 - Vấn đề đang mở: ảnh `/uploads/**` vẫn mở được bởi mọi người đã đăng nhập nếu biết tên file (tên UUID, khó đoán); xoá cây/bệnh đang được tham chiếu mới test bằng mock; font tải từ Google Fonts; chưa có favicon.
 
 ## Quyết định quan trọng
@@ -27,6 +27,12 @@
 - Mẫu CRUD Task 3 phải copy từ Plant: id lạ -> `NotFoundException` (404); trùng tên -> `bindingResult.rejectValue("name","duplicate","Tên đã tồn tại")`; xoá khi đang được tham chiếu -> `InUseException` -> flash `error`; `confirm()` khi xoá; `@Size(max=255)` cho chuỗi ngắn.
 
 ## Nhật ký (mới nhất ở trên)
+
+### 2026-11-13 – Hỏi đáp: chữ trả lời chạy dần + nút "Hỏi cẩm nang" mở trang ngay (ngoài plan)
+- Lý do: Shin thấy bấm "Hỏi cẩm nang" phải đợi lâu mới chuyển trang; muốn chuyển ngay sang Hỏi đáp có sẵn câu hỏi.
+- Đã làm: nút ở kết quả quét thành link `GET /chat?q=...` (điền sẵn, tự hỏi khi mở); `POST /chat/stream` (SSE, có CSRF): `sources` -> `token`... -> `done`, Gemini hỏng thì `busy` (vẫn có nguồn), lỗi tìm kiếm thì `error`; `RagChatService.prepare/stream` (Flux, cùng cầu dao, timeout giữa 2 đoạn chữ, model dự phòng nếu chưa ra chữ nào). JS thuần trong `chat/index.html` (fetch + đọc stream, escape rồi in đậm); không JS thì form POST `/chat` cũ vẫn chạy.
+- Test: `ChatPageControllerTest` +8, `RagChatServiceTest` +3, `ScanControllerTest` sửa; 285 test xanh. Thử JS bằng Playwright 390px với server SSE giả: chữ hiện dần, `<script>` bị escape, nhánh `busy`, không tràn ngang. Chưa thử với Gemini thật.
+- Nhánh: `feat/rag-chat-stream` (tách từ `fix/rag-chat-timeout` chưa merge).
 
 ### 2026-11-13 – Hỏi đáp RAG chịu lỗi khi Gemini quá tải (ngoài plan)
 - Lý do: log Render cho thấy `503 This model is currently experiencing high demand`; Spring AI mặc định thử lại 10 lần, chờ tăng dần nên trang treo ~11 phút. Shin chọn hướng Streaming + Semantic cache + Resilience4j, làm từng PR.
@@ -125,13 +131,8 @@
 - Test: `ScanControllerTest` +4 (ADMIN thấy tên/email/"Chưa rõ", USER không thấy, ở cả list và detail).
 - Lọc theo người dùng, thống kê theo tài khoản để cho Task 12 (dashboard admin). Nhánh: `fix/admin-sees-scan-owner`.
 
-### 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free
-- Đã làm: `V5__scan_owner.sql` (`scan_history.user_id` null được, FK, index), `ScanHistory.owner`; `ScanHistoryService` nhận `AppUser`: `remainingToday` (null = không giới hạn cho Premium/ADMIN), `create` chặn lượt thứ 6 **trước** khi lưu file (`ScanLimitException`), `list/get/delete` chỉ của mình (người khác hoặc dòng không chủ -> 404), ADMIN thấy hết; `DashboardService.stats(user)` (số cây/bệnh chung, lượt quét của mình; ADMIN tính tất cả).
-- Giao diện: trang Quét lá hiện "Còn X/5 lượt hôm nay (gói Free)"; hết lượt thì hộp cảnh báo + nút "Nâng cấp Premium", nút Lưu ảnh bị khoá. Kiểm tay 390: không tràn ngang.
-- Test: `ScanHistoryServiceTest` (+8: chủ sở hữu, 5 lượt rồi chặn không ghi file, đếm lùi, hôm qua không tính, người khác không tính, Premium/ADMIN không giới hạn, chỉ thấy/xoá của mình), `ScanControllerTest` (+2), `DashboardServiceTest` (+1); 167 test xanh.
-- Quyết định: ngày tính theo `Asia/Ho_Chi_Minh` đổi sang giờ máy chủ (vì `createdAt` lưu giờ máy chủ, Render chạy UTC); hai lần upload cùng lúc có thể lọt lượt thứ 6 (ghi `shortcut:` trong code). Lượt quét cũ không có chủ: chỉ ADMIN thấy. Nhánh: `feat/task-10-free-limit`.
-
 ### Cũ hơn (mỗi mục 1 dòng)
+- 2026-11-08 – Task 10: Lượt quét theo người dùng + giới hạn Free (`feat/task-10-free-limit`)
 - 2026-11-08 – Task 9: Lịch sử giao dịch (`feat/task-9-payment-history`)
 - 2026-11-08 – Thanh toán QR ngân hàng qua SePay (ngoài plan) (`feat/sepay-qr`)
 - 2026-11-08 – Task 8: MoMo sandbox (`feat/task-8-momo`)

@@ -77,13 +77,9 @@
                 <div th:if="${scan.status.name() == 'DONE' and scan.disease != null}">
                     <dt class="text-sm font-semibold text-base-content/70">Hỏi thêm</dt>
                     <dd>
-                        <!-- POST thẳng tới /chat: trả lời ngay từ cẩm nang đã nạp, câu hỏi vẫn sửa được ở trang Hỏi đáp. -->
-                        <form th:action="@{/chat}" method="post" class="mt-1"
-                              onsubmit="const b = this.querySelector('button'); b.disabled = true; b.textContent = 'Đang tra cẩm nang…';">
-                            <input type="hidden" name="question"
-                                   th:value="'Cách nhận biết và xử lý ' + ${scan.disease.name} + (${scan.plant != null} ? ' trên ' + ${scan.plant.name} : '') + '?'">
-                            <button type="submit" class="btn btn-outline btn-primary h-12 w-full rounded-full sm:w-auto sm:px-6">Hỏi cẩm nang về bệnh này</button>
-                        </form>
+                        <!-- mở ngay trang Hỏi đáp có sẵn câu hỏi; trang đó tự hỏi và hiện chữ trả lời dần -->
+                        <a th:href="@{/chat(q=${'Cách nhận biết và xử lý ' + scan.disease.name + (scan.plant != null ? ' trên ' + scan.plant.name : '') + '?'})}"
+                           class="btn btn-outline btn-primary mt-1 h-12 w-full rounded-full sm:w-auto sm:px-6">Hỏi cẩm nang về bệnh này</a>
                     </dd>
                 </div>
                 <div>

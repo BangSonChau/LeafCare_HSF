@@ -8,6 +8,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
+import reactor.core.publisher.Flux;
 
 /**
  * Tìm đoạn liên quan -> đưa cho LLM -> trả lời kèm nguồn.
@@ -42,6 +45,7 @@ public class RagChatService {
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
     private final TimeLimiter timeLimiter;
+    private final Duration timeout;
     private final String fallbackModel;
     final CircuitBreaker breaker;
     // 4 luồng: tối đa 4 câu hỏi chờ Gemini cùng lúc, để server 512 MB không cạn luồng xử lý web
@@ -57,6 +61,7 @@ public class RagChatService {
         this.vectorStore = vectorStore;
         this.chatClient = chatClientBuilder.defaultSystem(SYSTEM_PROMPT).build();
         this.timeLimiter = TimeLimiter.of(timeout);
+        this.timeout = timeout;
         this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? null : fallbackModel.trim();
         // 3 trong 5 lần gần nhất lỗi -> ngắt 60s, rồi cho thử 1 lần
         this.breaker = CircuitBreaker.of("gemini", CircuitBreakerConfig.custom()
@@ -66,14 +71,12 @@ public class RagChatService {
     }
 
     public RagAnswer ask(String question) {
-        // lấy 4 đoạn gần nghĩa nhất, bỏ đoạn quá xa (độ giống < 0.3)
-        List<Document> docs = vectorStore.similaritySearch(SearchRequest.builder()
-                .query(question).topK(4).similarityThreshold(0.3).build());
-        if (docs.isEmpty()) {
+        Prepared p = prepare(question);
+        if (p.prompt() == null) {
             return new RagAnswer(NO_INFO, List.of());
         }
-        String prompt = buildUserPrompt(question, docs);
-        List<RagAnswer.Source> sources = toSources(docs);
+        String prompt = p.prompt();
+        List<RagAnswer.Source> sources = p.sources();
         try {
             return new RagAnswer(breaker.executeCallable(() -> generate(null, prompt)), sources);
         } catch (Exception e) {
@@ -89,6 +92,51 @@ public class RagChatService {
         return new RagAnswer(null, sources);
     }
 
+    /** Câu hỏi đã tìm trong cẩm nang: prompt null khi không có đoạn nào liên quan. */
+    public record Prepared(String prompt, List<RagAnswer.Source> sources) {}
+
+    /** Tìm 4 đoạn cẩm nang gần nghĩa nhất, bỏ đoạn quá xa (độ giống < 0.3). Gọi embedding, chặn luồng. */
+    public Prepared prepare(String question) {
+        List<Document> docs = vectorStore.similaritySearch(SearchRequest.builder()
+                .query(question).topK(4).similarityThreshold(0.3).build());
+        return docs.isEmpty() ? new Prepared(null, List.of())
+                : new Prepared(buildUserPrompt(question, docs), toSources(docs));
+    }
+
+    /**
+     * Bước 2: chữ trả lời theo từng đoạn. Cùng cầu dao và giới hạn thời gian (giữa hai đoạn chữ) như ask();
+     * model chính lỗi trước khi ra chữ nào thì chuyển sang model dự phòng.
+     */
+    public Flux<String> stream(String prompt) {
+        AtomicBoolean started = new AtomicBoolean();
+        Flux<String> main = Flux.defer(() -> {
+            if (!breaker.tryAcquirePermission()) {
+                return Flux.error(CallNotPermittedException.createCallNotPermittedException(breaker));
+            }
+            long t0 = System.nanoTime();
+            return streamFrom(null, prompt)
+                    .doOnComplete(() -> breaker.onSuccess(System.nanoTime() - t0, TimeUnit.NANOSECONDS))
+                    .doOnError(e -> breaker.onError(System.nanoTime() - t0, TimeUnit.NANOSECONDS, e))
+                    .doOnCancel(breaker::releasePermission);
+        });
+        return main.doOnNext(t -> started.set(true)).onErrorResume(e -> {
+            log.warn("RAG chat: main model failed: {}", shortReason(e));
+            if (started.get() || fallbackModel == null) {
+                return Flux.error(e);
+            }
+            return streamFrom(fallbackModel, prompt).doOnError(f ->
+                    log.warn("RAG chat: fallback model {} failed: {}", fallbackModel, shortReason(f)));
+        });
+    }
+
+    private Flux<String> streamFrom(String model, String prompt) {
+        ChatClient.ChatClientRequestSpec spec = chatClient.prompt();
+        if (model != null) {
+            spec = spec.options(ChatOptions.builder().model(model));
+        }
+        return spec.user(prompt).stream().content().timeout(timeout);
+    }
+
     /** model null = model mặc định trong cấu hình. Quá thời gian thì huỷ và ném TimeoutException. */
     private String generate(String model, String prompt) throws Exception {
         return timeLimiter.executeFutureSupplier(() -> pool.submit(() -> {
@@ -100,7 +148,7 @@ public class RagChatService {
         }));
     }
 
-    static String shortReason(Exception e) {
+    static String shortReason(Throwable e) {
         if (e instanceof CallNotPermittedException) {
             return "skipped, circuit breaker open (too many recent failures)";
         }
